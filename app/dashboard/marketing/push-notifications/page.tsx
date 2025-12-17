@@ -9,12 +9,19 @@ import {
   NotificationHistoryItem,
   NotificationDetail,
   HistoryFilters,
+  ScheduledNotification,
+  NotificationTemplate,
+  CreateTemplatePayload,
 } from '@/lib/api/notifications';
 import SendNotificationForm from '@/components/notifications/SendNotificationForm';
 import { NotificationHistoryTable } from '@/components/notifications/NotificationHistoryTable';
 import { HistoryFilters as HistoryFiltersComponent } from '@/components/notifications/HistoryFilters';
 import { HistoryPagination } from '@/components/notifications/HistoryPagination';
 import { NotificationDetailModal } from '@/components/notifications/NotificationDetailModal';
+import { ScheduledNotificationsList } from '@/components/notifications/ScheduledNotificationsList';
+import { EditScheduledModal } from '@/components/notifications/EditScheduledModal';
+import { TemplatesList } from '@/components/notifications/TemplatesList';
+import { TemplateFormModal } from '@/components/notifications/TemplateFormModal';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   RefreshCw,
@@ -24,16 +31,17 @@ import {
   Smartphone,
   Users,
   CheckCircle2,
-  TrendingUp,
   Sparkles,
   Zap,
   BarChart3,
   Apple,
+  Calendar,
+  FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-type TabType = 'send' | 'history' | 'stats';
+type TabType = 'send' | 'templates' | 'scheduled' | 'history' | 'stats';
 
 export default function PushNotificationsPage() {
   const { data: session, status } = useSession();
@@ -60,6 +68,18 @@ export default function PushNotificationsPage() {
   const [selectedNotificationId, setSelectedNotificationId] = useState<string | null>(null);
   const [notificationDetail, setNotificationDetail] = useState<NotificationDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+
+  // Scheduled notifications state
+  const [scheduledNotifications, setScheduledNotifications] = useState<ScheduledNotification[]>([]);
+  const [scheduledLoading, setScheduledLoading] = useState(false);
+  const [editingScheduled, setEditingScheduled] = useState<ScheduledNotification | null>(null);
+
+  // Templates state
+  const [templates, setTemplates] = useState<NotificationTemplate[]>([]);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [templateModalOpen, setTemplateModalOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<NotificationTemplate | null>(null);
+  const [selectedTemplateForSend, setSelectedTemplateForSend] = useState<NotificationTemplate | null>(null);
 
   useEffect(() => {
     if (status === 'authenticated' && session?.user && !hasLoaded) {
@@ -110,6 +130,44 @@ export default function PushNotificationsPage() {
     }
   }, [activeTab, hasLoaded, loadHistory]);
 
+  // Load scheduled notifications
+  const loadScheduled = useCallback(async () => {
+    setScheduledLoading(true);
+    try {
+      const data = await notificationApi.getScheduledNotifications();
+      setScheduledNotifications(data.notifications.filter(n => n.status === 'scheduled'));
+    } catch (err) {
+      console.error('[Push Notifications] Scheduled load error:', err);
+    } finally {
+      setScheduledLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'scheduled' && hasLoaded) {
+      loadScheduled();
+    }
+  }, [activeTab, hasLoaded, loadScheduled]);
+
+  // Load templates
+  const loadTemplates = useCallback(async () => {
+    setTemplatesLoading(true);
+    try {
+      const data = await notificationApi.getTemplates();
+      setTemplates(data.templates);
+    } catch (err) {
+      console.error('[Push Notifications] Templates load error:', err);
+    } finally {
+      setTemplatesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'templates' && hasLoaded) {
+      loadTemplates();
+    }
+  }, [activeTab, hasLoaded, loadTemplates]);
+
   const handleViewDetails = async (notificationId: string) => {
     setSelectedNotificationId(notificationId);
     setDetailLoading(true);
@@ -141,10 +199,92 @@ export default function PushNotificationsPage() {
     if (activeTab === 'history') {
       loadHistory();
     }
+    if (activeTab === 'scheduled') {
+      loadScheduled();
+    }
+  };
+
+  // Scheduled notification handlers
+  const handleCancelScheduled = async (id: string) => {
+    try {
+      await notificationApi.cancelScheduledNotification(id);
+      loadScheduled();
+    } catch (err) {
+      console.error('[Push Notifications] Cancel error:', err);
+    }
+  };
+
+  const handleSendScheduledNow = async (id: string) => {
+    try {
+      await notificationApi.sendScheduledNow(id);
+      loadScheduled();
+      loadHistory();
+    } catch (err) {
+      console.error('[Push Notifications] Send now error:', err);
+    }
+  };
+
+  const handleUpdateScheduled = async (id: string, updates: {
+    title?: string;
+    body?: string;
+    segment?: string;
+    scheduledFor?: string;
+  }) => {
+    try {
+      await notificationApi.updateScheduledNotification(id, updates);
+      loadScheduled();
+    } catch (err) {
+      console.error('[Push Notifications] Update error:', err);
+      throw err;
+    }
+  };
+
+  // Template handlers
+  const handleCreateTemplate = async (data: CreateTemplatePayload) => {
+    await notificationApi.createTemplate(data);
+    loadTemplates();
+  };
+
+  const handleUpdateTemplate = async (data: CreateTemplatePayload) => {
+    if (!editingTemplate) return;
+    await notificationApi.updateTemplate(editingTemplate.id, data);
+    setEditingTemplate(null);
+    loadTemplates();
+  };
+
+  const handleDeleteTemplate = async (template: NotificationTemplate) => {
+    if (!confirm(`Delete template "${template.name}"?`)) return;
+    try {
+      await notificationApi.deleteTemplate(template.id);
+      loadTemplates();
+    } catch (err) {
+      console.error('[Push Notifications] Delete template error:', err);
+    }
+  };
+
+  const handleDuplicateTemplate = async (template: NotificationTemplate) => {
+    try {
+      await notificationApi.duplicateTemplate(template.id);
+      loadTemplates();
+    } catch (err) {
+      console.error('[Push Notifications] Duplicate template error:', err);
+    }
+  };
+
+  const handleUseTemplate = async (template: NotificationTemplate) => {
+    try {
+      await notificationApi.recordTemplateUsage(template.id);
+    } catch (err) {
+      console.error('[Push Notifications] Record template usage error:', err);
+    }
+    setSelectedTemplateForSend(template);
+    setActiveTab('send');
   };
 
   const tabs = [
     { id: 'send' as TabType, label: 'Send Notification', icon: Send },
+    { id: 'templates' as TabType, label: 'Templates', icon: FileText },
+    { id: 'scheduled' as TabType, label: 'Scheduled', icon: Calendar, count: scheduledNotifications.length },
     { id: 'history' as TabType, label: 'History', icon: History },
     { id: 'stats' as TabType, label: 'Analytics', icon: BarChart3 },
   ];
@@ -195,6 +335,7 @@ export default function PushNotificationsPage() {
       <div className="flex gap-2 p-1 bg-slate-100 rounded-xl w-fit">
         {tabs.map((tab) => {
           const Icon = tab.icon;
+          const count = 'count' in tab ? tab.count : undefined;
           return (
             <button
               key={tab.id}
@@ -208,6 +349,11 @@ export default function PushNotificationsPage() {
             >
               <Icon className="w-4 h-4" />
               {tab.label}
+              {count !== undefined && count > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 text-xs rounded-full bg-violet-100 text-violet-700">
+                  {count}
+                </span>
+              )}
             </button>
           );
         })}
@@ -232,7 +378,12 @@ export default function PushNotificationsPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <SendNotificationForm segments={segments} onSuccess={handleNotificationSent} />
+                <SendNotificationForm
+                  segments={segments}
+                  onSuccess={handleNotificationSent}
+                  template={selectedTemplateForSend}
+                  onClearTemplate={() => setSelectedTemplateForSend(null)}
+                />
               </CardContent>
             </Card>
           </div>
@@ -243,6 +394,68 @@ export default function PushNotificationsPage() {
             <SegmentPreview segments={segments} />
           </div>
         </div>
+      )}
+
+      {activeTab === 'templates' && (
+        <Card className="border-0 shadow-lg overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500" />
+          <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
+                <FileText className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <CardTitle className="text-xl">Notification Templates</CardTitle>
+                <CardDescription>Create and manage reusable notification templates</CardDescription>
+              </div>
+            </div>
+            <Button variant="outline" size="sm" onClick={loadTemplates} disabled={templatesLoading}>
+              <RefreshCw className={cn('w-4 h-4 mr-2', templatesLoading && 'animate-spin')} />
+              Refresh
+            </Button>
+          </CardHeader>
+          <CardContent className="p-6">
+            <TemplatesList
+              templates={templates}
+              onUse={handleUseTemplate}
+              onEdit={setEditingTemplate}
+              onDuplicate={handleDuplicateTemplate}
+              onDelete={handleDeleteTemplate}
+              onCreate={() => setTemplateModalOpen(true)}
+              isLoading={templatesLoading}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {activeTab === 'scheduled' && (
+        <Card className="border-0 shadow-lg overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500" />
+          <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <CardTitle className="text-xl">Scheduled Notifications</CardTitle>
+                <CardDescription>Manage notifications scheduled for future delivery</CardDescription>
+              </div>
+            </div>
+            <Button variant="outline" size="sm" onClick={loadScheduled} disabled={scheduledLoading}>
+              <RefreshCw className={cn('w-4 h-4 mr-2', scheduledLoading && 'animate-spin')} />
+              Refresh
+            </Button>
+          </CardHeader>
+          <CardContent className="p-6">
+            <ScheduledNotificationsList
+              notifications={scheduledNotifications}
+              onCancel={handleCancelScheduled}
+              onSendNow={handleSendScheduledNow}
+              onEdit={setEditingScheduled}
+              isLoading={scheduledLoading}
+            />
+          </CardContent>
+        </Card>
       )}
 
       {activeTab === 'history' && (
@@ -313,6 +526,30 @@ export default function PushNotificationsPage() {
         isOpen={!!selectedNotificationId}
         onClose={handleCloseDetail}
         isLoading={detailLoading}
+      />
+
+      <EditScheduledModal
+        notification={editingScheduled}
+        segments={segments}
+        isOpen={!!editingScheduled}
+        onClose={() => setEditingScheduled(null)}
+        onSave={handleUpdateScheduled}
+      />
+
+      <TemplateFormModal
+        template={null}
+        segments={segments}
+        isOpen={templateModalOpen}
+        onClose={() => setTemplateModalOpen(false)}
+        onSave={handleCreateTemplate}
+      />
+
+      <TemplateFormModal
+        template={editingTemplate}
+        segments={segments}
+        isOpen={!!editingTemplate}
+        onClose={() => setEditingTemplate(null)}
+        onSave={handleUpdateTemplate}
       />
     </div>
   );

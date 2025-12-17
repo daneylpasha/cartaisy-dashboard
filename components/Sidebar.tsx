@@ -13,6 +13,7 @@ import {
   Settings,
   Menu,
   Users,
+  UserRound,
   ClipboardList,
   BarChart3,
   KeyRound,
@@ -58,6 +59,11 @@ function SidebarContent({ collapsed, onToggleCollapse }: SidebarContentProps) {
       href: "/dashboard/analytics",
       label: "Analytics",
       icon: <BarChart3 className="w-5 h-5" />,
+    },
+    {
+      href: "/dashboard/customers",
+      label: "Customers",
+      icon: <UserRound className="w-5 h-5" />,
     },
     {
       href: "/dashboard/collections",

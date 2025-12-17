@@ -21,6 +21,8 @@ import {
   Link,
   Shield,
   AlertTriangle,
+  ChevronRight,
+  FileText,
 } from 'lucide-react';
 import { canManageSettings } from '@/lib/utils/permissions';
 import { useStoreStats } from '@/hooks/useStoreStats';
@@ -221,6 +223,38 @@ function SettingsContent() {
           />
         </div>
       )}
+
+      {/* Compliance & Privacy Section */}
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <FileText className="w-5 h-5 text-slate-600" />
+          <h2 className="text-lg font-semibold text-slate-900">Privacy & Compliance</h2>
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                <Shield className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="font-medium text-slate-900">GDPR Compliance Settings</h3>
+                <p className="text-sm text-slate-600 mt-1">
+                  Manage data retention policies, export customer data, and configure privacy settings
+                  to ensure compliance with GDPR and other data protection regulations.
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => window.location.href = '/dashboard/settings/compliance'}
+              className="gap-2 whitespace-nowrap"
+            >
+              Manage Compliance
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
 
       {/* Pro Tips */}
       <div className="rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-zinc-50 p-6">

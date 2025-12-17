@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { notificationApi, NotificationSegment } from '@/lib/api/notifications';
+import { useState, useEffect } from 'react';
+import { notificationApi, NotificationSegment, NotificationTemplate } from '@/lib/api/notifications';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,26 +13,48 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, Send, CheckCircle, AlertCircle, Users, ImageIcon, Type, MessageSquare } from 'lucide-react';
+import { Loader2, Send, CheckCircle, AlertCircle, Users, Type, MessageSquare, Clock, Calendar, FileText, X } from 'lucide-react';
+import { ImageUploader } from './ImageUploader';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 interface SendNotificationFormProps {
   segments: NotificationSegment[];
   onSuccess?: () => void;
+  template?: NotificationTemplate | null;
+  onClearTemplate?: () => void;
 }
 
 export default function SendNotificationForm({
   segments,
   onSuccess,
+  template,
+  onClearTemplate,
 }: SendNotificationFormProps) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [error, setError] = useState('');
   const [selectedSegment, setSelectedSegment] = useState('all');
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
+  // Scheduling state
+  const [scheduleEnabled, setScheduleEnabled] = useState(false);
+  const [scheduledDate, setScheduledDate] = useState('');
+  const [scheduledTime, setScheduledTime] = useState('');
+
+  // Pre-fill form when template is selected
+  useEffect(() => {
+    if (template) {
+      setTitle(template.title);
+      setBody(template.body);
+      setImageUrl(template.image || '');
+      setSelectedSegment(template.segment);
+    }
+  }, [template]);
 
   const selectedSegmentData = segments.find(s => s.id === selectedSegment);
   const recipientCount = selectedSegmentData?.count || 0;
@@ -52,49 +74,91 @@ export default function SendNotificationForm({
       errors.body = 'Message must be 500 characters or less';
     }
 
-    if (imageUrl && !isValidUrl(imageUrl)) {
-      errors.imageUrl = 'Please enter a valid URL';
+    // Validate scheduling
+    if (scheduleEnabled) {
+      if (!scheduledDate) {
+        errors.scheduledDate = 'Date is required for scheduling';
+      }
+      if (!scheduledTime) {
+        errors.scheduledTime = 'Time is required for scheduling';
+      }
+      if (scheduledDate && scheduledTime) {
+        const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
+        if (scheduledDateTime <= new Date()) {
+          errors.scheduledDate = 'Scheduled time must be in the future';
+        }
+      }
     }
 
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  const isValidUrl = (url: string): boolean => {
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validate()) return;
+    const isScheduled = scheduleEnabled && scheduledDate && scheduledTime;
+
+    console.log('📤 [DASHBOARD] Step 1: Send button clicked');
+    console.log('📤 [DASHBOARD] Step 1a: Form data:', {
+      title: title.trim(),
+      body: body.trim(),
+      segment: selectedSegment,
+      imageUrl: imageUrl.trim() || undefined,
+      scheduledFor: isScheduled ? `${scheduledDate}T${scheduledTime}` : undefined,
+    });
+
+    if (!validate()) {
+      console.log('❌ [DASHBOARD] Validation failed:', validationErrors);
+      return;
+    }
 
     try {
       setLoading(true);
       setError('');
       setSuccess(false);
+      setSuccessMessage('');
 
-      await notificationApi.broadcast({
+      console.log('📤 [DASHBOARD] Step 2: Calling notificationApi.broadcast()');
+
+      const payload: Parameters<typeof notificationApi.broadcast>[0] = {
         title: title.trim(),
         body: body.trim(),
         segment: selectedSegment,
         imageUrl: imageUrl.trim() || undefined,
-      });
+      };
+
+      // Add scheduling if enabled
+      if (isScheduled) {
+        const scheduledDateTime = new Date(`${scheduledDate}T${scheduledTime}`);
+        payload.scheduledFor = scheduledDateTime.toISOString();
+      }
+
+      const result = await notificationApi.broadcast(payload);
+
+      console.log('✅ [DASHBOARD] Step 3: Broadcast result:', result);
 
       setSuccess(true);
+      if (isScheduled) {
+        const formattedDate = format(new Date(`${scheduledDate}T${scheduledTime}`), 'MMM d, yyyy \'at\' h:mm a');
+        setSuccessMessage(`Notification scheduled for ${formattedDate}`);
+      } else {
+        setSuccessMessage(`Delivered to ${recipientCount.toLocaleString()} customers`);
+      }
+
+      // Reset form
       setTitle('');
       setBody('');
       setImageUrl('');
+      setScheduleEnabled(false);
+      setScheduledDate('');
+      setScheduledTime('');
       setValidationErrors({});
       onSuccess?.();
 
       setTimeout(() => setSuccess(false), 5000);
     } catch (err) {
+      console.error('❌ [DASHBOARD] Broadcast error:', err);
       setError(err instanceof Error ? err.message : 'Failed to send notification');
     } finally {
       setLoading(false);
@@ -110,10 +174,10 @@ export default function SendNotificationForm({
             <CheckCircle className="h-5 w-5 text-emerald-600" />
           </div>
           <div>
-            <p className="font-medium text-emerald-900">Notification sent successfully!</p>
-            <p className="text-sm text-emerald-700">
-              Delivered to {recipientCount.toLocaleString()} customers
+            <p className="font-medium text-emerald-900">
+              {successMessage.includes('scheduled') ? 'Notification scheduled!' : 'Notification sent successfully!'}
             </p>
+            <p className="text-sm text-emerald-700">{successMessage}</p>
           </div>
         </div>
       )}
@@ -128,6 +192,28 @@ export default function SendNotificationForm({
             <p className="font-medium text-red-900">Failed to send</p>
             <p className="text-sm text-red-700">{error}</p>
           </div>
+        </div>
+      )}
+
+      {/* Template Indicator */}
+      {template && onClearTemplate && (
+        <div className="flex items-center justify-between bg-violet-50 border border-violet-200 p-4 rounded-xl animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0">
+              <FileText className="h-5 w-5 text-violet-600" />
+            </div>
+            <div>
+              <p className="font-medium text-violet-900">Using template</p>
+              <p className="text-sm text-violet-700">{template.name}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClearTemplate}
+            className="p-2 text-violet-400 hover:text-violet-600 rounded-lg hover:bg-violet-100 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
       )}
 
@@ -216,29 +302,75 @@ export default function SendNotificationForm({
         </div>
       </div>
 
-      {/* Image URL (Optional) */}
-      <div className="space-y-2">
-        <Label className="flex items-center gap-2 text-sm font-medium text-slate-700">
-          <ImageIcon className="w-4 h-4 text-slate-500" />
-          Image URL
-          <span className="text-xs text-slate-400 font-normal">(Optional)</span>
-        </Label>
-        <Input
-          type="url"
-          placeholder="https://example.com/promo-image.jpg"
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-          className={cn(
-            'h-12 bg-slate-50 border-slate-200 focus:bg-white transition-colors',
-            validationErrors.imageUrl && 'border-red-500 focus:ring-red-500'
-          )}
-        />
-        {validationErrors.imageUrl ? (
-          <p className="text-xs text-red-600">{validationErrors.imageUrl}</p>
-        ) : (
-          <p className="text-xs text-slate-500 pl-6">
-            Add an image to make your notification more engaging
-          </p>
+      {/* Image Upload */}
+      <ImageUploader
+        value={imageUrl}
+        onChange={setImageUrl}
+        onClear={() => setImageUrl('')}
+      />
+
+      {/* Schedule Option */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+          <input
+            type="checkbox"
+            id="schedule"
+            checked={scheduleEnabled}
+            onChange={(e) => {
+              setScheduleEnabled(e.target.checked);
+              if (!e.target.checked) {
+                setScheduledDate('');
+                setScheduledTime('');
+              }
+            }}
+            className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+          />
+          <label htmlFor="schedule" className="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+            <Clock className="w-4 h-4 text-slate-500" />
+            Schedule for later
+          </label>
+        </div>
+
+        {scheduleEnabled && (
+          <div className="grid grid-cols-2 gap-4 pl-4 animate-in fade-in slide-in-from-top-2">
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                <Calendar className="w-4 h-4 text-slate-500" />
+                Date
+              </Label>
+              <Input
+                type="date"
+                value={scheduledDate}
+                onChange={(e) => setScheduledDate(e.target.value)}
+                min={format(new Date(), 'yyyy-MM-dd')}
+                className={cn(
+                  'h-12 bg-slate-50 border-slate-200 focus:bg-white transition-colors',
+                  validationErrors.scheduledDate && 'border-red-500 focus:ring-red-500'
+                )}
+              />
+              {validationErrors.scheduledDate && (
+                <p className="text-xs text-red-600">{validationErrors.scheduledDate}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                <Clock className="w-4 h-4 text-slate-500" />
+                Time
+              </Label>
+              <Input
+                type="time"
+                value={scheduledTime}
+                onChange={(e) => setScheduledTime(e.target.value)}
+                className={cn(
+                  'h-12 bg-slate-50 border-slate-200 focus:bg-white transition-colors',
+                  validationErrors.scheduledTime && 'border-red-500 focus:ring-red-500'
+                )}
+              />
+              {validationErrors.scheduledTime && (
+                <p className="text-xs text-red-600">{validationErrors.scheduledTime}</p>
+              )}
+            </div>
+          </div>
         )}
       </div>
 
@@ -279,19 +411,27 @@ export default function SendNotificationForm({
           disabled={loading || recipientCount === 0}
           size="lg"
           className={cn(
-            'h-12 px-8 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white shadow-lg shadow-blue-500/25 transition-all',
+            'h-12 px-8 text-white shadow-lg transition-all',
+            scheduleEnabled
+              ? 'bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 shadow-violet-500/25'
+              : 'bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 shadow-blue-500/25',
             (loading || recipientCount === 0) && 'opacity-50 cursor-not-allowed shadow-none'
           )}
         >
           {loading ? (
             <>
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              Sending...
+              {scheduleEnabled ? 'Scheduling...' : 'Sending...'}
+            </>
+          ) : scheduleEnabled ? (
+            <>
+              <Clock className="mr-2 h-5 w-5" />
+              Schedule Notification
             </>
           ) : (
             <>
               <Send className="mr-2 h-5 w-5" />
-              Send Notification
+              Send Now
             </>
           )}
         </Button>
