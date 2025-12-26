@@ -22,6 +22,7 @@ import { ScheduledNotificationsList } from '@/components/notifications/Scheduled
 import { EditScheduledModal } from '@/components/notifications/EditScheduledModal';
 import { TemplatesList } from '@/components/notifications/TemplatesList';
 import { TemplateFormModal } from '@/components/notifications/TemplateFormModal';
+import { AbandonedCartSettings } from '@/components/notifications/AbandonedCartSettings';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   RefreshCw,
@@ -41,7 +42,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-type TabType = 'send' | 'templates' | 'scheduled' | 'history' | 'stats';
+type TabType = 'send' | 'templates' | 'scheduled' | 'automation' | 'history' | 'stats';
 
 export default function PushNotificationsPage() {
   const { data: session, status } = useSession();
@@ -285,6 +286,7 @@ export default function PushNotificationsPage() {
     { id: 'send' as TabType, label: 'Send Notification', icon: Send },
     { id: 'templates' as TabType, label: 'Templates', icon: FileText },
     { id: 'scheduled' as TabType, label: 'Scheduled', icon: Calendar, count: scheduledNotifications.length },
+    { id: 'automation' as TabType, label: 'Automation', icon: Zap },
     { id: 'history' as TabType, label: 'History', icon: History },
     { id: 'stats' as TabType, label: 'Analytics', icon: BarChart3 },
   ];
@@ -456,6 +458,28 @@ export default function PushNotificationsPage() {
             />
           </CardContent>
         </Card>
+      )}
+
+      {activeTab === 'automation' && (
+        <div className="space-y-6">
+          <AbandonedCartSettings />
+
+          {/* Future automation features can be added here */}
+          <Card className="border-0 shadow-lg overflow-hidden opacity-60">
+            <div className="h-1 bg-gradient-to-r from-slate-400 to-slate-500" />
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-9 h-9 rounded-lg bg-slate-200 flex items-center justify-center">
+                  <Bell className="w-4 h-4 text-slate-500" />
+                </div>
+                <div>
+                  <p className="font-medium text-slate-700">More Automations Coming Soon</p>
+                  <p className="text-sm text-slate-500">Order updates, shipping alerts, and promotional triggers</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {activeTab === 'history' && (

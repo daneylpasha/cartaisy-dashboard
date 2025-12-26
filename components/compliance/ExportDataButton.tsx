@@ -60,11 +60,25 @@ export function ExportDataButton({
     }
   }, [customerId]);
 
-  const handleDownload = useCallback(() => {
-    if (exportRequest?.downloadUrl) {
-      window.open(exportRequest.downloadUrl, '_blank');
+  const handleDownload = useCallback(async () => {
+    if (!exportRequest) return;
+
+    try {
+      // Determine if this is a bulk export (no customerId means bulk)
+      const isBulk = !customerId;
+
+      // Use the API download function which handles auth and file download
+      await complianceApi.downloadExport(exportRequest.id, {
+        customerId: exportRequest.customerId,
+        customerName: exportRequest.customerName,
+        isBulk,
+        totalCustomers: exportRequest.totalCustomers,
+      });
+    } catch (err) {
+      console.error('Download failed:', err);
+      setError(err instanceof Error ? err.message : 'Failed to download export');
     }
-  }, [exportRequest]);
+  }, [exportRequest, customerId]);
 
   const handleReset = useCallback(() => {
     setExportRequest(null);

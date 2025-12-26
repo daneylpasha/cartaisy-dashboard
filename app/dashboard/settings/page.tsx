@@ -8,6 +8,7 @@ import { StoreInfoCard } from '@/components/settings/StoreInfoCard';
 import { PlanUsageCard } from '@/components/settings/PlanUsageCard';
 import { StoreSettingsForm } from '@/components/settings/StoreSettingsForm';
 import { DeleteStoreDialog } from '@/components/settings/DeleteStoreDialog';
+import { SyncStatusCard } from '@/components/settings/SyncStatusCard';
 import { Button } from '@/components/ui/button';
 import {
   AlertCircle,
@@ -187,6 +188,15 @@ function SettingsContent() {
           <h2 className="text-sm font-semibold tracking-tight text-slate-900">Shopify Connection</h2>
         </div>
         <ConnectShopify />
+      </div>
+
+      {/* Sync Status Section */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <RefreshCw className="w-4 h-4 text-slate-600" />
+          <h2 className="text-sm font-semibold tracking-tight text-slate-900">Sync Status</h2>
+        </div>
+        <SyncStatusCard />
       </div>
 
       {/* Plan & Usage Section */}

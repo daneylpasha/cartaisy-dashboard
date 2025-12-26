@@ -13,8 +13,11 @@ export type ExportStatus = 'pending' | 'processing' | 'completed' | 'failed';
 export interface DataExportRequest {
   id: string;
   customerId?: string;
-  type: 'single_customer' | 'all_customers';
+  customerName?: string;
+  customerEmail?: string;
+  type: 'single_customer' | 'all_customers' | 'bulk';
   status: ExportStatus;
+  totalCustomers?: number;
   downloadUrl?: string;
   expiresAt?: string;
   createdAt: string;
@@ -81,7 +84,12 @@ export const complianceApi = {
     }
 
     const data = await response.json();
-    return data.data;
+    const result = data.data || data;
+    // Handle different ID field names from backend
+    if (!result.id) {
+      result.id = result.exportId || result._id;
+    }
+    return result;
   },
 
   /**
@@ -116,7 +124,12 @@ export const complianceApi = {
     }
 
     const data = await response.json();
-    return data.data;
+    const result = data.data || data;
+    // Handle different ID field names from backend
+    if (!result.id) {
+      result.id = result.exportId || result._id;
+    }
+    return result;
   },
 
   /**
@@ -148,7 +161,12 @@ export const complianceApi = {
     }
 
     const data = await response.json();
-    return data.data;
+    const result = data.data || data;
+    // Handle different ID field names from backend
+    if (!result.id) {
+      result.id = result.exportId || result._id;
+    }
+    return result;
   },
 
   /**
@@ -180,7 +198,14 @@ export const complianceApi = {
     }
 
     const data = await response.json();
-    return data.data || [];
+    const results = data.data || data || [];
+    // Handle different ID field names from backend for each item
+    return results.map((item: DataExportRequest & { _id?: string; exportId?: string }) => {
+      if (!item.id) {
+        return { ...item, id: item.exportId || item._id };
+      }
+      return item;
+    });
   },
 
   /**
@@ -219,7 +244,7 @@ export const complianceApi = {
     }
 
     const data = await response.json();
-    return data.data;
+    return data.data || data;
   },
 
   /**
@@ -262,6 +287,77 @@ export const complianceApi = {
 
     const data = await response.json();
     return data.data;
+  },
+
+  /**
+   * Download a completed export file
+   */
+  async downloadExport(
+    exportId: string,
+    exportInfo?: {
+      customerId?: string;
+      customerName?: string;
+      isBulk?: boolean;
+      totalCustomers?: number;
+    }
+  ): Promise<void> {
+    const token = tokenStorage.getToken();
+    const user = tokenStorage.getUser<{ storeId?: string }>();
+
+    if (!token) {
+      throw new Error('Not authenticated');
+    }
+
+    if (!user?.storeId) {
+      throw new Error('Store ID not found');
+    }
+
+    const response = await fetch(
+      `${API_URL}/stores/${user.storeId}/compliance/export/${exportId}/download`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to download export');
+    }
+
+    // Generate filename based on export type
+    const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    let filename: string;
+
+    if (exportInfo?.isBulk) {
+      // Bulk export: all-customers-export-4-customers-2025-12-24.json
+      const customerCount = exportInfo.totalCustomers || 'all';
+      filename = `all-customers-export-${customerCount}-customers-${date}.json`;
+    } else if (exportInfo?.customerId) {
+      // Single customer export
+      filename = `customer-export-${exportInfo.customerId}`;
+      if (exportInfo?.customerName) {
+        const sanitizedName = exportInfo.customerName
+          .replace(/[^a-zA-Z0-9\s-]/g, '')
+          .replace(/\s+/g, '_')
+          .toLowerCase();
+        filename += `-${sanitizedName}`;
+      }
+      filename += `-${date}.json`;
+    } else {
+      filename = `data-export-${date}.json`;
+    }
+
+    // Get the blob and trigger download
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
   },
 
   /**
