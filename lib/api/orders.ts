@@ -236,6 +236,26 @@ export const ordersApi = {
       };
     });
 
+    // Client-side sorting fallback (in case backend doesn't sort)
+    const sortBy = filters.sortBy || 'date';
+    const sortOrder = filters.sortOrder || 'desc';
+    orders.sort((a, b) => {
+      let comparison = 0;
+      if (sortBy === 'date') {
+        // Sort by date only (ignore time)
+        const dateA = new Date(a.createdAt);
+        const dateB = new Date(b.createdAt);
+        dateA.setHours(0, 0, 0, 0);
+        dateB.setHours(0, 0, 0, 0);
+        comparison = dateA.getTime() - dateB.getTime();
+      } else if (sortBy === 'total') {
+        comparison = a.total - b.total;
+      } else if (sortBy === 'orderNumber') {
+        comparison = a.orderNumber.localeCompare(b.orderNumber);
+      }
+      return sortOrder === 'desc' ? -comparison : comparison;
+    });
+
     return {
       orders,
       pagination: {
@@ -460,27 +480,49 @@ export const ordersApi = {
   },
 };
 
+// Helper function to safely extract a numeric value
+function safeNumber(value: unknown): number {
+  if (typeof value === 'number' && !isNaN(value)) {
+    return value;
+  }
+  return 0;
+}
+
+// Helper function to get first valid number from multiple sources
+function getNumber(...values: unknown[]): number {
+  for (const value of values) {
+    const num = safeNumber(value);
+    if (num !== 0) return num;
+  }
+  return 0;
+}
+
 // Helper function to map backend order response to frontend format
 function mapOrderResponse(data: Record<string, unknown>): Order {
   const lineItems = (data.lineItems as Record<string, unknown>[] || data.items as Record<string, unknown>[] || []).map(
-    (item: Record<string, unknown>) => ({
-      id: (item.id as string) || (item._id as string) || '',
-      productId: (item.shopifyProductId as string) || (item.productId as string) || '',
-      productTitle: (item.productTitle as string) || (item.title as string) || (item.name as string) || '',
-      variantId: (item.shopifyVariantId as string) || (item.variantId as string) || undefined,
-      variantTitle: item.variantTitle as string | undefined,
-      sku: item.sku as string | undefined,
-      quantity: (item.quantity as number) || 1,
-      unitPrice: (item.unitPrice as number) || (item.price as number) || 0,
-      totalPrice: (item.totalPrice as number) || ((item.quantity as number || 1) * ((item.unitPrice as number) || (item.price as number) || 0)),
-      currency: (item.currency as string) || 'USD',
-      imageUrl: (item.imageUrl as string) || (item.image as string) || undefined,
-    })
+    (item: Record<string, unknown>) => {
+      const quantity = safeNumber(item.quantity) || 1;
+      const unitPrice = getNumber(item.unitPrice, item.price);
+      return {
+        id: (item.id as string) || (item._id as string) || '',
+        productId: (item.shopifyProductId as string) || (item.productId as string) || '',
+        productTitle: (item.productTitle as string) || (item.title as string) || (item.name as string) || '',
+        variantId: (item.shopifyVariantId as string) || (item.variantId as string) || undefined,
+        variantTitle: item.variantTitle as string | undefined,
+        sku: item.sku as string | undefined,
+        quantity,
+        unitPrice,
+        totalPrice: safeNumber(item.totalPrice) || (quantity * unitPrice),
+        currency: (item.currency as string) || 'USD',
+        imageUrl: (item.imageUrl as string) || (item.image as string) || undefined,
+      };
+    }
   );
 
   const customer = data.customer as Record<string, unknown> || {};
   const mobileStatus = data.mobileStatus as { current?: string; history?: Array<{ status: string; timestamp: string }> } || {};
   const shipping = data.shipping as { method?: string; cost?: number } || {};
+  const pricing = data.pricing as { subtotal?: number; shippingCost?: number; tax?: number; discountAmount?: number; grandTotal?: number } || {};
 
   // Parse customer name if it's a single field
   const customerName = (customer.name as string) || '';
@@ -517,13 +559,13 @@ function mapOrderResponse(data: Record<string, unknown>): Order {
       phone: customer.phone as string | undefined,
     },
     lineItems,
-    itemCount: (data.itemCount as number) || lineItems.reduce((sum, item) => sum + item.quantity, 0),
-    subtotal: (data.subtotal as number) || (data.subtotalPrice as number) || 0,
-    shippingTotal: (data.shippingTotal as number) || (data.shippingCost as number) || (shipping.cost as number) || 0,
+    itemCount: safeNumber(data.itemCount) || lineItems.reduce((sum, item) => sum + item.quantity, 0),
+    subtotal: getNumber(data.subtotal, data.subtotalPrice, pricing.subtotal),
+    shippingTotal: getNumber(data.shippingTotal, data.shippingCost, shipping.cost, pricing.shippingCost),
     shippingMethod: (data.shippingMethod as string) || (shipping.method as string) || undefined,
-    taxTotal: (data.taxTotal as number) || (data.totalTax as number) || 0,
-    discountTotal: (data.discountTotal as number) || (data.discount as number) || 0,
-    total: (data.total as number) || (data.totalPrice as number) || 0,
+    taxTotal: getNumber(data.taxTotal, data.totalTax, pricing.tax),
+    discountTotal: getNumber(data.discountTotal, data.discount, pricing.discountAmount),
+    total: getNumber(data.total, data.totalPrice, pricing.grandTotal),
     currency: (data.currency as string) || 'USD',
     shippingAddress: data.shippingAddress as OrderAddress | undefined,
     billingAddress: data.billingAddress as OrderAddress | undefined,

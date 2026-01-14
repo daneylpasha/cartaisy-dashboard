@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Search, Filter, X, RefreshCw, Download, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,10 +29,44 @@ export function OrderFilters({
   isLoading = false,
 }: OrderFiltersProps) {
   const [searchValue, setSearchValue] = useState(filters.search || '');
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const previousSearchRef = useRef(filters.search || '');
+
+  // Auto-search after 3 letters with debouncing - only if value changed
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    if (searchValue.length < 3) {
+      // Clear search if less than 3 characters
+      if (filters.search) {
+        previousSearchRef.current = '';
+        onFiltersChange({ ...filters, search: '', page: 1 });
+      }
+      return;
+    }
+
+    // Only trigger API call if search value actually changed
+    if (searchValue === previousSearchRef.current) {
+      return;
+    }
+
+    // Set debounce timer for search after 3+ letters
+    debounceTimerRef.current = setTimeout(() => {
+      previousSearchRef.current = searchValue;
+      onFiltersChange({ ...filters, search: searchValue, page: 1 });
+    }, 300);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [searchValue, filters, onFiltersChange]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onFiltersChange({ ...filters, search: searchValue, page: 1 });
   };
 
   const handleFilterChange = (key: keyof OrdersFilters, value: string) => {
