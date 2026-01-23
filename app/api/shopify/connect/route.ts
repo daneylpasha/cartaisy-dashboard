@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     // Build Shopify OAuth authorization URL
     // Must match Shopify Partner Dashboard redirect URL
-    const redirectUri = "http://localhost:3002/api/v1/shopify/oauth/callback";
+    const redirectUri = `${process.env.NEXTAUTH_URL}/api/v1/shopify/oauth/callback`;
     const authorizationUrl =
       `https://${shopDomain}/admin/oauth/authorize?` +
       `client_id=${SHOPIFY_API_KEY}` +

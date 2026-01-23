@@ -199,6 +199,7 @@ export const ordersApi = {
       {
         headers: {
           'Authorization': `Bearer ${token}`,
+          'X-Store-ID': user.storeId,
         },
       }
     );
@@ -272,6 +273,7 @@ export const ordersApi = {
    */
   async getOrderStats(): Promise<OrdersStats> {
     const token = tokenStorage.getToken();
+    const user = tokenStorage.getUser<{ storeId?: string }>();
 
     const defaultStats: OrdersStats = {
       totalOrders: 0,
@@ -282,7 +284,7 @@ export const ordersApi = {
       currency: 'USD',
     };
 
-    if (!token) {
+    if (!token || !user?.storeId) {
       return defaultStats;
     }
 
@@ -293,6 +295,7 @@ export const ordersApi = {
         {
           headers: {
             'Authorization': `Bearer ${token}`,
+            'X-Store-ID': user.storeId,
           },
         }
       );
@@ -351,9 +354,14 @@ export const ordersApi = {
    */
   async getOrder(orderId: string): Promise<Order> {
     const token = tokenStorage.getToken();
+    const user = tokenStorage.getUser<{ storeId?: string }>();
 
     if (!token) {
       throw new Error('Not authenticated');
+    }
+
+    if (!user?.storeId) {
+      throw new Error('Store ID not found');
     }
 
     const response = await fetch(
@@ -361,6 +369,7 @@ export const ordersApi = {
       {
         headers: {
           'Authorization': `Bearer ${token}`,
+          'X-Store-ID': user.storeId,
         },
       }
     );
@@ -387,9 +396,14 @@ export const ordersApi = {
     data?: FulfillOrderData | CancelOrderData
   ): Promise<Order> {
     const token = tokenStorage.getToken();
+    const user = tokenStorage.getUser<{ storeId?: string }>();
 
     if (!token) {
       throw new Error('Not authenticated');
+    }
+
+    if (!user?.storeId) {
+      throw new Error('Store ID not found');
     }
 
     const response = await fetch(
@@ -399,6 +413,7 @@ export const ordersApi = {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
+          'X-Store-ID': user.storeId,
         },
         body: JSON.stringify({ action, ...data }),
       }
@@ -418,9 +433,14 @@ export const ordersApi = {
    */
   async addOrderNote(orderId: string, content: string): Promise<OrderNote> {
     const token = tokenStorage.getToken();
+    const user = tokenStorage.getUser<{ storeId?: string }>();
 
     if (!token) {
       throw new Error('Not authenticated');
+    }
+
+    if (!user?.storeId) {
+      throw new Error('Store ID not found');
     }
 
     const response = await fetch(
@@ -430,6 +450,7 @@ export const ordersApi = {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
+          'X-Store-ID': user.storeId,
         },
         body: JSON.stringify({ content }),
       }
