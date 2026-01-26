@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 import {
   Palette,
   Smartphone,
@@ -8,50 +8,57 @@ import {
   RefreshCw,
   Users,
   BarChart3,
-  ArrowRight
-} from 'lucide-react';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
+  ArrowRight,
+} from "lucide-react";
+import { fadeInUp, staggerContainer } from "@/lib/animations";
 
 const features = [
   {
     icon: Palette,
-    title: 'Customizable Dashboard',
-    description: 'Design your mobile app\'s homescreen with drag-and-drop components. Carousels, banners, collections - all customizable.',
-    gradient: 'from-purple-500 to-pink-500',
+    title: "Customizable Dashboard",
+    description:
+      "Design your mobile app's homescreen with drag-and-drop components. Carousels, banners, collections - all customizable.",
+    gradient: "from-purple-500 to-pink-500",
   },
   {
     icon: Smartphone,
-    title: 'Native Mobile App',
-    description: 'Your customers get a beautiful React Native app branded with your logo and colors. iOS and Android ready.',
-    gradient: 'from-pink-500 to-rose-500',
+    title: "Native Mobile App",
+    description:
+      "Your customers get a beautiful React Native app branded with your logo and colors. iOS and Android ready.",
+    gradient: "from-pink-500 to-rose-500",
   },
   {
     icon: ShoppingBag,
-    title: 'Complete E-commerce',
-    description: 'Orders, wishlists, reviews, customer management - everything you need to run your online store.',
-    gradient: 'from-blue-500 to-cyan-500',
+    title: "Complete E-commerce",
+    description:
+      "Orders, wishlists, reviews, customer management - everything you need to run your online store.",
+    gradient: "from-blue-500 to-cyan-500",
   },
   {
     icon: RefreshCw,
-    title: 'Shopify Integration',
-    description: 'Already on Shopify? Sync your products, orders, and inventory seamlessly with one click.',
-    gradient: 'from-cyan-500 to-teal-500',
+    title: "Shopify Integration",
+    description:
+      "Already on Shopify? Sync your products, orders, and inventory seamlessly with one click.",
+    gradient: "from-cyan-500 to-teal-500",
   },
   {
     icon: Users,
-    title: 'Multi-tenant Architecture',
-    description: 'Invite your team, manage roles, and collaborate. Each store is completely isolated and secure.',
-    gradient: 'from-violet-500 to-purple-500',
+    title: "Multi-tenant Architecture",
+    description:
+      "Invite your team, manage roles, and collaborate. Each store is completely isolated and secure.",
+    gradient: "from-violet-500 to-purple-500",
   },
   {
     icon: BarChart3,
-    title: 'Real-time Analytics',
-    description: 'Track orders, customer behavior, and sales. Make data-driven decisions with powerful insights.',
-    gradient: 'from-indigo-500 to-blue-500',
+    title: "Real-time Analytics",
+    description:
+      "Track orders, customer behavior, and sales. Make data-driven decisions with powerful insights.",
+    gradient: "from-indigo-500 to-blue-500",
   },
 ];
 
 export default function FeaturesSection() {
+  console.log("hello");
   return (
     <section id="features" className="py-24 md:py-32 px-6 lg:px-8 relative">
       {/* Background decoration - more subtle */}
@@ -83,7 +90,8 @@ export default function FeaturesSection() {
             </span>
           </h2>
           <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
-            A complete platform with all the tools you need to build, manage, and grow your mobile commerce business.
+            A complete platform with all the tools you need to build, manage,
+            and grow your mobile commerce business.
           </p>
         </motion.div>
 
@@ -107,7 +115,9 @@ export default function FeaturesSection() {
               {/* Card */}
               <div className="relative bg-slate-900/80 backdrop-blur-sm border border-white/[0.08] rounded-2xl p-8 h-full transition-all duration-300 group-hover:border-transparent group-hover:bg-slate-900">
                 {/* Icon with gradient background */}
-                <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.gradient} p-3.5 mb-6 shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}>
+                <div
+                  className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.gradient} p-3.5 mb-6 shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}
+                >
                   <feature.icon className="w-full h-full text-white" />
                 </div>
 
