@@ -113,7 +113,7 @@ export default function MobileAppFeaturesSection() {
                 initial={{ opacity: 0, x: -30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.35, delay: index * 0.05 }}
+                transition={{ duration: 0.45, delay: index * 0.08 }}
                 className="group"
               >
                 <div className="relative">
@@ -294,7 +294,7 @@ export default function MobileAppFeaturesSection() {
                 initial={{ opacity: 0, x: 30 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.35, delay: index * 0.05 }}
+                transition={{ duration: 0.45, delay: index * 0.08 }}
                 className="group"
               >
                 <div className="relative">

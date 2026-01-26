@@ -214,7 +214,7 @@ export default function HeroSection() {
                       className="w-9 h-9 rounded-full border-2 border-black bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-xs font-medium text-white shadow-lg"
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.2 + i * 0.05 }}
+                      transition={{ delay: 0.3 + i * 0.08 }}
                       whileHover={{ scale: 1.1, zIndex: 10 }}
                     />
                   ))}
@@ -240,7 +240,7 @@ export default function HeroSection() {
             className="relative"
             initial={{ opacity: 0, scale: 0.9, y: 40 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ delay: 0.2, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           >
             {/* Glow effect behind mockup */}
             <motion.div
@@ -327,7 +327,7 @@ export default function HeroSection() {
                         className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.05] hover:border-white/[0.1] transition-all duration-300"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 + i * 0.05 }}
+                        transition={{ delay: 0.3 + i * 0.08 }}
                       >
                         <p className="text-xs text-slate-500 mb-1">
                           {stat.label}
@@ -487,7 +487,7 @@ export default function HeroSection() {
         className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
+        transition={{ delay: 0.8 }}
       >
         <span className="text-xs text-slate-500">Scroll to explore</span>
         <motion.div

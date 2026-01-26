@@ -86,7 +86,7 @@ function BuilderMockup() {
           initial={{ opacity: 0, x: -10 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.1 + i * 0.05 }}
+          transition={{ delay: 0.15 + i * 0.08 }}
         >
           <Grip className="w-4 h-4 text-slate-600" />
           <div className={`w-2 h-2 rounded-full ${i === 0 ? 'bg-emerald-400' : i === 1 ? 'bg-blue-400' : 'bg-purple-400'}`} />
@@ -115,7 +115,7 @@ function TeamMockup() {
           initial={{ opacity: 0, x: -10 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.1 + i * 0.05 }}
+          transition={{ delay: 0.15 + i * 0.08 }}
         >
           <div className={`w-8 h-8 rounded-full ${member.color} flex items-center justify-center text-white text-xs font-medium`}>
             {member.name.split(' ').map(n => n[0]).join('')}
@@ -149,7 +149,7 @@ function AnalyticsMockup() {
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.1 + i * 0.05 }}
+            transition={{ delay: 0.15 + i * 0.08 }}
           >
             <div className="text-xs text-slate-500">{stat.label}</div>
             <div className="text-lg font-bold text-white">{stat.value}</div>
@@ -187,7 +187,7 @@ function SyncMockup() {
           initial={{ opacity: 0, x: -10 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.1 + i * 0.05 }}
+          transition={{ delay: 0.15 + i * 0.08 }}
         >
           <item.icon className="w-4 h-4 text-slate-400" />
           <span className="text-sm text-slate-300">{item.label}</span>

@@ -61,7 +61,7 @@ export default function LandingNavbar() {
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
               {/* Glow effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl blur-lg opacity-40 group-hover:opacity-70 transition-opacity duration-300" />
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl blur-lg opacity-40 group-hover:opacity-50 transition-opacity duration-300" />
               <img src="/cartaisy-white-logo.png" width={130} alt="Cartaisy" />
               {/* Logo icon */}
               {/* <div className="relative w-11 h-11 bg-gradient-to-br from-purple-600 via-violet-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/25">
@@ -87,7 +87,7 @@ export default function LandingNavbar() {
                 className="relative px-4 py-2 text-sm text-slate-300 hover:text-white transition-colors group"
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 * index, duration: 0.25 }}
+                transition={{ delay: 0.08 * index, duration: 0.35 }}
               >
                 {link.label}
                 {/* Animated underline */}
@@ -101,7 +101,7 @@ export default function LandingNavbar() {
             className="hidden md:flex items-center gap-3"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.15, duration: 0.25 }}
+            transition={{ delay: 0.2, duration: 0.35 }}
           >
             {/* Sign In */}
             <Link
