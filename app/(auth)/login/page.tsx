@@ -42,7 +42,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-[#0A0A0A] relative overflow-hidden flex items-start md:items-center justify-center pt-16 md:pt-0">
+    <div className="min-h-screen bg-[#0A0A0A] relative overflow-hidden flex items-center justify-center">
       {/* Refined gradient background - subtle and elegant */}
       <div className="absolute inset-0">
         {/* Top gradient glow */}
