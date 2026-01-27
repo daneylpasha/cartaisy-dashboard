@@ -48,7 +48,7 @@ interface SidebarContentProps {
 function SidebarContent({ collapsed, onToggleCollapse, showSignOut = false }: SidebarContentProps & { showSignOut?: boolean }) {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const { logout } = useAuth();
+  const { logout, getToken } = useAuth();
   const [storeLogo, setStoreLogo] = useState<string | null>(null);
 
   const storeId = session?.user?.storeId;
@@ -61,7 +61,12 @@ function SidebarContent({ collapsed, onToggleCollapse, showSignOut = false }: Si
     const fetchBranding = async () => {
       if (!storeId) return;
       try {
-        const response = await fetch(`${API_URL}/admin/stores/${storeId}/branding`);
+        const token = getToken();
+        const response = await fetch(`${API_URL}/admin/stores/${storeId}/branding`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
         if (response.ok) {
           const data = await response.json();
           if (data.data?.logoUrl) {
@@ -73,7 +78,7 @@ function SidebarContent({ collapsed, onToggleCollapse, showSignOut = false }: Si
       }
     };
     fetchBranding();
-  }, [storeId]);
+  }, [storeId, getToken]);
 
   const baseNavItems: NavItem[] = [
     { href: "/dashboard", label: "Home", icon: <House className="w-4 h-4" /> },

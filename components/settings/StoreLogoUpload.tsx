@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useSession } from '@/lib/auth';
+import { useSession, useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Upload, X, Loader2, CheckCircle2 } from 'lucide-react';
 
@@ -15,6 +15,7 @@ interface StoreLogoUploadProps {
 
 export function StoreLogoUpload({ currentLogo, storeName = 'Store', onLogoChange }: StoreLogoUploadProps) {
   const { data: session } = useSession();
+  const { getToken } = useAuth();
   const [logo, setLogo] = useState<string | null>(currentLogo || null);
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,7 +35,12 @@ export function StoreLogoUpload({ currentLogo, storeName = 'Store', onLogoChange
       }
 
       try {
-        const response = await fetch(`${API_URL}/admin/stores/${storeId}/branding`);
+        const token = getToken();
+        const response = await fetch(`${API_URL}/admin/stores/${storeId}/branding`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
         if (response.ok) {
           const data = await response.json();
           if (data.data?.logoUrl) {
@@ -78,11 +84,15 @@ export function StoreLogoUpload({ currentLogo, storeName = 'Store', onLogoChange
     setIsUploading(true);
 
     try {
+      const token = getToken();
       const formData = new FormData();
       formData.append('logo', file);
 
       const response = await fetch(`${API_URL}/admin/stores/${storeId}/branding/logo`, {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
         body: formData,
       });
 
@@ -120,8 +130,12 @@ export function StoreLogoUpload({ currentLogo, storeName = 'Store', onLogoChange
     setIsUploading(true);
 
     try {
+      const token = getToken();
       const response = await fetch(`${API_URL}/admin/stores/${storeId}/branding/logo`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       });
 
       if (response.ok) {
