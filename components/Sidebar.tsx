@@ -78,7 +78,8 @@ function SidebarContent({ collapsed, onToggleCollapse, showSignOut = false }: Si
       }
     };
     fetchBranding();
-  }, [storeId, getToken]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storeId]);
 
   const baseNavItems: NavItem[] = [
     { href: "/dashboard", label: "Home", icon: <House className="w-4 h-4" /> },
