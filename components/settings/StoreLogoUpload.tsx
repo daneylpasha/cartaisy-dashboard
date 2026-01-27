@@ -5,6 +5,8 @@ import { useSession } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Upload, X, Loader2, CheckCircle2 } from 'lucide-react';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cartaisy-backend-production.up.railway.app/api/v1';
+
 interface StoreLogoUploadProps {
   currentLogo?: string | null;
   storeName?: string;
@@ -32,7 +34,7 @@ export function StoreLogoUpload({ currentLogo, storeName = 'Store', onLogoChange
       }
 
       try {
-        const response = await fetch(`/api/v1/admin/stores/${storeId}/branding`);
+        const response = await fetch(`${API_URL}/admin/stores/${storeId}/branding`);
         if (response.ok) {
           const data = await response.json();
           if (data.data?.logoUrl) {
@@ -79,7 +81,7 @@ export function StoreLogoUpload({ currentLogo, storeName = 'Store', onLogoChange
       const formData = new FormData();
       formData.append('logo', file);
 
-      const response = await fetch(`/api/v1/admin/stores/${storeId}/branding/logo`, {
+      const response = await fetch(`${API_URL}/admin/stores/${storeId}/branding/logo`, {
         method: 'POST',
         body: formData,
       });
@@ -118,7 +120,7 @@ export function StoreLogoUpload({ currentLogo, storeName = 'Store', onLogoChange
     setIsUploading(true);
 
     try {
-      const response = await fetch(`/api/v1/admin/stores/${storeId}/branding/logo`, {
+      const response = await fetch(`${API_URL}/admin/stores/${storeId}/branding/logo`, {
         method: 'DELETE',
       });
 

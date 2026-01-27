@@ -30,6 +30,8 @@ import { canManageTeam } from "@/lib/utils/permissions";
 // Master admins who can access admin pages
 const MASTER_ADMINS = ['sufyanali@gmail.com', 'daniyal@cartaisy.com'];
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cartaisy-backend-production.up.railway.app/api/v1';
+
 interface NavItem {
   href: string;
   label: string;
@@ -59,7 +61,7 @@ function SidebarContent({ collapsed, onToggleCollapse, showSignOut = false }: Si
     const fetchBranding = async () => {
       if (!storeId) return;
       try {
-        const response = await fetch(`/api/v1/admin/stores/${storeId}/branding`);
+        const response = await fetch(`${API_URL}/admin/stores/${storeId}/branding`);
         if (response.ok) {
           const data = await response.json();
           if (data.data?.logoUrl) {
