@@ -7,28 +7,25 @@ import { Sparkles, Twitter, Linkedin, Github, Mail } from "lucide-react";
 export default function LandingFooter() {
   const footerLinks = {
     product: [
-      { label: "Features", href: "#features" },
-      { label: "Dashboard", href: "#dashboard" },
-      { label: "Mobile App", href: "#mobile-app" },
-      { label: "Shopify Integration", href: "#shopify" },
-      { label: "Pricing", href: "#pricing" },
+      { label: "Features", href: "/#features" },
+      { label: "Dashboard", href: "/#dashboard" },
+      { label: "Mobile App", href: "/#mobile-app" },
+      { label: "Pricing", href: "/pricing" },
     ],
     company: [
-      { label: "About Us", href: "#about" },
-      { label: "Blog", href: "#blog" },
-      { label: "Careers", href: "#careers" },
-      { label: "Contact", href: "#contact" },
+      { label: "About Us", href: "/about" },
+      { label: "Blog", href: "/blog" },
+      { label: "Careers", href: "/careers" },
+      { label: "Contact", href: "/contact" },
     ],
     resources: [
-      { label: "Documentation", href: "#docs" },
-      { label: "API Reference", href: "#api" },
-      { label: "Support", href: "#support" },
-      { label: "Status", href: "#status" },
+      { label: "Documentation", href: "/docs" },
+      { label: "Support", href: "/contact" },
     ],
     legal: [
-      { label: "Privacy Policy", href: "#privacy" },
-      { label: "Terms of Service", href: "#terms" },
-      { label: "Cookie Policy", href: "#cookies" },
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Terms of Service", href: "/terms" },
+      { label: "Cookie Policy", href: "/cookies" },
     ],
   };
 
@@ -53,7 +50,7 @@ export default function LandingFooter() {
     },
     {
       icon: Mail,
-      href: "#",
+      href: "mailto:support@cartaisy.com",
       label: "Email",
       gradient: "from-purple-500 to-pink-500",
     },

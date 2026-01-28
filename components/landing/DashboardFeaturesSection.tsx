@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
   Layout,
@@ -351,23 +352,27 @@ export default function DashboardFeaturesSection() {
             Ready to see how easy store management can be?
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <motion.button
-              className="group px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 transition-all duration-300"
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <span className="flex items-center justify-center gap-2">
-                Request Dashboard Tour
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </span>
-            </motion.button>
-            <motion.button
-              className="px-8 py-4 backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] rounded-xl font-semibold text-white hover:bg-white/[0.06] hover:border-white/[0.12] transition-all duration-300"
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              View Documentation
-            </motion.button>
+            <Link href="/schedule-demo">
+              <motion.button
+                className="group px-8 py-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl font-semibold text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 transition-all duration-300"
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <span className="flex items-center justify-center gap-2">
+                  Request Dashboard Tour
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </span>
+              </motion.button>
+            </Link>
+            <Link href="/docs">
+              <motion.button
+                className="px-8 py-4 backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] rounded-xl font-semibold text-white hover:bg-white/[0.06] hover:border-white/[0.12] transition-all duration-300"
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                View Documentation
+              </motion.button>
+            </Link>
           </div>
         </motion.div>
       </div>

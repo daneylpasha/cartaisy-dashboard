@@ -31,9 +31,11 @@ import {
   buttonTap,
   textReveal,
 } from "@/lib/animations";
+import DemoVideoModal from "./DemoVideoModal";
 
 export default function HeroSection() {
   const [isMobile, setIsMobile] = useState(false);
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
   const { scrollY } = useScroll();
 
   // Check if mobile
@@ -190,15 +192,15 @@ export default function HeroSection() {
                 </motion.button>
               </Link>
 
-              <motion.a
-                href="#features"
+              <motion.button
+                onClick={() => setIsVideoOpen(true)}
                 className="group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-white/90 backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.06] hover:border-white/[0.12] transition-all duration-300"
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={buttonTap}
               >
                 <Play className="w-4 h-4 group-hover:scale-110 transition-transform" />
                 Watch Demo
-              </motion.a>
+              </motion.button>
             </motion.div>
 
             {/* Trust Indicators - Enhanced */}
@@ -508,6 +510,9 @@ export default function HeroSection() {
           />
         </motion.div>
       </motion.div>
+
+      {/* Demo Video Modal */}
+      <DemoVideoModal isOpen={isVideoOpen} onClose={() => setIsVideoOpen(false)} />
     </section>
   );
 }
