@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { SessionProvider } from "@/components/SessionProvider";
 import { OrganizationSchema, SoftwareApplicationSchema } from "@/components/landing/StructuredData";
 import { GoogleAnalytics, AnalyticsProvider, VercelAnalytics, VercelSpeedInsights } from "@/components/analytics";
@@ -12,6 +13,13 @@ const geistSans = localFont({
   variable: "--font-geist-sans",
   display: "swap",
   weight: "100 900",
+});
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
+  variable: "--font-heading",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -64,7 +72,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={geistSans.variable} suppressHydrationWarning>
+    <html lang="en" className={`${geistSans.variable} ${plusJakarta.variable}`} suppressHydrationWarning>
       <head>
         <GoogleAnalytics />
       </head>

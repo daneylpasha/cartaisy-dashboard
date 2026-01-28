@@ -91,7 +91,7 @@ export default function MobileAppFeaturesSection() {
           >
             Mobile App
           </motion.span>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight font-heading">
             A Shopping Experience
             <br />
             <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">

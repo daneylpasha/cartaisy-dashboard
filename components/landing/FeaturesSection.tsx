@@ -12,6 +12,8 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
+import LottieAnimation from "@/components/ui/LottieAnimation";
+import shoppingBagAnimation from "@/public/lottie/Shopping bag.json";
 
 const features = [
   {
@@ -68,14 +70,23 @@ export default function FeaturesSection() {
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Section Header - Improved typography */}
         <motion.div
-          className="text-center mb-20 space-y-6"
+          className="text-center mb-20 space-y-6 relative"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.4 }}
         >
+          {/* Shopping Bag Lottie - decorative behind header */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-15 pointer-events-none">
+            <LottieAnimation
+              animationData={shoppingBagAnimation}
+              className="w-80 h-80"
+              loop={true}
+            />
+          </div>
+
           <motion.span
-            className="inline-block text-sm font-medium text-purple-400 tracking-wide uppercase"
+            className="inline-block text-sm font-medium text-purple-400 tracking-wide uppercase relative z-10"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
@@ -83,14 +94,14 @@ export default function FeaturesSection() {
           >
             Features
           </motion.span>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight relative z-10 font-heading">
             Everything You Need to Launch
             <br />
             <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
               Your Mobile Store
             </span>
           </h2>
-          <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed relative z-10">
             A complete platform with all the tools you need to build, manage,
             and grow your mobile commerce business.
           </p>

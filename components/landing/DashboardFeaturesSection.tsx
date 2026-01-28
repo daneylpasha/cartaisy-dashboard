@@ -231,7 +231,7 @@ export default function DashboardFeaturesSection() {
           >
             Dashboard
           </motion.span>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight font-heading">
             Powerful Dashboard for
             <br />
             <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
@@ -270,7 +270,7 @@ export default function DashboardFeaturesSection() {
                     </motion.div>
 
                     {/* Title */}
-                    <h3 className="text-3xl md:text-4xl font-bold text-white leading-tight">
+                    <h3 className="text-3xl md:text-4xl font-bold text-white leading-tight font-heading">
                       {feature.title}
                     </h3>
 

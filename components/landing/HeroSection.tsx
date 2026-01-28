@@ -16,7 +16,6 @@ import {
   Play,
   Bell,
   TrendingUp,
-  ShoppingBag,
   Layout,
   Grip,
   Zap,
@@ -33,6 +32,8 @@ import {
 } from "@/lib/animations";
 import { analytics } from "@/lib/analytics";
 import DemoVideoModal from "./DemoVideoModal";
+import LottieAnimation from "@/components/ui/LottieAnimation";
+import shoppingCartAnimation from "@/public/lottie/shopping cart.json";
 
 export default function HeroSection() {
   const [isMobile, setIsMobile] = useState(false);
@@ -50,6 +51,8 @@ export default function HeroSection() {
   // Parallax values - disabled on mobile
   const heroY = useTransform(scrollY, [0, 500], [0, isMobile ? 0 : 150]);
   const heroOpacity = useTransform(scrollY, [0, 300], [1, isMobile ? 1 : 0]);
+  // Lottie fades IN as hero fades OUT
+  const lottieOpacity = useTransform(scrollY, [0, 300], [0, isMobile ? 0 : 1]);
 
   // Spring mouse position for smooth tracking
   const mouseX = useMotionValue(0);
@@ -134,7 +137,7 @@ export default function HeroSection() {
 
             {/* Main Headline - Improved typography */}
             <motion.h1
-              className="text-5xl sm:text-6xl lg:text-6xl xl:text-7xl font-bold leading-[1.08] tracking-tight mb-8"
+              className="text-5xl sm:text-6xl lg:text-6xl xl:text-7xl font-bold leading-[1.08] tracking-tight mb-8 font-heading"
               variants={textReveal}
             >
               <span className="block bg-gradient-to-b from-white via-white to-white/50 bg-clip-text text-transparent">
@@ -451,20 +454,6 @@ export default function HeroSection() {
               </motion.div>
             </motion.div>
 
-            <motion.div
-              className="absolute -right-4 top-1/3 hidden lg:block"
-              variants={floatSlow}
-              initial="initial"
-              animate="animate"
-            >
-              <motion.div
-                className="w-16 h-16 rounded-2xl backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] p-3 flex flex-col items-center justify-center shadow-xl"
-                whileHover={{ scale: 1.1, y: -4 }}
-              >
-                <ShoppingBag className="w-5 h-5 text-purple-400 mb-0.5" />
-                <span className="text-xs text-slate-400">847</span>
-              </motion.div>
-            </motion.div>
 
             <motion.div
               className="absolute -left-2 bottom-1/4 hidden lg:block"
@@ -487,6 +476,23 @@ export default function HeroSection() {
             </motion.div>
           </motion.div>
         </div>
+      </motion.div>
+
+      {/* Centered Shopping Cart Lottie Animation - fades in as hero fades out */}
+      <motion.div
+        className="absolute bottom-32 left-1/2 -translate-x-1/2 z-20 hidden md:block"
+        style={{ opacity: lottieOpacity }}
+      >
+        <motion.div
+          animate={{ y: [0, -10, 0] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <LottieAnimation
+            animationData={shoppingCartAnimation}
+            className="w-48 h-48"
+            loop={true}
+          />
+        </motion.div>
       </motion.div>
 
       {/* Scroll indicator */}
