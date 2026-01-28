@@ -21,7 +21,7 @@ export default function LandingNavbar() {
     { href: "#features", label: "Features" },
     { href: "#dashboard", label: "Dashboard" },
     { href: "#mobile-app", label: "Mobile App" },
-    { href: "#pricing", label: "Pricing" },
+    { href: "/pricing", label: "Pricing" },
   ];
 
   return (
