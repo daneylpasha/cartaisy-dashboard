@@ -18,10 +18,10 @@ export default function LandingNavbar() {
   }, []);
 
   const navLinks = [
-    { href: "#features", label: "Features" },
-    { href: "#dashboard", label: "Dashboard" },
-    { href: "#mobile-app", label: "Mobile App" },
+    { href: "/features", label: "Features" },
     { href: "/pricing", label: "Pricing" },
+    { href: "/docs", label: "Docs" },
+    { href: "/contact", label: "Contact" },
   ];
 
   return (
