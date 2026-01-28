@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { HelpCircle, ChevronDown } from 'lucide-react';
+import PageLayout from '@/components/landing/PageLayout';
 
 export const metadata: Metadata = {
   title: 'FAQ | Cartaisy',
@@ -52,65 +53,59 @@ const faqs = [
 
 export default function FAQPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <div className="max-w-4xl mx-auto px-4 py-16">
-        <Link href="/docs" className="text-purple-400 hover:text-purple-300 mb-8 inline-block transition-colors">
-          &larr; Back to Documentation
-        </Link>
-
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-12">
-          <div className="w-14 h-14 bg-blue-500/20 rounded-xl flex items-center justify-center">
-            <HelpCircle className="w-7 h-7 text-blue-400" />
-          </div>
-          <div>
-            <h1 className="text-4xl font-bold text-white">Frequently Asked Questions</h1>
-            <p className="text-gray-400">Quick answers to common questions</p>
-          </div>
+    <PageLayout maxWidth="4xl" backHref="/docs" backLabel="Back to Docs">
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-12">
+        <div className="w-14 h-14 bg-blue-500/20 rounded-xl flex items-center justify-center">
+          <HelpCircle className="w-7 h-7 text-blue-400" />
         </div>
-
-        {/* FAQ List */}
-        <div className="space-y-4 mb-12">
-          {faqs.map((faq, index) => (
-            <details
-              key={index}
-              className="group bg-white/5 rounded-xl border border-white/10 overflow-hidden"
-            >
-              <summary className="flex items-center justify-between p-6 cursor-pointer list-none">
-                <h3 className="text-lg font-medium text-white pr-4">{faq.question}</h3>
-                <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0 transition-transform group-open:rotate-180" />
-              </summary>
-              <div className="px-6 pb-6">
-                <p className="text-gray-400 leading-relaxed">{faq.answer}</p>
-              </div>
-            </details>
-          ))}
+        <div>
+          <h1 className="text-4xl font-bold text-white">Frequently Asked Questions</h1>
+          <p className="text-gray-400">Quick answers to common questions</p>
         </div>
+      </div>
 
-        {/* Still have questions */}
-        <div className="text-center">
-          <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl p-8 border border-purple-500/20">
-            <h3 className="text-xl font-semibold text-white mb-2">Still have questions?</h3>
-            <p className="text-gray-400 mb-6">
-              Can&apos;t find the answer you&apos;re looking for? Our team is here to help.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/contact"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
-              >
-                Contact Support
-              </Link>
-              <Link
-                href="/schedule-demo"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-lg font-medium border border-white/10 transition-colors"
-              >
-                Schedule a Demo
-              </Link>
+      {/* FAQ List */}
+      <div className="space-y-4 mb-12">
+        {faqs.map((faq, index) => (
+          <details
+            key={index}
+            className="group bg-white/5 rounded-xl border border-white/10 overflow-hidden"
+          >
+            <summary className="flex items-center justify-between p-6 cursor-pointer list-none">
+              <h3 className="text-lg font-medium text-white pr-4">{faq.question}</h3>
+              <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="px-6 pb-6">
+              <p className="text-gray-400 leading-relaxed">{faq.answer}</p>
             </div>
+          </details>
+        ))}
+      </div>
+
+      {/* Still have questions */}
+      <div className="text-center">
+        <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl p-8 border border-purple-500/20">
+          <h3 className="text-xl font-semibold text-white mb-2">Still have questions?</h3>
+          <p className="text-gray-400 mb-6">
+            Can&apos;t find the answer you&apos;re looking for? Our team is here to help.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/contact"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+            >
+              Contact Support
+            </Link>
+            <Link
+              href="/schedule-demo"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-lg font-medium border border-white/10 transition-colors"
+            >
+              Schedule a Demo
+            </Link>
           </div>
         </div>
       </div>
-    </main>
+    </PageLayout>
   );
 }
