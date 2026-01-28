@@ -15,6 +15,8 @@ import {
   BarChart3,
   Settings
 } from 'lucide-react';
+import LottieAnimation from '@/components/ui/LottieAnimation';
+import onlineShoppingAnimation from '@/public/lottie/Online Shopping.json';
 
 const dashboardFeatures = [
   {
@@ -216,14 +218,23 @@ export default function DashboardFeaturesSection() {
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Section Header - Improved typography */}
         <motion.div
-          className="text-center mb-24 space-y-6"
+          className="text-center mb-24 space-y-6 relative"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.4 }}
         >
+          {/* Online Shopping Lottie - decorative behind header */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-15 pointer-events-none">
+            <LottieAnimation
+              animationData={onlineShoppingAnimation}
+              className="w-80 h-80"
+              loop={true}
+            />
+          </div>
+
           <motion.span
-            className="inline-block text-sm font-medium text-purple-400 tracking-wide uppercase"
+            className="inline-block text-sm font-medium text-purple-400 tracking-wide uppercase relative z-10"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
@@ -231,14 +242,14 @@ export default function DashboardFeaturesSection() {
           >
             Dashboard
           </motion.span>
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight font-heading">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight tracking-tight font-heading relative z-10">
             Powerful Dashboard for
             <br />
             <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
               Store Management
             </span>
           </h2>
-          <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed relative z-10">
             Everything you need to build, customize, and manage your mobile commerce platform in one intuitive interface.
           </p>
         </motion.div>
