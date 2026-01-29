@@ -39,7 +39,7 @@ export default function PageLayout({
       <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-0">
         <LottieAnimation
           animationData={flowAnimation}
-          className="w-[1000px] h-[1000px] opacity-[0.12]"
+          className="w-[1000px] h-[1000px] opacity-[0.06]"
           loop={true}
         />
       </div>

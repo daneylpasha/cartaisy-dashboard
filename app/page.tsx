@@ -10,8 +10,6 @@ import DashboardFeaturesSection from '@/components/landing/DashboardFeaturesSect
 import MobileAppFeaturesSection from '@/components/landing/MobileAppFeaturesSection';
 import LandingNavbar from '@/components/landing/LandingNavbar';
 import LandingFooter from '@/components/landing/LandingFooter';
-import LottieAnimation from '@/components/ui/LottieAnimation';
-import fishAnimation from '@/public/lottie/Glowing Fish Loader.json';
 
 export default function LandingPage() {
   const { status } = useSession();
@@ -53,24 +51,13 @@ export default function LandingPage() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white overflow-x-hidden relative">
-      {/* Fish Animation Background */}
-      <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-0">
-        <LottieAnimation
-          animationData={fishAnimation}
-          className="w-[800px] h-[800px] opacity-[0.15]"
-          loop={true}
-        />
-      </div>
-
-      <div className="relative z-10">
-        <LandingNavbar />
-        <HeroSection />
-        <FeaturesSection />
-        <DashboardFeaturesSection />
-        <MobileAppFeaturesSection />
-        <LandingFooter />
-      </div>
+    <main className="min-h-screen bg-black text-white overflow-x-hidden">
+      <LandingNavbar />
+      <HeroSection />
+      <FeaturesSection />
+      <DashboardFeaturesSection />
+      <MobileAppFeaturesSection />
+      <LandingFooter />
     </main>
   );
 }

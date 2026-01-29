@@ -52,7 +52,12 @@ export default function HeroSection() {
   const heroY = useTransform(scrollY, [0, 500], [0, isMobile ? 0 : 150]);
   const heroOpacity = useTransform(scrollY, [0, 300], [1, isMobile ? 1 : 0]);
   // Lottie fades IN as hero fades OUT
-  const lottieOpacity = useTransform(scrollY, [0, 300], [0, isMobile ? 0 : 1]);
+  // Cart fades in AFTER hero fades out (starts at 250px scroll, full at 450px)
+  const lottieOpacity = useTransform(
+    scrollY,
+    [230, 450],
+    [0, isMobile ? 0 : 1],
+  );
 
   // Spring mouse position for smooth tracking
   const mouseX = useMotionValue(0);
@@ -173,7 +178,10 @@ export default function HeroSection() {
               className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12"
               variants={fadeInUp}
             >
-              <Link href="/login" onClick={() => analytics.ctaClick('get_started')}>
+              <Link
+                href="/login"
+                onClick={() => analytics.ctaClick("get_started")}
+              >
                 <motion.button
                   className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-white overflow-hidden shadow-lg shadow-purple-500/20"
                   whileHover={{ scale: 1.02, y: -2 }}
@@ -198,8 +206,8 @@ export default function HeroSection() {
 
               <motion.button
                 onClick={() => {
-                  analytics.ctaClick('watch_demo');
-                  analytics.videoWatched('demo_video');
+                  analytics.ctaClick("watch_demo");
+                  analytics.videoWatched("demo_video");
                   setIsVideoOpen(true);
                 }}
                 className="group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-white/90 backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.06] hover:border-white/[0.12] transition-all duration-300"
@@ -454,7 +462,6 @@ export default function HeroSection() {
               </motion.div>
             </motion.div>
 
-
             <motion.div
               className="absolute -left-2 bottom-1/4 hidden lg:block"
               variants={float}
@@ -523,7 +530,10 @@ export default function HeroSection() {
       </motion.div>
 
       {/* Demo Video Modal */}
-      <DemoVideoModal isOpen={isVideoOpen} onClose={() => setIsVideoOpen(false)} />
+      <DemoVideoModal
+        isOpen={isVideoOpen}
+        onClose={() => setIsVideoOpen(false)}
+      />
     </section>
   );
 }

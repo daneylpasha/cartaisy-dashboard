@@ -225,13 +225,19 @@ export default function DashboardFeaturesSection() {
           transition={{ duration: 0.4 }}
         >
           {/* Online Shopping Lottie - decorative behind header */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-15 pointer-events-none">
+          <motion.div
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 0.1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.8 }}
+          >
             <LottieAnimation
               animationData={onlineShoppingAnimation}
               className="w-80 h-80"
               loop={true}
             />
-          </div>
+          </motion.div>
 
           <motion.span
             className="inline-block text-sm font-medium text-purple-400 tracking-wide uppercase relative z-10"

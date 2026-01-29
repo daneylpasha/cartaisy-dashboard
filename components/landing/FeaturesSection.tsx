@@ -77,13 +77,19 @@ export default function FeaturesSection() {
           transition={{ duration: 0.4 }}
         >
           {/* Shopping Bag Lottie - decorative behind header */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-15 pointer-events-none">
+          <motion.div
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 0.1 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.8 }}
+          >
             <LottieAnimation
               animationData={shoppingBagAnimation}
               className="w-80 h-80"
               loop={true}
             />
-          </div>
+          </motion.div>
 
           <motion.span
             className="inline-block text-sm font-medium text-purple-400 tracking-wide uppercase relative z-10"
@@ -139,15 +145,9 @@ export default function FeaturesSection() {
                 </h3>
 
                 {/* Description */}
-                <p className="text-gray-400 leading-relaxed text-sm mb-6">
+                <p className="text-gray-400 leading-relaxed text-sm">
                   {feature.description}
                 </p>
-
-                {/* Hover indicator */}
-                <div className="flex items-center gap-2 text-purple-400 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-                  <span className="text-sm font-medium">Learn more</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </div>
               </div>
             </motion.div>
           ))}
