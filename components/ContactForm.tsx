@@ -203,10 +203,10 @@ export default function ContactForm() {
             For general inquiries and support
           </p>
           <a
-            href="mailto:support@cartaisy.com"
+            href="mailto:sales@rendernext.io"
             className="text-purple-400 hover:text-purple-300 transition-colors"
           >
-            support@cartaisy.com
+            sales@rendernext.io
           </a>
         </div>
 
