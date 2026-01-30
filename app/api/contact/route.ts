@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       // 1. Notification to team
       await resend.emails.send({
         from: 'Cartaisy Contact <noreply@cartaisy.com>',
-        to: 'support@cartaisy.com',
+        to: 'daniyal@rendernext.io',
         replyTo: sanitizedData.email,
         subject: `Contact Form: ${sanitizedData.subject}`,
         html: `
