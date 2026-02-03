@@ -20,24 +20,24 @@ import {
   Grip,
   Zap,
 } from "lucide-react";
-import {
-  float,
-  floatSlow,
-  pulseGlow,
-  buttonTap,
-} from "@/lib/animations";
+import { float, floatSlow, pulseGlow, buttonTap } from "@/lib/animations";
 import { analytics } from "@/lib/analytics";
 import dynamic from "next/dynamic";
 import DemoVideoModal from "./DemoVideoModal";
 
-const LottieAnimation = dynamic(() => import("@/components/ui/LottieAnimation"), {
-  ssr: false,
-});
+const LottieAnimation = dynamic(
+  () => import("@/components/ui/LottieAnimation"),
+  {
+    ssr: false,
+  },
+);
 
 export default function HeroSection() {
   const [isMobile, setIsMobile] = useState(false);
   const [isVideoOpen, setIsVideoOpen] = useState(false);
-  const [shoppingCartAnimation, setShoppingCartAnimation] = useState<object | null>(null);
+  const [shoppingCartAnimation, setShoppingCartAnimation] = useState<
+    object | null
+  >(null);
   const { scrollY } = useScroll();
 
   // Check if mobile
@@ -194,12 +194,12 @@ export default function HeroSection() {
               transition={{ duration: 0.3, delay: 0.2 }}
             >
               <Link
-                href="/login"
-                className="min-h-[48px] min-w-[48px] inline-flex"
+                href="/contact"
+                className="min-h-[48px] min-w-[48px] inline-flex self-center lg:self-start"
                 onClick={() => analytics.ctaClick("get_started")}
               >
                 <motion.button
-                  className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-white overflow-hidden shadow-lg shadow-purple-500/20"
+                  className=" relative inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-white overflow-hidden shadow-lg shadow-purple-500/20"
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={buttonTap}
                 >
@@ -220,7 +220,7 @@ export default function HeroSection() {
                 </motion.button>
               </Link>
 
-              <motion.button
+              {/* <motion.button
                 onClick={() => {
                   analytics.ctaClick("watch_demo");
                   analytics.videoWatched("demo_video");
@@ -232,7 +232,7 @@ export default function HeroSection() {
               >
                 <Play className="w-4 h-4 group-hover:scale-110 transition-transform" />
                 Watch Demo
-              </motion.button>
+              </motion.button> */}
             </motion.div>
 
             {/* Trust Indicators - Enhanced */}
