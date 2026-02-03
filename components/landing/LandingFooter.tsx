@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { Sparkles, Twitter, Linkedin, Github, Mail } from "lucide-react";
 import NewsletterForm from "./NewsletterForm";
 import { CookieSettingsButton } from "@/components/cookies";
@@ -92,9 +93,10 @@ export default function LandingFooter() {
                 {/* <div className="relative w-10 h-10 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center">
                   <Sparkles className="w-5 h-5 text-white" />
                 </div> */}
-                <img
+                <Image
                   src="/cartaisy-white-logo.png"
                   width={130}
+                  height={31}
                   alt="Cartaisy"
                 />
               </motion.div>
@@ -211,12 +213,12 @@ export default function LandingFooter() {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-white/10">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-gray-500 text-sm">
+            <p className="text-gray-400 text-sm">
               © {new Date().getFullYear()} Cartaisy. All rights reserved.
             </p>
 
             {/* Status indicator */}
-            <div className="flex items-center gap-6 text-sm text-gray-500">
+            <div className="flex items-center gap-6 text-sm text-gray-400">
               <span className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />

@@ -15,8 +15,12 @@ import {
   BarChart3,
   Settings
 } from 'lucide-react';
-import LottieAnimation from '@/components/ui/LottieAnimation';
-import onlineShoppingAnimation from '@/public/lottie/Online Shopping.json';
+import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+
+const LottieAnimation = dynamic(() => import('@/components/ui/LottieAnimation'), {
+  ssr: false,
+});
 
 const dashboardFeatures = [
   {
@@ -210,6 +214,14 @@ const mockupComponents: Record<string, React.ComponentType> = {
 };
 
 export default function DashboardFeaturesSection() {
+  const [onlineShoppingAnimation, setOnlineShoppingAnimation] = useState<object | null>(null);
+
+  useEffect(() => {
+    import('@/public/lottie/Online Shopping.json').then((mod) => {
+      setOnlineShoppingAnimation(mod.default);
+    });
+  }, []);
+
   return (
     <section id="dashboard" className="py-24 md:py-32 px-6 lg:px-8 relative overflow-hidden">
       {/* Background gradient - more subtle */}
@@ -232,11 +244,13 @@ export default function DashboardFeaturesSection() {
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8 }}
           >
-            <LottieAnimation
-              animationData={onlineShoppingAnimation}
-              className="w-80 h-80"
-              loop={true}
-            />
+            {onlineShoppingAnimation && (
+              <LottieAnimation
+                animationData={onlineShoppingAnimation}
+                className="w-80 h-80"
+                loop={true}
+              />
+            )}
           </motion.div>
 
           <motion.span

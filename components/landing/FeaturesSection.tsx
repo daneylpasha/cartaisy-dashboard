@@ -12,8 +12,12 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
-import LottieAnimation from "@/components/ui/LottieAnimation";
-import shoppingBagAnimation from "@/public/lottie/Shopping bag.json";
+import dynamic from "next/dynamic";
+import { useState, useEffect } from "react";
+
+const LottieAnimation = dynamic(() => import("@/components/ui/LottieAnimation"), {
+  ssr: false,
+});
 
 const features = [
   {
@@ -61,7 +65,14 @@ const features = [
 ];
 
 export default function FeaturesSection() {
-  console.log("hello");
+  const [shoppingBagAnimation, setShoppingBagAnimation] = useState<object | null>(null);
+
+  useEffect(() => {
+    import("@/public/lottie/Shopping bag.json").then((mod) => {
+      setShoppingBagAnimation(mod.default);
+    });
+  }, []);
+
   return (
     <section id="features" className="py-24 md:py-32 px-6 lg:px-8 relative">
       {/* Background decoration - more subtle */}
@@ -84,11 +95,13 @@ export default function FeaturesSection() {
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8 }}
           >
-            <LottieAnimation
-              animationData={shoppingBagAnimation}
-              className="w-80 h-80"
-              loop={true}
-            />
+            {shoppingBagAnimation && (
+              <LottieAnimation
+                animationData={shoppingBagAnimation}
+                className="w-80 h-80"
+                loop={true}
+              />
+            )}
           </motion.div>
 
           <motion.span

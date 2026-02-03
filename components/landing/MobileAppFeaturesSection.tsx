@@ -14,8 +14,12 @@ import {
   ShoppingBag,
   ArrowRight
 } from 'lucide-react';
-import LottieAnimation from '@/components/ui/LottieAnimation';
-import ecommerceAnimation from '@/public/lottie/E-commerce.json';
+import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
+
+const LottieAnimation = dynamic(() => import('@/components/ui/LottieAnimation'), {
+  ssr: false,
+});
 
 const mobileFeatures = [
   {
@@ -69,6 +73,14 @@ const mobileFeatures = [
 ];
 
 export default function MobileAppFeaturesSection() {
+  const [ecommerceAnimation, setEcommerceAnimation] = useState<object | null>(null);
+
+  useEffect(() => {
+    import('@/public/lottie/E-commerce.json').then((mod) => {
+      setEcommerceAnimation(mod.default);
+    });
+  }, []);
+
   return (
     <section id="mobile-app" className="py-24 md:py-32 px-6 lg:px-8 relative overflow-hidden">
       {/* Background elements - more subtle */}
@@ -93,11 +105,13 @@ export default function MobileAppFeaturesSection() {
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8 }}
           >
-            <LottieAnimation
-              animationData={ecommerceAnimation}
-              className="w-80 h-80"
-              loop={true}
-            />
+            {ecommerceAnimation && (
+              <LottieAnimation
+                animationData={ecommerceAnimation}
+                className="w-80 h-80"
+                loop={true}
+              />
+            )}
           </motion.div>
 
           <motion.span
@@ -145,9 +159,9 @@ export default function MobileAppFeaturesSection() {
                         <feature.icon className="w-full h-full text-white" />
                       </div>
                       <div className="min-w-0">
-                        <h4 className="text-base font-semibold text-white mb-1">
+                        <h3 className="text-base font-semibold text-white mb-1">
                           {feature.title}
-                        </h4>
+                        </h3>
                         <p className="text-sm text-gray-400 leading-relaxed">
                           {feature.description}
                         </p>
@@ -326,9 +340,9 @@ export default function MobileAppFeaturesSection() {
                         <feature.icon className="w-full h-full text-white" />
                       </div>
                       <div className="min-w-0">
-                        <h4 className="text-base font-semibold text-white mb-1">
+                        <h3 className="text-base font-semibold text-white mb-1">
                           {feature.title}
-                        </h4>
+                        </h3>
                         <p className="text-sm text-gray-400 leading-relaxed">
                           {feature.description}
                         </p>

@@ -31,13 +31,17 @@ import {
   textReveal,
 } from "@/lib/animations";
 import { analytics } from "@/lib/analytics";
+import dynamic from "next/dynamic";
 import DemoVideoModal from "./DemoVideoModal";
-import LottieAnimation from "@/components/ui/LottieAnimation";
-import shoppingCartAnimation from "@/public/lottie/shopping cart.json";
+
+const LottieAnimation = dynamic(() => import("@/components/ui/LottieAnimation"), {
+  ssr: false,
+});
 
 export default function HeroSection() {
   const [isMobile, setIsMobile] = useState(false);
   const [isVideoOpen, setIsVideoOpen] = useState(false);
+  const [shoppingCartAnimation, setShoppingCartAnimation] = useState<object | null>(null);
   const { scrollY } = useScroll();
 
   // Check if mobile
@@ -46,6 +50,13 @@ export default function HeroSection() {
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Lazy-load Lottie animation data
+  useEffect(() => {
+    import("@/public/lottie/shopping cart.json").then((mod) => {
+      setShoppingCartAnimation(mod.default);
+    });
   }, []);
 
   // Parallax values - disabled on mobile
@@ -121,14 +132,16 @@ export default function HeroSection() {
           {/* Left Content */}
           <motion.div
             className="text-center lg:text-left"
-            variants={staggerContainer}
-            initial="initial"
-            animate="animate"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
           >
             {/* Animated Badge */}
             <motion.div
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] mb-8"
-              variants={fadeInDown}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
             >
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -143,7 +156,9 @@ export default function HeroSection() {
             {/* Main Headline - Improved typography */}
             <motion.h1
               className="text-5xl sm:text-6xl lg:text-6xl xl:text-7xl font-bold leading-[1.08] tracking-tight mb-8 font-heading"
-              variants={textReveal}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
             >
               <span className="block bg-gradient-to-b from-white via-white to-white/50 bg-clip-text text-transparent">
                 Build Your
@@ -166,7 +181,9 @@ export default function HeroSection() {
             {/* Subheadline - Better line height */}
             <motion.p
               className="text-lg sm:text-xl text-slate-400 max-w-xl mx-auto lg:mx-0 mb-10 leading-relaxed"
-              variants={fadeInUp}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3, delay: 0.15 }}
             >
               The complete dashboard to design, manage, and optimize your
               Shopify mobile app. Drag-and-drop components, real-time analytics,
@@ -176,10 +193,13 @@ export default function HeroSection() {
             {/* CTA Buttons - Refined */}
             <motion.div
               className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12"
-              variants={fadeInUp}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
             >
               <Link
                 href="/login"
+                className="min-h-[48px] min-w-[48px] inline-flex"
                 onClick={() => analytics.ctaClick("get_started")}
               >
                 <motion.button
@@ -222,7 +242,9 @@ export default function HeroSection() {
             {/* Trust Indicators - Enhanced */}
             <motion.div
               className="flex flex-col sm:flex-row items-center gap-8 justify-center lg:justify-start"
-              variants={fadeInUp}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3, delay: 0.25 }}
             >
               <div className="flex items-center gap-3">
                 <div className="flex -space-x-2">
@@ -494,11 +516,13 @@ export default function HeroSection() {
           animate={{ y: [0, -10, 0] }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
         >
-          <LottieAnimation
-            animationData={shoppingCartAnimation}
-            className="w-48 h-48"
-            loop={true}
-          />
+          {shoppingCartAnimation && (
+            <LottieAnimation
+              animationData={shoppingCartAnimation}
+              className="w-48 h-48"
+              loop={true}
+            />
+          )}
         </motion.div>
       </motion.div>
 
@@ -509,7 +533,7 @@ export default function HeroSection() {
         animate={{ opacity: 1 }}
         transition={{ delay: 0.8 }}
       >
-        <span className="text-xs text-slate-500">Scroll to explore</span>
+        <span className="text-xs text-slate-400">Scroll to explore</span>
         <motion.div
           className="w-6 h-10 border-2 border-white/20 rounded-full flex items-start justify-center p-2"
           animate={{

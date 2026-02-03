@@ -15,12 +15,14 @@ export default function LottieAnimation({
   ...props
 }: LottieAnimationProps) {
   return (
-    <Lottie
-      animationData={animationData}
-      loop={loop}
-      autoplay={autoplay}
-      className={className}
-      {...props}
-    />
+    <div aria-hidden="true">
+      <Lottie
+        animationData={animationData}
+        loop={loop}
+        autoplay={autoplay}
+        className={className}
+        {...props}
+      />
+    </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import { Sparkles, Menu, X } from "lucide-react";
 
 export default function LandingNavbar() {
@@ -62,7 +63,7 @@ export default function LandingNavbar() {
             >
               {/* Glow effect */}
               <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl blur-lg opacity-40 group-hover:opacity-50 transition-opacity duration-300" />
-              <img src="/cartaisy-white-logo.png" width={130} alt="Cartaisy" />
+              <Image src="/cartaisy-white-logo.png" width={130} height={31} alt="Cartaisy" />
               {/* Logo icon */}
               {/* <div className="relative w-11 h-11 bg-gradient-to-br from-purple-600 via-violet-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/25">
                 <Sparkles className="w-5 h-5 text-white" />
