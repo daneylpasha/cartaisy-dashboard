@@ -122,7 +122,7 @@ export default function FeaturesSection() {
                 </div>
 
                 {/* Title */}
-                <h3 className="text-xl font-semibold text-white mb-3 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-white/80 group-hover:bg-clip-text transition-all duration-300">
+                <h3 className="text-xl font-semibold text-white mb-3">
                   {feature.title}
                 </h3>
 
