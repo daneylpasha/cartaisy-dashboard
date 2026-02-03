@@ -92,10 +92,10 @@ export default function PricingPage() {
         {plans.map((plan) => (
           <div
             key={plan.name}
-            className={`relative rounded-2xl p-6 border ${
+            className={`relative rounded-2xl p-6 border transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-purple-500/10 ${
               plan.popular
-                ? 'bg-gradient-to-b from-purple-500/20 to-pink-500/20 border-purple-500/50'
-                : 'bg-white/5 border-white/10'
+                ? 'bg-gradient-to-b from-purple-500/20 to-pink-500/20 border-purple-500/50 hover:border-purple-500/70'
+                : 'bg-white/5 border-white/10 hover:border-white/20'
             }`}
           >
             {plan.popular && (
@@ -126,7 +126,7 @@ export default function PricingPage() {
             </ul>
 
             <Link
-              href={plan.name === 'Enterprise' ? '/contact' : '/signup'}
+              href="/contact"
               className={`block w-full text-center py-3 rounded-lg font-medium transition-colors ${
                 plan.popular
                   ? 'bg-purple-600 hover:bg-purple-700 text-white'

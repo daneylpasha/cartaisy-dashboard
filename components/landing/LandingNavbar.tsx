@@ -22,6 +22,7 @@ export default function LandingNavbar() {
     { href: "/features", label: "Features" },
     { href: "/pricing", label: "Pricing" },
     { href: "/docs", label: "Docs" },
+    { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
   ];
 
@@ -112,7 +113,7 @@ export default function LandingNavbar() {
             </Link>
 
             {/* Get Started - Primary CTA */}
-            <Link href="/login">
+            <Link href="/contact">
               <motion.button
                 className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold text-white shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300"
                 whileHover={{ scale: 1.05 }}
@@ -189,7 +190,7 @@ export default function LandingNavbar() {
                     Sign In
                   </Link>
                   <Link
-                    href="/login"
+                    href="/contact"
                     className="block text-center px-5 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full font-semibold text-white"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
