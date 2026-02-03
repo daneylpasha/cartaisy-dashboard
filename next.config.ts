@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
     },
   },
   experimental: {
-    optimizePackageImports: ["@/components"],
+    optimizePackageImports: ["@/components", "framer-motion", "lucide-react"],
   },
   // Disable dev overlay in development
   onDemandEntries: {

@@ -44,11 +44,10 @@ export default function LandingNavbar() {
       />
 
       {/* Bottom gradient border - visible on scroll */}
-      <motion.div
-        className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: isScrolled ? 1 : 0 }}
-        transition={{ duration: 0.3 }}
+      <div
+        className={`absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent transition-opacity duration-300 ${
+          isScrolled ? "opacity-100" : "opacity-0"
+        }`}
       />
 
       {/* Content */}

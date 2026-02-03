@@ -21,14 +21,10 @@ import {
   Zap,
 } from "lucide-react";
 import {
-  fadeInUp,
-  fadeInDown,
-  staggerContainer,
   float,
   floatSlow,
   pulseGlow,
   buttonTap,
-  textReveal,
 } from "@/lib/animations";
 import { analytics } from "@/lib/analytics";
 import dynamic from "next/dynamic";

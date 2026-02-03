@@ -4,12 +4,22 @@ import { useEffect } from 'react';
 import { useSession } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import dynamic from 'next/dynamic';
 import HeroSection from '@/components/landing/HeroSection';
-import FeaturesSection from '@/components/landing/FeaturesSection';
-import DashboardFeaturesSection from '@/components/landing/DashboardFeaturesSection';
-import MobileAppFeaturesSection from '@/components/landing/MobileAppFeaturesSection';
 import LandingNavbar from '@/components/landing/LandingNavbar';
-import LandingFooter from '@/components/landing/LandingFooter';
+
+const FeaturesSection = dynamic(() => import('@/components/landing/FeaturesSection'), {
+  ssr: false,
+});
+const DashboardFeaturesSection = dynamic(() => import('@/components/landing/DashboardFeaturesSection'), {
+  ssr: false,
+});
+const MobileAppFeaturesSection = dynamic(() => import('@/components/landing/MobileAppFeaturesSection'), {
+  ssr: false,
+});
+const LandingFooter = dynamic(() => import('@/components/landing/LandingFooter'), {
+  ssr: false,
+});
 
 export default function LandingPage() {
   const { status } = useSession();
