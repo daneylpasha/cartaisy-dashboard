@@ -76,17 +76,19 @@ export default function MobileAppFeaturesSection() {
   const [ecommerceAnimation, setEcommerceAnimation] = useState<object | null>(null);
 
   useEffect(() => {
-    import('@/public/lottie/E-commerce.json').then((mod) => {
-      setEcommerceAnimation(mod.default);
-    });
+    if (window.innerWidth >= 768) {
+      import('@/public/lottie/E-commerce.json').then((mod) => {
+        setEcommerceAnimation(mod.default);
+      });
+    }
   }, []);
 
   return (
     <section id="mobile-app" className="py-24 md:py-32 px-6 lg:px-8 relative overflow-hidden">
       {/* Background elements - more subtle */}
       <div className="absolute inset-0 bg-gradient-to-b from-purple-900/5 via-transparent to-purple-900/5" />
-      <div className="absolute top-1/2 left-1/4 w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-purple-500 rounded-full blur-[80px] md:blur-[120px] opacity-[0.07] transform-gpu" />
-      <div className="absolute top-1/2 right-1/4 w-[300px] h-[300px] md:w-[500px] md:h-[500px] bg-pink-500 rounded-full blur-[80px] md:blur-[120px] opacity-[0.07] transform-gpu" />
+      <div className="absolute top-1/2 left-1/4 w-[200px] h-[200px] md:w-[500px] md:h-[500px] bg-purple-500 rounded-full blur-[40px] md:blur-[120px] opacity-[0.07] transform-gpu" />
+      <div className="absolute top-1/2 right-1/4 w-[200px] h-[200px] md:w-[500px] md:h-[500px] bg-pink-500 rounded-full blur-[40px] md:blur-[120px] opacity-[0.07] transform-gpu" />
 
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Section Header - Improved typography */}

@@ -68,9 +68,11 @@ export default function FeaturesSection() {
   const [shoppingBagAnimation, setShoppingBagAnimation] = useState<object | null>(null);
 
   useEffect(() => {
-    import("@/public/lottie/Shopping bag.json").then((mod) => {
-      setShoppingBagAnimation(mod.default);
-    });
+    if (window.innerWidth >= 768) {
+      import("@/public/lottie/Shopping bag.json").then((mod) => {
+        setShoppingBagAnimation(mod.default);
+      });
+    }
   }, []);
 
   return (

@@ -48,11 +48,13 @@ export default function HeroSection() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // Lazy-load Lottie animation data
+  // Lazy-load Lottie animation data - desktop only
   useEffect(() => {
-    import("@/public/lottie/shopping cart.json").then((mod) => {
-      setShoppingCartAnimation(mod.default);
-    });
+    if (window.innerWidth >= 768) {
+      import("@/public/lottie/shopping cart.json").then((mod) => {
+        setShoppingCartAnimation(mod.default);
+      });
+    }
   }, []);
 
   // Parallax values - disabled on mobile
@@ -77,13 +79,14 @@ export default function HeroSection() {
   const orbY = useTransform(smoothMouseY, [0, 1080], [-200, 200]);
 
   useEffect(() => {
+    if (isMobile) return;
     const handleMouseMove = (e: MouseEvent) => {
       mouseX.set(e.clientX);
       mouseY.set(e.clientY);
     };
     window.addEventListener("mousemove", handleMouseMove);
     return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [mouseX, mouseY]);
+  }, [mouseX, mouseY, isMobile]);
 
   return (
     <section className="relative md:min-h-screen flex items-start md:items-center pt-20 md:pt-24 pb-8 md:pb-32 px-4 md:px-6 lg:px-8">
@@ -91,27 +94,31 @@ export default function HeroSection() {
       <div className="fixed inset-0 overflow-hidden pointer-events-none will-change-transform">
         {/* Animated gradient orbs - GPU accelerated for smooth performance */}
         <motion.div
-          className="absolute w-[600px] h-[600px] md:w-[1000px] md:h-[1000px] bg-purple-600/15 rounded-full blur-[80px] md:blur-[150px] transform-gpu"
+          className="absolute w-[300px] h-[300px] md:w-[1000px] md:h-[1000px] bg-purple-600/15 rounded-full blur-[40px] md:blur-[150px] transform-gpu"
           style={{
-            x: orbX,
-            y: orbY,
+            x: isMobile ? undefined : orbX,
+            y: isMobile ? undefined : orbY,
           }}
-          variants={pulseGlow}
-          initial="initial"
-          animate="animate"
+          variants={isMobile ? undefined : pulseGlow}
+          initial={isMobile ? undefined : "initial"}
+          animate={isMobile ? undefined : "animate"}
         />
-        <motion.div
-          className="absolute top-1/3 right-0 w-[400px] h-[400px] md:w-[700px] md:h-[700px] bg-violet-600/10 rounded-full blur-[60px] md:blur-[120px] translate-x-1/2 transform-gpu"
-          variants={floatSlow}
-          initial="initial"
-          animate="animate"
-        />
-        <motion.div
-          className="absolute bottom-0 left-1/4 w-[350px] h-[350px] md:w-[600px] md:h-[600px] bg-fuchsia-600/8 rounded-full blur-[50px] md:blur-[100px] transform-gpu"
-          variants={float}
-          initial="initial"
-          animate="animate"
-        />
+        {!isMobile && (
+          <>
+            <motion.div
+              className="absolute top-1/3 right-0 w-[700px] h-[700px] bg-violet-600/10 rounded-full blur-[120px] translate-x-1/2 transform-gpu"
+              variants={floatSlow}
+              initial="initial"
+              animate="animate"
+            />
+            <motion.div
+              className="absolute bottom-0 left-1/4 w-[600px] h-[600px] bg-fuchsia-600/8 rounded-full blur-[100px] transform-gpu"
+              variants={float}
+              initial="initial"
+              animate="animate"
+            />
+          </>
+        )}
 
         {/* Grid pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:80px_80px]" />

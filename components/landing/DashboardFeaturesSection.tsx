@@ -217,9 +217,11 @@ export default function DashboardFeaturesSection() {
   const [onlineShoppingAnimation, setOnlineShoppingAnimation] = useState<object | null>(null);
 
   useEffect(() => {
-    import('@/public/lottie/Online Shopping.json').then((mod) => {
-      setOnlineShoppingAnimation(mod.default);
-    });
+    if (window.innerWidth >= 768) {
+      import('@/public/lottie/Online Shopping.json').then((mod) => {
+        setOnlineShoppingAnimation(mod.default);
+      });
+    }
   }, []);
 
   return (
