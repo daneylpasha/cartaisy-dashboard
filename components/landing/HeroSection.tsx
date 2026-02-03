@@ -1,14 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import {
-  motion,
-  useScroll,
-  useTransform,
-  useMotionValue,
-  useSpring,
-} from "framer-motion";
+import { useState } from "react";
+import { motion } from "framer-motion";
 import {
   ArrowRight,
   ChevronRight,
@@ -25,72 +19,30 @@ import { analytics } from "@/lib/analytics";
 import DemoVideoModal from "./DemoVideoModal";
 
 export default function HeroSection() {
-  const [isMobile, setIsMobile] = useState(false);
   const [isVideoOpen, setIsVideoOpen] = useState(false);
-  const { scrollY } = useScroll();
-
-  // Check if mobile
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  // Parallax values - disabled on mobile
-  const heroY = useTransform(scrollY, [0, 500], [0, isMobile ? 0 : 150]);
-  const heroOpacity = useTransform(scrollY, [0, 300], [1, isMobile ? 1 : 0]);
-  // Spring mouse position for smooth tracking
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  const smoothMouseX = useSpring(mouseX, { stiffness: 50, damping: 20 });
-  const smoothMouseY = useSpring(mouseY, { stiffness: 50, damping: 20 });
-
-  // Mouse-based transforms for gradient orb
-  const orbX = useTransform(smoothMouseX, [0, 1920], [-200, 200]);
-  const orbY = useTransform(smoothMouseY, [0, 1080], [-200, 200]);
-
-  useEffect(() => {
-    if (isMobile) return;
-    const handleMouseMove = (e: MouseEvent) => {
-      mouseX.set(e.clientX);
-      mouseY.set(e.clientY);
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [mouseX, mouseY, isMobile]);
 
   return (
     <section className="relative md:min-h-screen flex items-start md:items-center pt-20 md:pt-24 pb-8 md:pb-32 px-4 md:px-6 lg:px-8">
-      {/* Dynamic Gradient Background - GPU accelerated */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none will-change-transform">
-        {/* Animated gradient orbs - GPU accelerated for smooth performance */}
+      {/* Background gradients - reduced blur for performance, same visual */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          className="absolute w-[300px] h-[300px] md:w-[1000px] md:h-[1000px] bg-purple-600/15 rounded-full blur-[40px] md:blur-[150px] transform-gpu"
-          style={{
-            x: isMobile ? undefined : orbX,
-            y: isMobile ? undefined : orbY,
-          }}
-          variants={isMobile ? undefined : pulseGlow}
-          initial={isMobile ? undefined : "initial"}
-          animate={isMobile ? undefined : "animate"}
+          className="absolute w-[300px] h-[300px] md:w-[800px] md:h-[800px] bg-purple-600/15 rounded-full blur-[40px] md:blur-[60px] transform-gpu"
+          variants={pulseGlow}
+          initial="initial"
+          animate="animate"
         />
-        {!isMobile && (
-          <>
-            <motion.div
-              className="absolute top-1/3 right-0 w-[700px] h-[700px] bg-violet-600/10 rounded-full blur-[120px] translate-x-1/2 transform-gpu"
-              variants={floatSlow}
-              initial="initial"
-              animate="animate"
-            />
-            <motion.div
-              className="absolute bottom-0 left-1/4 w-[600px] h-[600px] bg-fuchsia-600/8 rounded-full blur-[100px] transform-gpu"
-              variants={float}
-              initial="initial"
-              animate="animate"
-            />
-          </>
-        )}
+        <motion.div
+          className="absolute top-1/3 right-0 w-[500px] h-[500px] bg-violet-600/10 rounded-full blur-[50px] translate-x-1/2 transform-gpu"
+          variants={floatSlow}
+          initial="initial"
+          animate="animate"
+        />
+        <motion.div
+          className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-fuchsia-600/[0.08] rounded-full blur-[50px] transform-gpu"
+          variants={float}
+          initial="initial"
+          animate="animate"
+        />
 
         {/* Grid pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:80px_80px]" />
@@ -99,10 +51,7 @@ export default function HeroSection() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,black_70%)]" />
       </div>
 
-      <motion.div
-        className="max-w-7xl mx-auto w-full relative z-10"
-        style={{ y: heroY, opacity: heroOpacity }}
-      >
+      <div className="max-w-7xl mx-auto w-full relative z-10">
         <div className="grid lg:grid-cols-2 gap-16 lg:gap-20 items-center">
           {/* Left Content */}
           <motion.div
@@ -128,7 +77,7 @@ export default function HeroSection() {
               <ChevronRight className="w-4 h-4 text-slate-500" />
             </motion.div>
 
-            {/* Main Headline - Improved typography */}
+            {/* Main Headline */}
             <motion.h1
               className="text-5xl sm:text-6xl lg:text-6xl xl:text-7xl font-bold leading-[1.08] tracking-tight mb-8 font-heading"
               initial={{ opacity: 0, y: 15 }}
@@ -153,7 +102,7 @@ export default function HeroSection() {
               </span>
             </motion.h1>
 
-            {/* Subheadline - Better line height */}
+            {/* Subheadline */}
             <motion.p
               className="text-lg sm:text-xl text-slate-400 max-w-xl mx-auto lg:mx-0 mb-10 leading-relaxed"
               initial={{ opacity: 0 }}
@@ -165,7 +114,7 @@ export default function HeroSection() {
               and instant updates.
             </motion.p>
 
-            {/* CTA Buttons - Refined */}
+            {/* CTA Buttons */}
             <motion.div
               className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12"
               initial={{ opacity: 0 }}
@@ -178,7 +127,7 @@ export default function HeroSection() {
                 onClick={() => analytics.ctaClick("get_started")}
               >
                 <motion.button
-                  className=" relative inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-white overflow-hidden shadow-lg shadow-purple-500/20"
+                  className="relative inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-white overflow-hidden shadow-lg shadow-purple-500/20"
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={buttonTap}
                 >
@@ -198,23 +147,9 @@ export default function HeroSection() {
                   <ArrowRight className="w-4 h-4 relative z-10 group-hover:translate-x-1 transition-transform" />
                 </motion.button>
               </Link>
-
-              {/* <motion.button
-                onClick={() => {
-                  analytics.ctaClick("watch_demo");
-                  analytics.videoWatched("demo_video");
-                  setIsVideoOpen(true);
-                }}
-                className="group inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-white/90 backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] hover:bg-white/[0.06] hover:border-white/[0.12] transition-all duration-300"
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={buttonTap}
-              >
-                <Play className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                Watch Demo
-              </motion.button> */}
             </motion.div>
 
-            {/* Trust Indicators - Enhanced */}
+            {/* Trust Indicators */}
             <motion.div
               className="flex flex-col sm:flex-row items-center gap-8 justify-center lg:justify-start"
               initial={{ opacity: 0 }}
@@ -250,7 +185,7 @@ export default function HeroSection() {
             </motion.div>
           </motion.div>
 
-          {/* Right Visual - Premium Dashboard Preview */}
+          {/* Right Visual - Dashboard Preview */}
           <motion.div
             className="relative"
             initial={{ opacity: 0, scale: 0.9, y: 40 }}
@@ -259,7 +194,7 @@ export default function HeroSection() {
           >
             {/* Glow effect behind mockup */}
             <motion.div
-              className="absolute -inset-4 bg-gradient-to-r from-purple-500/20 via-violet-500/10 to-pink-500/20 blur-3xl rounded-3xl"
+              className="absolute -inset-4 bg-gradient-to-r from-purple-500/20 via-violet-500/10 to-pink-500/20 blur-2xl rounded-3xl"
               variants={pulseGlow}
               initial="initial"
               animate="animate"
@@ -480,7 +415,7 @@ export default function HeroSection() {
             </motion.div>
           </motion.div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Scroll indicator */}
       <motion.div

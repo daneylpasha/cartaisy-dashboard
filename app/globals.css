@@ -153,3 +153,34 @@ div[style*="position: fixed"][style*="border-radius: 50%"],
 button[style*="position: fixed"][style*="bottom"] {
   display: none !important;
 }
+
+/* Landing page CSS animations - GPU composited, no JS overhead */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+@keyframes scroll-dot {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(8px); }
+}
+@keyframes fade-in-delayed {
+  0% { opacity: 0; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+}
+.animate-float {
+  animation: float 5s ease-in-out infinite;
+}
+.animate-float-slow {
+  animation: float-slow 7s ease-in-out infinite;
+}
+.animate-scroll-dot {
+  animation: scroll-dot 1.5s ease-in-out infinite;
+}
+.animate-fade-in-delayed {
+  animation: fade-in-delayed 1.6s ease forwards;
+}
