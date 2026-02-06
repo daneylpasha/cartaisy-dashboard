@@ -105,3 +105,79 @@ export function WebPageSchema({
     />
   );
 }
+
+export function ArticleSchema({
+  title,
+  description,
+  url,
+  image,
+  author,
+  publishedAt,
+  modifiedAt,
+}: {
+  title: string;
+  description: string;
+  url: string;
+  image?: string;
+  author: string;
+  publishedAt: string;
+  modifiedAt?: string;
+}) {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: title,
+    description: description,
+    url: url,
+    image: image || 'https://cartaisy.com/og-image.png',
+    author: {
+      '@type': 'Person',
+      name: author,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Cartaisy',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://cartaisy.com/logo.png',
+      },
+    },
+    datePublished: publishedAt,
+    dateModified: modifiedAt || publishedAt,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': url,
+    },
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}
+
+export function BreadcrumbSchema({
+  items,
+}: {
+  items: { name: string; url: string }[];
+}) {
+  const schema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+    />
+  );
+}

@@ -1,6 +1,8 @@
 import { MetadataRoute } from 'next';
+import { connectToDatabase } from '@/lib/db';
+import { BlogPost } from '@/models/BlogPost';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = 'https://cartaisy.com';
 
   // Static pages with their priorities and change frequencies
@@ -24,10 +26,32 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { route: '/newsletter', priority: 0.5, changeFrequency: 'monthly' as const },
   ];
 
-  return staticPages.map((page) => ({
+  const staticSitemap: MetadataRoute.Sitemap = staticPages.map((page) => ({
     url: `${baseUrl}${page.route}`,
     lastModified: new Date(),
     changeFrequency: page.changeFrequency,
     priority: page.priority,
   }));
+
+  // Fetch published blog posts for dynamic sitemap entries
+  let blogSitemap: MetadataRoute.Sitemap = [];
+
+  try {
+    await connectToDatabase();
+
+    const publishedPosts = await BlogPost.find({ status: 'published' })
+      .select('slug updatedAt')
+      .lean();
+
+    blogSitemap = publishedPosts.map((post) => ({
+      url: `${baseUrl}/blog/${post.slug}`,
+      lastModified: new Date(post.updatedAt),
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
+    }));
+  } catch (error) {
+    console.error('Failed to fetch blog posts for sitemap:', error);
+  }
+
+  return [...staticSitemap, ...blogSitemap];
 }

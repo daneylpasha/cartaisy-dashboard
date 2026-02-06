@@ -21,6 +21,7 @@ import {
   ShoppingBag,
   HelpCircle,
   LogOut,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -117,6 +118,12 @@ function SidebarContent({ collapsed, onToggleCollapse, showSignOut = false }: Si
       href: "/dashboard/marketing/push-notifications",
       label: "Push Notifications",
       icon: <Bell className="w-4 h-4" />,
+    },
+    {
+      href: "/dashboard/blog",
+      label: "Blog",
+      icon: <FileText className="w-4 h-4" />,
+      requiresRole: 'super_admin',
     },
     {
       href: "/dashboard/team",
