@@ -16,7 +16,7 @@ import PageLayout from '@/components/landing/PageLayout';
 import { ShareButtons } from '@/components/blog/ShareButtons';
 import { ArticleSchema, BreadcrumbSchema } from '@/components/landing/StructuredData';
 import { siteConfig } from '@/lib/seo';
-import { getBlogBySlug, getRelatedPosts, getAllCategories, getPublishedBlogs, getAllPublishedSlugs } from '@/lib/services/blog';
+import { getBlogBySlug, getRelatedPosts, getAllCategories, getPublishedBlogs } from '@/lib/services/blog';
 
 export const revalidate = 60;
 
@@ -115,15 +115,6 @@ function calculateReadingTime(content: string): number {
   const text = content.replace(/<[^>]*>/g, '');
   const words = text.split(/\s+/).filter(Boolean).length;
   return Math.ceil(words / 200);
-}
-
-export async function generateStaticParams() {
-  try {
-    const slugs = await getAllPublishedSlugs();
-    return slugs.map((slug) => ({ slug }));
-  } catch {
-    return [];
-  }
 }
 
 export default async function BlogPostPage({
