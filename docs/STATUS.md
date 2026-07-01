@@ -6,9 +6,9 @@ This file is a human/agent-maintained snapshot, not an automatically guaranteed 
 
 ## Current state:
 
-- Complete enough to identify: Next.js dashboard shell, protected dashboard routes, invite-token signup, store creation on signup, store settings pages, Shopify connect/status/disconnect UI, Shopify collection fetch route, home module CRUD areas, home layout ordering/visibility, homescreen preview, team/settings/orders/customers/analytics/admin surfaces, npm package metadata, and local API testing script.
+- Complete enough to identify: Next.js dashboard shell, protected dashboard routes, invite-token signup, store creation on signup, store settings pages, Shopify connect/status/disconnect UI, Shopify collection fetch route, home module CRUD areas, home layout ordering/visibility, homescreen preview, team/settings/orders/customers/analytics/admin surfaces, npm package metadata, local API testing script, GitHub issue templates, and a repo-level PR template.
 - Partial: merchant onboarding, store setup/status, Shopify configuration, branding/theme setup, collection selection, backend API compatibility, and role-based admin permissions. These areas exist but need security and product-scope verification before being treated as production-ready SaaS workflows.
-- Not started or not identified in audited files: product picker workflow, dedicated app build request workflow, app-store submission workflow, release status handoff, CI configuration, repo-level PR template, repo-level env examples, and full automated test suite.
+- Not started or not identified in audited files: product picker workflow, dedicated app build request workflow, app-store submission workflow, release status handoff, CI configuration, repo-level env examples, and full automated test suite.
 
 ## Target state:
 
