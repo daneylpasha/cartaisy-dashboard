@@ -1,6 +1,7 @@
 name: Audit / investigation
 description: Request an audit-first task before any implementation.
 title: "[Audit]: "
+labels: ["audit"]
 body:
   - type: markdown
     attributes:

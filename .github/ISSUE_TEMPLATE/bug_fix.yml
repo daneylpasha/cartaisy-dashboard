@@ -1,6 +1,7 @@
 name: Bug fix
 description: Report a dashboard defect with reproduction and safety impact details.
 title: "[Bug]: "
+labels: ["bug"]
 body:
   - type: markdown
     attributes:

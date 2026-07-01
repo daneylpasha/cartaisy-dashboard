@@ -1,6 +1,7 @@
 name: Feature / implementation task
 description: Plan a dashboard implementation change with Cartaisy safety checks.
 title: "[Feature]: "
+labels: ["feature"]
 body:
   - type: markdown
     attributes:
