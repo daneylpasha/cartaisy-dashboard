@@ -4,6 +4,8 @@
 
 ## Validation
 
+<!-- Check the one validation status that applies, then add details if needed. -->
+
 - [ ] Not run; reason:
 - [ ] Docs/workflow-only change
 - [ ] Other:
@@ -27,6 +29,8 @@
 - [ ] This PR updates docs/context.
 
 ## Dashboard risk area checklist
+
+<!-- Check all areas this PR touches, or "None of the above". -->
 
 - [ ] Auth/session behavior
 - [ ] Store ownership/tenant context
