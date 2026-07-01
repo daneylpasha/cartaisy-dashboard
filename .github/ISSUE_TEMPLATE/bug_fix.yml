@@ -1,0 +1,163 @@
+name: Bug fix
+description: Report a dashboard defect with reproduction and safety impact details.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for defects in dashboard behavior. Keep fixes scoped and avoid unrelated refactors.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Bug summary
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: dropdown
+    id: affected_area
+    attributes:
+      label: Affected area
+      options:
+        - Auth/session
+        - Store ownership/tenancy
+        - Backend API contract
+        - Shopify credentials/secrets
+        - Merchant onboarding
+        - Branding/theme
+        - Home module editor/publishing
+        - Collection/product picker
+        - Build/release/status
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Low
+        - Medium
+        - High
+        - Critical
+    validations:
+      required: true
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Risk level
+      options:
+        - Low
+        - Medium
+        - High
+    validations:
+      required: true
+  - type: dropdown
+    id: regression_risk
+    attributes:
+      label: Regression risk
+      options:
+        - Low
+        - Medium
+        - High
+    validations:
+      required: true
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of scope
+      description: Name what must not change while fixing this bug.
+      placeholder: Runtime scope boundaries, auth behavior, Shopify credentials, publishing behavior, package files, etc.
+    validations:
+      required: true
+  - type: checkboxes
+    id: impacts
+    attributes:
+      label: Impact checklist
+      description: Check every area touched or needing explicit verification.
+      options:
+        - label: Auth/session impact
+        - label: Store ownership/tenant impact
+        - label: Backend API contract impact
+        - label: Shopify credentials/secrets impact
+        - label: Merchant onboarding impact
+        - label: Branding/theme impact
+        - label: Home module publishing impact
+  - type: textarea
+    id: impact_notes
+    attributes:
+      label: Impact details
+      description: Explain checked impacts, or write "None verified" with reasoning. Do not expose Shopify Admin/private credentials in frontend code.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+  - type: textarea
+    id: tests
+    attributes:
+      label: Tests required
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation commands
+      placeholder: |
+        npm run build
+        npm run test:api
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs/screenshots if applicable
+      description: Paste relevant logs or attach screenshots. Remove secrets and tokens.
+  - type: textarea
+    id: docs_read
+    attributes:
+      label: Docs to read before work
+      value: |
+        - AGENTS.md
+        - CARTAISY_CONTEXT.md
+        - docs/ARCHITECTURE.md
+        - docs/STATUS.md
+        - docs/DECISIONS.md
+        - docs/TESTING.md
+        - docs/DASHBOARD_ONBOARDING_FLOW.md
+        - docs/HOME_MODULE_EDITOR_CONTRACT.md
+    validations:
+      required: true
+  - type: textarea
+    id: docs_update
+    attributes:
+      label: Docs to update if behavior changes
+      placeholder: None, or list files.
+    validations:
+      required: true

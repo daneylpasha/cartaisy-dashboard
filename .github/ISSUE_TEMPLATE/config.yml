@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Dashboard agent context
+    url: https://github.com/daneylpasha/cartaisy-dashboard/blob/main/CARTAISY_CONTEXT.md
+    about: Read this before creating broad dashboard implementation issues.
+  - name: Dashboard architecture
+    url: https://github.com/daneylpasha/cartaisy-dashboard/blob/main/docs/ARCHITECTURE.md
+    about: Current dashboard architecture, boundaries, and known gaps.
+  - name: Dashboard testing notes
+    url: https://github.com/daneylpasha/cartaisy-dashboard/blob/main/docs/TESTING.md
+    about: Validation commands and known test/CI gaps.

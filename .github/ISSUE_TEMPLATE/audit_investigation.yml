@@ -1,0 +1,81 @@
+name: Audit / investigation
+description: Request an audit-first task before any implementation.
+title: "[Audit]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this when the first deliverable is investigation. If implementation is allowed, say so explicitly.
+  - type: textarea
+    id: question
+    attributes:
+      label: Audit question
+      description: What should be answered?
+    validations:
+      required: true
+  - type: textarea
+    id: areas
+    attributes:
+      label: Areas/files to inspect
+      description: Include docs, routes, components, API clients, models, or config files to inspect.
+      value: |
+        - AGENTS.md
+        - CARTAISY_CONTEXT.md
+        - docs/ARCHITECTURE.md
+        - docs/STATUS.md
+        - docs/DECISIONS.md
+        - docs/TESTING.md
+        - docs/DASHBOARD_ONBOARDING_FLOW.md
+        - docs/HOME_MODULE_EDITOR_CONTRACT.md
+    validations:
+      required: true
+  - type: textarea
+    id: concerns
+    attributes:
+      label: Known concerns
+      description: Risks, suspected gaps, prior bugs, or areas where planned features may be confused with implemented behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output expected
+      description: Audit report, issue list, docs update, implementation plan, or another artifact.
+    validations:
+      required: true
+  - type: dropdown
+    id: implementation_allowed
+    attributes:
+      label: Is follow-up implementation allowed in this issue?
+      options:
+        - No, audit only
+        - Yes, only docs/context updates
+        - Yes, implementation is allowed after audit
+    validations:
+      required: true
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Risk level
+      options:
+        - Low
+        - Medium
+        - High
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+  - type: textarea
+    id: docs_update
+    attributes:
+      label: Docs to update
+      placeholder: None, or list files.
+    validations:
+      required: true

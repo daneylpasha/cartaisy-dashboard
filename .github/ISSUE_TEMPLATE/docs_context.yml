@@ -1,0 +1,84 @@
+name: Docs / context update
+description: Request documentation or agent-context changes only.
+title: "[Docs]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for documentation/context-only work. Runtime code, tests, CI behavior, secrets, auth, Shopify, and publishing behavior are out of scope unless a separate implementation issue says otherwise.
+  - type: textarea
+    id: goal
+    attributes:
+      label: Documentation goal
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: Files to create/update
+      placeholder: |
+        - AGENTS.md
+        - CARTAISY_CONTEXT.md
+        - docs/...
+    validations:
+      required: true
+  - type: textarea
+    id: confusion
+    attributes:
+      label: Current confusion/problem
+      description: What is unclear, stale, or missing?
+    validations:
+      required: true
+  - type: textarea
+    id: required_content
+    attributes:
+      label: Required content
+      description: What must the docs say?
+    validations:
+      required: true
+  - type: textarea
+    id: state_requirement
+    attributes:
+      label: Current state vs target state requirement
+      description: How should the docs separate verified current behavior, target behavior, and known gaps?
+      value: |
+        Clearly separate:
+        - Current state
+        - Target state
+        - Known gaps
+        Do not describe planned features as implemented unless verified in code.
+    validations:
+      required: true
+  - type: textarea
+    id: related_docs
+    attributes:
+      label: Links to related docs
+      value: |
+        - AGENTS.md
+        - CARTAISY_CONTEXT.md
+        - docs/ARCHITECTURE.md
+        - docs/STATUS.md
+        - docs/DECISIONS.md
+        - docs/TESTING.md
+        - docs/DASHBOARD_ONBOARDING_FLOW.md
+        - docs/HOME_MODULE_EDITOR_CONTRACT.md
+    validations:
+      required: true
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of scope
+      value: |
+        No runtime code changes.
+        No tests, CI behavior, secrets, auth implementation, Shopify implementation, module publishing behavior, package files, backend code, mobile code, or app behavior changes.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
