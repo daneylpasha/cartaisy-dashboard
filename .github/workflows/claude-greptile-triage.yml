@@ -6,6 +6,10 @@ on:
   pull_request_review_comment:
     types: [created]
 
+concurrency:
+  group: greptile-triage-${{ github.repository }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
 jobs:
   triage:
     if: |
@@ -26,7 +30,7 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
-          COUNT="$(gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" --paginate --jq '[.[] | select(.body | test("<!-- claude-greptile-triage-run -->"))] | length' 2>/dev/null || echo 0)"
+          COUNT="$(gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/comments" --paginate 2>/dev/null | jq -s '[.[][] | select((.body // "") | test("<!-- claude-greptile-triage-run -->"))] | length' || echo 0)"
           COUNT="${COUNT:-0}"
           echo "Prior triage runs on PR #${PR_NUMBER}: ${COUNT}"
           echo "count=${COUNT}" >> "$GITHUB_OUTPUT"
@@ -43,27 +47,34 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          allowed_bots: "greptile-apps[bot]"
 
           additional_permissions: |
             actions: read
 
           prompt: |
-            Triage every unresolved Greptile review thread on this pull request,
-            per docs/cartaisy/DEV_PLAYBOOK.md's "Automated review comments" rules:
+            Triage every unresolved Greptile review thread on this pull request.
+            Before changing files, read AGENTS.md, CARTAISY_CONTEXT.md, and any
+            relevant docs/ files that apply to the touched area.
 
-            - Valid AND within the ticket's scope -> fix it on this branch.
+            Apply these automated review-comment rules:
+
+            - Valid AND within scope -> fix it on this branch.
             - Valid but OUT of scope -> do not fix. Reply on the thread "valid,
-              out of scope for #<ticket>" (the issue number this PR closes) and
-              say so plainly in your final summary, so the orchestrator can
-              turn it into a follow-up ticket.
+              out of scope for #<ticket>" when this PR closes an issue. If this
+              PR does not close an issue, reply "valid, out of scope for this PR
+              (no linked issue found)" instead. Say so plainly in your final
+              summary, so the orchestrator can turn it into a follow-up ticket.
             - Incorrect or noise -> reply briefly why, and resolve the thread.
 
-            Never expand scope beyond what the linked issue asks for. Never
-            touch the high-risk areas (checkout, payments, auth, tenancy,
-            Shopify credentials, webhooks, migrations, CI/production config)
-            even if a Greptile comment suggests it — for those, reply "valid,
-            out of scope, high-risk — needs Daniyal" and stop instead of
-            fixing them yourself.
+            Determine scope from the issue this PR closes when one exists. If
+            there is no linked issue, determine scope only from this PR's title,
+            body, and changed files. Never expand scope beyond that. Never touch
+            the high-risk areas (checkout, payments, auth, tenancy, Shopify
+            credentials, webhooks, migrations, CI/production config) even if a
+            Greptile comment suggests it — for those, reply "valid, out of
+            scope, high-risk — needs Daniyal" and stop instead of fixing them
+            yourself.
 
             Do not silently ignore any unresolved thread. Post a short triage
             summary as your final PR comment, listing anything you flagged as
