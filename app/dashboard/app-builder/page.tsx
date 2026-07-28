@@ -47,6 +47,12 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers';
+// Type-only import. `models/HomeLayout` instantiates a Mongoose model at module
+// scope, so this must never become a value import from a client component —
+// `import type` is erased at compile time and keeps mongoose out of the bundle.
+// `IHomeLayoutSection` is the shape this page's data actually has: /api/home-layout
+// returns it via lib/services/homeLayout.
+import type { IHomeLayoutSection } from '@/models/HomeLayout';
 
 interface ComponentStats {
   carouselCount: number;
@@ -58,13 +64,10 @@ interface ComponentStats {
   categoryCollectionGridCount: number;
 }
 
-interface LayoutSection {
-  type: string;
-  isVisible: boolean;
-  position: number;
-}
-
-const componentConfig: Record<string, {
+// Keyed by the same closed union as `IHomeLayoutSection['type']`, so adding a
+// section type to models/HomeLayout.ts without adding its config here is a
+// compile error rather than a silent `undefined` lookup at runtime.
+const componentConfig: Record<IHomeLayoutSection['type'], {
   title: string;
   description: string;
   icon: any;
@@ -139,7 +142,7 @@ const componentConfig: Record<string, {
 };
 
 interface SortableItemProps {
-  section: LayoutSection;
+  section: IHomeLayoutSection;
   stats: ComponentStats | null;
   onToggleVisibility: (type: string) => void;
   isDragOverlay?: boolean;
@@ -147,9 +150,16 @@ interface SortableItemProps {
 }
 
 function SortableItem({ section, stats, onToggleVisibility, isDragOverlay = false, index }: SortableItemProps) {
-  const config = componentConfig[section.type];
-  if (!config) return null;
-
+  // `useSortable` must run on every render. Guarding before it would make this
+  // component call one hook on some renders and none on others, breaking React's
+  // hook-order guarantee. The hook depends only on `section`, never on `config`,
+  // so it is safe to call first and guard afterwards.
+  //
+  // The `config` lookup below is now exhaustively typed, so TypeScript believes
+  // it always resolves. The guard stays anyway: types are not enforced against
+  // what is actually stored in MongoDB, and a document written before a value
+  // was added to — or after one was removed from — the enum can still carry a
+  // type this file does not map.
   const {
     attributes,
     listeners,
@@ -164,6 +174,9 @@ function SortableItem({ section, stats, onToggleVisibility, isDragOverlay = fals
       easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
     },
   });
+
+  const config = componentConfig[section.type];
+  if (!config) return null;
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -269,8 +282,8 @@ function SortableItem({ section, stats, onToggleVisibility, isDragOverlay = fals
 
 export default function AppBuilderPage() {
   const [stats, setStats] = useState<ComponentStats | null>(null);
-  const [sections, setSections] = useState<LayoutSection[]>([]);
-  const [originalSections, setOriginalSections] = useState<LayoutSection[]>([]);
+  const [sections, setSections] = useState<IHomeLayoutSection[]>([]);
+  const [originalSections, setOriginalSections] = useState<IHomeLayoutSection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);

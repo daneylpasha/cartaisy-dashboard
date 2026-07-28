@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     await connectToDatabase();
 
     // Get home layout order
-    let layout = await HomeLayout.findOne({ storeId });
+    const layout = await HomeLayout.findOne({ storeId });
     const sections = layout?.sections || DEFAULT_SECTIONS;
 
     // Sort sections by position
