@@ -3,15 +3,16 @@
 ## Current state:
 
 - Dashboard release readiness was not previously documented in a repo-level checklist.
-- Verified commands include `npm run build`, `npm run dev`, `npm run start`, `npm run test:api`, and `npm run generate:api`.
-- No CI workflow or environment example file was found during the audit.
+- Verified commands include `npm run lint`, `npm run type-check`, `npm run build`, `npm run dev`, `npm run start`, `npm run test:api`, and `npm run generate:api`.
+- CI exists as of 2026-07-28: `.github/workflows/ci.yml` runs `npm ci`, `npm run lint` and `npm run type-check` on every pull request against `main`, on Node 20, with actions pinned by commit SHA. There is still no automated test suite, so CI proves the code lints and type-checks — not that it behaves correctly.
+- No environment example file was found during the audit.
 - The dashboard currently includes settings, Shopify connection, store branding/logo upload, app-builder modules, homescreen preview, and admin onboarding token pages.
 
 ## Target state:
 
 Before release, verify:
 
-- Pre-release checks: dependencies installed, build passes, relevant manual dashboard flows checked, and no unrelated files are included.
+- Pre-release checks: dependencies installed, `npm run lint` and `npm run type-check` pass (both are enforced on every PR by CI), build passes, relevant manual dashboard flows checked, and no unrelated files are included. The lint script runs with `--max-warnings 333`, pinning the pre-existing warning baseline: new violations of the demoted rules push the count over the cap and fail CI.
 - Environment variables: backend API URL, auth/session URLs, MongoDB connection, Shopify API credentials, email provider credentials, and any analytics settings are configured in deployment without exposing secret values in frontend code.
 - Auth/session: login, token cookie handling, backend profile verification, protected dashboard redirects, and signout behavior.
 - Store context: every dashboard route uses the authenticated store context and respects role permissions.
@@ -27,7 +28,7 @@ Before release, verify:
 
 - Do not assume any feature or behavior described above is implemented unless verified in the current code.
 - Dedicated build request, app-store submission, release status, and rollback automation were not found in the audited files.
-- No CI workflow was found.
+- CI covers lint and typecheck only. There is no unit, integration or e2e test runner, and no build step in CI, so a release still needs manual verification of the flows listed above.
 - No env example file was found; deployments must be checked without exposing secrets.
 - Current Shopify and branding flows include direct dashboard/backend API calls that need security review before major release changes.
 

@@ -31,11 +31,17 @@ const eslintConfig = [
     // demoted to warnings: CI stays green, the violations stay visible in the
     // log, and new code is still held to every other rule at error level.
     //
-    // These should be promoted back to "error" as the counts are burned down.
+    // Demoting them does NOT make them free: the `lint` script runs with
+    // `--max-warnings 333`, pinning the total to today's count, so a new
+    // violation of any of these rules pushes the count to 334 and fails CI.
+    // The baseline can only go down. Lower the cap as the counts are burned
+    // down, and promote each rule back to "error" once it reaches zero.
+    //
     // Counts at the time this baseline was set:
     //   @typescript-eslint/no-explicit-any     136
     //   react/no-unescaped-entities             34
     //   @typescript-eslint/no-empty-object-type  6
+    //   (total warnings across all rules: 333)
     rules: {
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-empty-object-type": "warn",

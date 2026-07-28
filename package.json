@@ -6,7 +6,7 @@
     "dev": "next dev -p 3002",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 333",
     "type-check": "tsc --noEmit",
     "test:api": "ts-node scripts/test-api.ts",
     "generate:api": "orval"
