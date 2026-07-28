@@ -15,11 +15,23 @@ import nextTypeScript from "eslint-config-next/typescript";
  * real `error` severity and the existing violations are recorded, per file and
  * per rule, in the suppressions file (generated with `eslint --suppress-all`).
  *
- * The practical difference: an aggregate `--max-warnings` cap would still pass
- * if someone fixed two old violations and introduced two new ones. Suppressions
- * are counted per file per rule, so any NEW violation fails regardless of what
- * was fixed elsewhere. Fixing a suppressed violation without adding one still
- * passes; run `eslint --prune-suppressions` to drop the stale entries.
+ * What this does and does not guarantee — verified, not assumed:
+ *   - a violation in a file with no recorded entry for that rule    -> FAILS
+ *   - a file exceeding its recorded count for that rule             -> FAILS
+ *   - fixing one violation and adding one in a DIFFERENT file       -> FAILS
+ *   - fixing one and adding one in the SAME file, for the SAME rule -> PASSES
+ *
+ * That last case is the residual limit of count-based suppressions: entries
+ * record how many violations a file has, not which ones. So the baseline
+ * guarantees debt cannot GROW, not that individual violations are frozen — one
+ * can be swapped for another inside a single file. Closing that fully needs
+ * either per-violation tracking, which ESLint does not offer, or actually
+ * fixing the 176. The alternative considered and rejected was 176 inline
+ * `eslint-disable` comments, which is a worse trade at this size.
+ *
+ * Fixing a suppressed violation without adding one still passes; run
+ * `eslint --prune-suppressions` afterwards to drop the stale entries, so the
+ * recorded count keeps shrinking with the real one.
  *
  * Do not add entries to the suppressions file by hand, and do not regenerate it
  * wholesale with `--suppress-all` to make a red build green — that silently
