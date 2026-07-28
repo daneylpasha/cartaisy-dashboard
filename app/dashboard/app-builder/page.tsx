@@ -175,15 +175,65 @@ function SortableItem({ section, stats, onToggleVisibility, isDragOverlay = fals
     },
   });
 
-  const config = componentConfig[section.type];
-  if (!config) return null;
-
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.4 : 1,
     zIndex: isDragOverlay ? 1000 : undefined,
   };
+
+  const config = componentConfig[section.type];
+
+  // An unmapped type is only reachable through legacy data or a direct database
+  // edit, since `componentConfig` is keyed by the same closed union the model
+  // enforces. It still has to render something: the section stays in
+  // `SortableContext` and in the saved payload either way, so returning null
+  // would leave the merchant holding a position in their layout that they can
+  // neither see nor reorder. This row is deliberately draggable for that reason.
+  if (!config) {
+    return (
+      <div
+        ref={!isDragOverlay ? setNodeRef : undefined}
+        style={!isDragOverlay ? style : undefined}
+        className={`group relative rounded-xl border border-dashed transition-all duration-200 ${
+          isDragOverlay
+            ? 'shadow-2xl border-amber-400 ring-2 ring-amber-200 bg-white'
+            : 'bg-amber-50/40 border-amber-300'
+        }`}
+      >
+        <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold bg-amber-500 text-white">
+          {index + 1}
+        </div>
+
+        <div className="p-3 pl-5">
+          <div className="flex items-center gap-3">
+            <button
+              {...(!isDragOverlay ? attributes : {})}
+              {...(!isDragOverlay ? listeners : {})}
+              className={`p-1.5 rounded-md text-amber-500 hover:text-amber-700 hover:bg-amber-100 transition-colors ${
+                isDragOverlay ? 'cursor-grabbing' : 'cursor-grab active:cursor-grabbing'
+              }`}
+              aria-label="Reorder unsupported section"
+            >
+              <GripVertical className="w-4 h-4" />
+            </button>
+
+            <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="w-5 h-5 text-amber-600" />
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold text-slate-900">Unsupported module</h3>
+              <p className="text-xs text-slate-500 truncate">
+                This dashboard has no editor for <code className="font-mono">{section.type}</code>. It still occupies
+                position {index + 1} in the saved layout. Reorder it here, or contact support to have it removed.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const Icon = config.icon;
   const count = stats ? stats[config.statsKey] : 0;
