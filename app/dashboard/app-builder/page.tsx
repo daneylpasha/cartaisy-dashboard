@@ -47,6 +47,12 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifiers';
+// Type-only import. `models/HomeLayout` instantiates a Mongoose model at module
+// scope, so this must never become a value import from a client component —
+// `import type` is erased at compile time and keeps mongoose out of the bundle.
+// `IHomeLayoutSection` is the shape this page's data actually has: /api/home-layout
+// returns it via lib/services/homeLayout.
+import type { IHomeLayoutSection } from '@/models/HomeLayout';
 
 interface ComponentStats {
   carouselCount: number;
@@ -58,13 +64,10 @@ interface ComponentStats {
   categoryCollectionGridCount: number;
 }
 
-interface LayoutSection {
-  type: string;
-  isVisible: boolean;
-  position: number;
-}
-
-const componentConfig: Record<string, {
+// Keyed by the same closed union as `IHomeLayoutSection['type']`, so adding a
+// section type to models/HomeLayout.ts without adding its config here is a
+// compile error rather than a silent `undefined` lookup at runtime.
+const componentConfig: Record<IHomeLayoutSection['type'], {
   title: string;
   description: string;
   icon: any;
@@ -139,7 +142,7 @@ const componentConfig: Record<string, {
 };
 
 interface SortableItemProps {
-  section: LayoutSection;
+  section: IHomeLayoutSection;
   stats: ComponentStats | null;
   onToggleVisibility: (type: string) => void;
   isDragOverlay?: boolean;
@@ -147,9 +150,16 @@ interface SortableItemProps {
 }
 
 function SortableItem({ section, stats, onToggleVisibility, isDragOverlay = false, index }: SortableItemProps) {
-  const config = componentConfig[section.type];
-  if (!config) return null;
-
+  // `useSortable` must run on every render. Guarding before it would make this
+  // component call one hook on some renders and none on others, breaking React's
+  // hook-order guarantee. The hook depends only on `section`, never on `config`,
+  // so it is safe to call first and guard afterwards.
+  //
+  // The `config` lookup below is now exhaustively typed, so TypeScript believes
+  // it always resolves. The guard stays anyway: types are not enforced against
+  // what is actually stored in MongoDB, and a document written before a value
+  // was added to — or after one was removed from — the enum can still carry a
+  // type this file does not map.
   const {
     attributes,
     listeners,
@@ -171,6 +181,59 @@ function SortableItem({ section, stats, onToggleVisibility, isDragOverlay = fals
     opacity: isDragging ? 0.4 : 1,
     zIndex: isDragOverlay ? 1000 : undefined,
   };
+
+  const config = componentConfig[section.type];
+
+  // An unmapped type is only reachable through legacy data or a direct database
+  // edit, since `componentConfig` is keyed by the same closed union the model
+  // enforces. It still has to render something: the section stays in
+  // `SortableContext` and in the saved payload either way, so returning null
+  // would leave the merchant holding a position in their layout that they can
+  // neither see nor reorder. This row is deliberately draggable for that reason.
+  if (!config) {
+    return (
+      <div
+        ref={!isDragOverlay ? setNodeRef : undefined}
+        style={!isDragOverlay ? style : undefined}
+        className={`group relative rounded-xl border border-dashed transition-all duration-200 ${
+          isDragOverlay
+            ? 'shadow-2xl border-amber-400 ring-2 ring-amber-200 bg-white'
+            : 'bg-amber-50/40 border-amber-300'
+        }`}
+      >
+        <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full flex items-center justify-center text-xs font-semibold bg-amber-500 text-white">
+          {index + 1}
+        </div>
+
+        <div className="p-3 pl-5">
+          <div className="flex items-center gap-3">
+            <button
+              {...(!isDragOverlay ? attributes : {})}
+              {...(!isDragOverlay ? listeners : {})}
+              className={`p-1.5 rounded-md text-amber-500 hover:text-amber-700 hover:bg-amber-100 transition-colors ${
+                isDragOverlay ? 'cursor-grabbing' : 'cursor-grab active:cursor-grabbing'
+              }`}
+              aria-label="Reorder unsupported section"
+            >
+              <GripVertical className="w-4 h-4" />
+            </button>
+
+            <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="w-5 h-5 text-amber-600" />
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold text-slate-900">Unsupported module</h3>
+              <p className="text-xs text-slate-500 truncate">
+                This dashboard has no editor for <code className="font-mono">{section.type}</code>. It still occupies
+                position {index + 1} in the saved layout. Reorder it here, or contact support to have it removed.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const Icon = config.icon;
   const count = stats ? stats[config.statsKey] : 0;
@@ -269,8 +332,8 @@ function SortableItem({ section, stats, onToggleVisibility, isDragOverlay = fals
 
 export default function AppBuilderPage() {
   const [stats, setStats] = useState<ComponentStats | null>(null);
-  const [sections, setSections] = useState<LayoutSection[]>([]);
-  const [originalSections, setOriginalSections] = useState<LayoutSection[]>([]);
+  const [sections, setSections] = useState<IHomeLayoutSection[]>([]);
+  const [originalSections, setOriginalSections] = useState<IHomeLayoutSection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);

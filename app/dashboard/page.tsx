@@ -68,7 +68,7 @@ export default function HomePage() {
           fetch('/api/activity?limit=3'),
         ]);
 
-        let dashboardStats: DashboardStats = {
+        const dashboardStats: DashboardStats = {
           totalComponents: 0,
           activeComponents: 0,
           hiddenComponents: 0,
