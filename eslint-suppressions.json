@@ -1,0 +1,344 @@
+{
+  "app/(auth)/signup/page.tsx": {
+    "react/no-unescaped-entities": {
+      "count": 2
+    }
+  },
+  "app/api/blogs/[id]/route.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "app/api/blogs/route.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "app/api/components/category-grid/[id]/route.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 6
+    }
+  },
+  "app/api/components/category-grid/reorder/route.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "app/api/components/category-grid/route.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    }
+  },
+  "app/api/migrate-store/route.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 7
+    }
+  },
+  "app/api/notifications/history/[id]/route.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "app/api/public/home-feed/route.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 4
+    }
+  },
+  "app/api/shopify/collections/route.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    }
+  },
+  "app/blog/[slug]/page.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    }
+  },
+  "app/dashboard/admin/onboarding/page.tsx": {
+    "react/no-unescaped-entities": {
+      "count": 2
+    }
+  },
+  "app/dashboard/analytics/page.tsx": {
+    "react/no-unescaped-entities": {
+      "count": 1
+    }
+  },
+  "app/dashboard/app-builder/callout-banners/page.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "app/dashboard/app-builder/category-collection-grids/page.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    },
+    "react/no-unescaped-entities": {
+      "count": 4
+    }
+  },
+  "app/dashboard/app-builder/collection-displays/page.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "app/dashboard/app-builder/collection-showcases/page.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "app/dashboard/app-builder/page.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    },
+    "react/no-unescaped-entities": {
+      "count": 2
+    }
+  },
+  "app/dashboard/app-builder/promo-banners/page.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "app/dashboard/blog/[id]/edit/page.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "app/dashboard/blog/new/page.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "app/dashboard/collections/page.tsx": {
+    "react/no-unescaped-entities": {
+      "count": 3
+    }
+  },
+  "app/dashboard/page.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    }
+  },
+  "app/dashboard/settings/page.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "app/invite/accept/page.tsx": {
+    "react/no-unescaped-entities": {
+      "count": 1
+    }
+  },
+  "components/analytics/ActiveUsersChart.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    }
+  },
+  "components/analytics/HourlyActivityChart.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    }
+  },
+  "components/analytics/PlatformChart.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 4
+    }
+  },
+  "components/analytics/SalesChart.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    }
+  },
+  "components/app-builder/callout-banners/CalloutBannerCard.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    },
+    "react/no-unescaped-entities": {
+      "count": 2
+    }
+  },
+  "components/app-builder/callout-banners/CalloutBannerForm.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "components/app-builder/carousel/CarouselCard.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    },
+    "react/no-unescaped-entities": {
+      "count": 2
+    }
+  },
+  "components/app-builder/carousel/CarouselForm.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "components/app-builder/category-collection-grids/CategoryCollectionGridCard.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    },
+    "react/no-unescaped-entities": {
+      "count": 2
+    }
+  },
+  "components/app-builder/category-grid/CategoryGridCard.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    },
+    "react/no-unescaped-entities": {
+      "count": 2
+    }
+  },
+  "components/app-builder/collection-displays/CollectionDisplayCard.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "components/app-builder/collection-displays/CollectionDisplayForm.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "components/app-builder/collection-showcases/CollectionShowcaseCard.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    },
+    "react/no-unescaped-entities": {
+      "count": 2
+    }
+  },
+  "components/app-builder/collection-showcases/CollectionShowcaseForm.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "components/app-builder/promo-banners/PromoBannerCard.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    },
+    "react/no-unescaped-entities": {
+      "count": 2
+    }
+  },
+  "components/app-builder/promo-banners/PromoBannerForm.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "components/notifications/AbandonedCartSettings.tsx": {
+    "react/no-unescaped-entities": {
+      "count": 3
+    }
+  },
+  "components/notifications/NotificationHistoryTable.tsx": {
+    "react/no-unescaped-entities": {
+      "count": 3
+    }
+  },
+  "components/settings/PlanUsageCard.tsx": {
+    "react/no-unescaped-entities": {
+      "count": 1
+    }
+  },
+  "components/settings/StoreInfoCard.tsx": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "lib/auth.nextauth.backup.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    }
+  },
+  "lib/db.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "lib/services/activity.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 15
+    }
+  },
+  "lib/services/blog.ts": {
+    "@typescript-eslint/no-empty-object-type": {
+      "count": 1
+    },
+    "@typescript-eslint/no-explicit-any": {
+      "count": 15
+    }
+  },
+  "lib/services/calloutBanner.ts": {
+    "@typescript-eslint/no-empty-object-type": {
+      "count": 1
+    }
+  },
+  "lib/services/carousel.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 5
+    }
+  },
+  "lib/services/categoryCollectionGrid.ts": {
+    "@typescript-eslint/no-empty-object-type": {
+      "count": 1
+    }
+  },
+  "lib/services/categoryGrid.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "lib/services/collectionDisplay.ts": {
+    "@typescript-eslint/no-empty-object-type": {
+      "count": 1
+    }
+  },
+  "lib/services/collectionShowcase.ts": {
+    "@typescript-eslint/no-empty-object-type": {
+      "count": 1
+    }
+  },
+  "lib/services/preview.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 9
+    }
+  },
+  "lib/services/promoBanner.ts": {
+    "@typescript-eslint/no-empty-object-type": {
+      "count": 1
+    }
+  },
+  "lib/services/store.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    }
+  },
+  "lib/services/team.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    }
+  },
+  "lib/utils/activityLogger.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 16
+    }
+  },
+  "models/Activity.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 3
+    }
+  },
+  "scripts/test-api.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    }
+  },
+  "types/index.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 3
+    }
+  }
+}

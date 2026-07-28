@@ -6,6 +6,24 @@ import nextTypeScript from "eslint-config-next/typescript";
  *
  * `eslint-config-next` 16.x exports ready-made flat config arrays, so no
  * `FlatCompat` / `@eslint/eslintrc` bridge is needed.
+ *
+ * Pre-existing baseline debt is handled by `eslint-suppressions.json`, not by
+ * demoting rules here. This repo had never been linted, so turning ESLint on
+ * surfaced 176 pre-existing violations — 136 `@typescript-eslint/no-explicit-any`,
+ * 34 `react/no-unescaped-entities`, 6 `@typescript-eslint/no-empty-object-type`.
+ * Rather than lower those three rules to warnings repo-wide, they keep their
+ * real `error` severity and the existing violations are recorded, per file and
+ * per rule, in the suppressions file (generated with `eslint --suppress-all`).
+ *
+ * The practical difference: an aggregate `--max-warnings` cap would still pass
+ * if someone fixed two old violations and introduced two new ones. Suppressions
+ * are counted per file per rule, so any NEW violation fails regardless of what
+ * was fixed elsewhere. Fixing a suppressed violation without adding one still
+ * passes; run `eslint --prune-suppressions` to drop the stale entries.
+ *
+ * Do not add entries to the suppressions file by hand, and do not regenerate it
+ * wholesale with `--suppress-all` to make a red build green — that silently
+ * absorbs new debt, which is the exact thing this file exists to prevent.
  */
 const eslintConfig = [
   {
@@ -21,33 +39,6 @@ const eslintConfig = [
   },
   ...nextCoreWebVitals,
   ...nextTypeScript,
-  {
-    // Pre-existing baseline debt.
-    //
-    // This repo had no linting at all before this config was added, so turning
-    // these on as errors surfaced ~176 pre-existing violations across ~63
-    // files. Rather than churn every one of them in the PR that introduces CI
-    // (or bury the codebase in inline eslint-disable comments), they are
-    // demoted to warnings: CI stays green, the violations stay visible in the
-    // log, and new code is still held to every other rule at error level.
-    //
-    // Demoting them does NOT make them free: the `lint` script runs with
-    // `--max-warnings 333`, pinning the total to today's count, so a new
-    // violation of any of these rules pushes the count to 334 and fails CI.
-    // The baseline can only go down. Lower the cap as the counts are burned
-    // down, and promote each rule back to "error" once it reaches zero.
-    //
-    // Counts at the time this baseline was set:
-    //   @typescript-eslint/no-explicit-any     136
-    //   react/no-unescaped-entities             34
-    //   @typescript-eslint/no-empty-object-type  6
-    //   (total warnings across all rules: 333)
-    rules: {
-      "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-empty-object-type": "warn",
-      "react/no-unescaped-entities": "warn",
-    },
-  },
 ];
 
 export default eslintConfig;

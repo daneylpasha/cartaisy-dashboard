@@ -16,7 +16,7 @@
 - Test command: no general `test` script was found. `test:api` exists and expects a development server at `http://localhost:3000` according to `scripts/test-api.ts`, while `npm run dev` uses port 3002.
 - Build command: `npm run build`.
 - CI behavior: `.github/workflows/ci.yml` runs on pull requests against `main`. It checks out the repo (actions pinned by commit SHA), sets up Node 20 with npm caching, then runs `npm ci`, `npm run lint`, and `npm run type-check`. There is no test step, because there is no automated test suite yet. The other three workflows in `.github/workflows/` dispatch AI coding agents and do not verify code.
-- Lint baseline: linting was introduced on a repo that had never been linted, which surfaced roughly 176 pre-existing violations. `@typescript-eslint/no-explicit-any`, `react/no-unescaped-entities`, and `@typescript-eslint/no-empty-object-type` are set to `warn` in `eslint.config.mjs` so CI is green while the violations stay visible in the log. Every other rule remains at error level, so new code is held to the full standard.
+- Lint baseline: linting was introduced on a repo that had never been linted, which surfaced 176 pre-existing violations of `@typescript-eslint/no-explicit-any` (136), `react/no-unescaped-entities` (34) and `@typescript-eslint/no-empty-object-type` (6). All three keep their `error` severity; the existing violations are recorded per file and per rule in `eslint-suppressions.json`, generated once with `eslint --suppress-all`. CI runs plain `eslint .`, which reads that file automatically. Burn the debt down by fixing violations and running `eslint --prune-suppressions` to drop the stale entries.
 
 ## Target state:
 
@@ -29,7 +29,7 @@
 
 - Do not assume any feature or behavior described above is implemented unless verified in the current code.
 - Lint and typecheck commands exist and run in CI, but there is still no unit, integration, or e2e test runner. CI proves the code lints and type-checks; it does not prove behavior.
-- The lint baseline is not clean. Three rules are demoted to warnings repo-wide. The `react-hooks/rules-of-hooks` violation in `app/dashboard/app-builder/page.tsx` that was originally suppressed here has since been fixed, so that suppression is gone; the demoted warnings are still known debt. Unrelated pre-existing `eslint-disable` comments elsewhere in the repo are untouched.
+- The lint baseline is not clean. 176 pre-existing violations of three rules are recorded in `eslint-suppressions.json` instead of being fixed; the rules themselves stay at `error`, so new violations still fail. That file is generated debt, not a permission slip — do not regenerate it with `--suppress-all` to turn a red build green. The `react-hooks/rules-of-hooks` violation in `app/dashboard/app-builder/page.tsx` that was originally suppressed inline has since been fixed, so that `eslint-disable` is gone. Unrelated pre-existing `eslint-disable` comments elsewhere in the repo are untouched.
 - `test:api` may require manual setup and currently references port 3000, while the dev script starts on port 3002. Future work should either update `scripts/test-api.ts` to default to `http://localhost:3002`, make it read a `BASE_URL` environment variable, or document running it with `BASE_URL=http://localhost:3002`.
 - Docs-only PRs do not need runtime validation unless they modify executable files.
 

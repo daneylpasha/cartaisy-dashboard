@@ -12,7 +12,7 @@
 
 Before release, verify:
 
-- Pre-release checks: dependencies installed, `npm run lint` and `npm run type-check` pass (both are enforced on every PR by CI), build passes, relevant manual dashboard flows checked, and no unrelated files are included. The lint script runs with `--max-warnings 333`, pinning the pre-existing warning baseline: new violations of the demoted rules push the count over the cap and fail CI.
+- Pre-release checks: dependencies installed, `npm run lint` and `npm run type-check` pass (both are enforced on every PR by CI), build passes, relevant manual dashboard flows checked, and no unrelated files are included. The 176 pre-existing violations of three rules are recorded in `eslint-suppressions.json`; those rules stay at `error`, so any new violation fails even if old ones were fixed elsewhere.
 - Environment variables: backend API URL, auth/session URLs, MongoDB connection, Shopify API credentials, email provider credentials, and any analytics settings are configured in deployment without exposing secret values in frontend code.
 - Auth/session: login, token cookie handling, backend profile verification, protected dashboard redirects, and signout behavior.
 - Store context: every dashboard route uses the authenticated store context and respects role permissions.
