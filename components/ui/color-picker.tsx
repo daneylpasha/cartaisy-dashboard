@@ -8,6 +8,14 @@ import { AlertCircle } from 'lucide-react';
 interface ColorPickerProps {
   value: string;
   onChange: (value: string) => void;
+  // Optional: fires whenever this picker's own live input validity changes,
+  // independent of onChange (which only ever fires with an already-valid,
+  // normalized value). Needed by callers that gate a Save/submit action on
+  // "is this field currently valid" rather than "what was the last valid
+  // value committed" — those aren't the same thing while the user is mid-
+  // edit on invalid text (see StoreBrandingColors.tsx for a real case).
+  // Purely additive; existing callers that don't pass it are unaffected.
+  onValidityChange?: (isValid: boolean) => void;
   label?: string;
   presets?: string[];
 }
@@ -28,6 +36,7 @@ function normalizeHex(hex: string): string {
 export function ColorPicker({
   value,
   onChange,
+  onValidityChange,
   label = 'Color',
   presets = ['#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF'],
 }: ColorPickerProps) {
@@ -35,9 +44,20 @@ export function ColorPicker({
   const [isValid, setIsValid] = useState(isValidHex(value || '#000000'));
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Kept in a ref so the prop-sync effect below doesn't need
+  // onValidityChange in its dependency array — callers commonly pass an
+  // inline arrow function, which would otherwise re-run the effect (and
+  // re-report the same validity) on every parent render.
+  const onValidityChangeRef = useRef(onValidityChange);
   useEffect(() => {
+    onValidityChangeRef.current = onValidityChange;
+  });
+
+  useEffect(() => {
+    const valid = isValidHex(value || '#000000');
     setInputValue(value || '#000000');
-    setIsValid(isValidHex(value || '#000000'));
+    setIsValid(valid);
+    onValidityChangeRef.current?.(valid);
   }, [value]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,15 +73,23 @@ export function ColorPicker({
     // Validate and update
     if (isValidHex(val)) {
       setIsValid(true);
+      onValidityChange?.(true);
       onChange(normalizeHex(val));
     } else {
+      // Deliberately does NOT call onChange here — an invalid value should
+      // never reach the parent's committed state. onValidityChange is the
+      // only signal a parent gets that the visible input no longer matches
+      // what it last committed; callers that skip it can't tell the two
+      // have diverged (see StoreBrandingColors.tsx).
       setIsValid(false);
+      onValidityChange?.(false);
     }
   };
 
   const handlePresetClick = (color: string) => {
     setInputValue(color);
     setIsValid(true);
+    onValidityChange?.(true);
     onChange(normalizeHex(color));
   };
 
@@ -69,6 +97,7 @@ export function ColorPicker({
     const color = e.target.value;
     setInputValue(color);
     setIsValid(true);
+    onValidityChange?.(true);
     onChange(normalizeHex(color));
   };
 

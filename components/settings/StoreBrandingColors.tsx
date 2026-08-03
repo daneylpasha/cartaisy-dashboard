@@ -41,6 +41,28 @@ export function StoreBrandingColors({
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  // Distinct from `error` (which is for save failures): tracks whether the
+  // initial branding fetch itself failed. Caught in review (see PR #13):
+  // without this, a failed/non-OK GET silently left primaryColor/
+  // secondaryColor at their hardcoded fallback values with no indication
+  // anything was wrong — since the parent page never supplies real colors
+  // as a prop fallback (unlike StoreLogoUpload's `currentLogo`, which
+  // usually already holds the real value from /api/store), a merchant with
+  // real saved branding would see the defaults presented as if they were
+  // their current colors. Save is blocked while this is set.
+  const [loadError, setLoadError] = useState<string | null>(null);
+  // Tracks each ColorPicker's own live input validity, separate from
+  // isPrimaryValid/isSecondaryValid below (which only check the last
+  // *committed* primaryColor/secondaryColor state). Caught in review (see
+  // PR #13): ColorPicker only calls onChange once its input becomes valid,
+  // so typing e.g. "#123" -> "#1234" leaves the committed color at the
+  // last-valid "#112233" while the field itself shows invalid, red-bordered
+  // text. Without this, Save stayed enabled off the stale-but-valid
+  // committed value and would silently save a color no longer shown on
+  // screen. Defaults to true since both pickers start on already-valid
+  // values.
+  const [isPrimaryPickerValid, setIsPrimaryPickerValid] = useState(true);
+  const [isSecondaryPickerValid, setIsSecondaryPickerValid] = useState(true);
 
   const storeId = session?.user?.storeId;
 
@@ -50,37 +72,43 @@ export function StoreBrandingColors({
   // would mean touching StoreLogoUpload's own fetch effect, which felt like
   // more risk to an already-shipped, unrelated component than one extra
   // lightweight admin GET call is worth for this ticket.
+  const fetchBranding = async () => {
+    if (!storeId) {
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const token = getToken();
+      const response = await fetch(`${API_URL}/admin/stores/${storeId}/branding`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const fetchedPrimary = data.data?.primaryColor || DEFAULT_PRIMARY_COLOR;
+        const fetchedSecondary = data.data?.secondaryColor || '';
+        setPrimaryColor(fetchedPrimary);
+        setSecondaryColor(fetchedSecondary);
+        setSavedPrimaryColor(fetchedPrimary);
+        setSavedSecondaryColor(fetchedSecondary);
+        setLoadError(null);
+      } else {
+        setLoadError('Failed to load current branding colors. Refresh or retry before saving, so changes aren’t based on the wrong starting colors.');
+      }
+    } catch (err) {
+      console.error('Failed to fetch branding colors:', err);
+      setLoadError('Failed to load current branding colors. Refresh or retry before saving, so changes aren’t based on the wrong starting colors.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchBranding = async () => {
-      if (!storeId) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const token = getToken();
-        const response = await fetch(`${API_URL}/admin/stores/${storeId}/branding`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (response.ok) {
-          const data = await response.json();
-          const fetchedPrimary = data.data?.primaryColor || DEFAULT_PRIMARY_COLOR;
-          const fetchedSecondary = data.data?.secondaryColor || '';
-          setPrimaryColor(fetchedPrimary);
-          setSecondaryColor(fetchedSecondary);
-          setSavedPrimaryColor(fetchedPrimary);
-          setSavedSecondaryColor(fetchedSecondary);
-        }
-      } catch (err) {
-        console.error('Failed to fetch branding colors:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchBranding();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId]);
 
   const isPrimaryValid = HEX_COLOR_REGEX.test(primaryColor);
@@ -90,6 +118,13 @@ export function StoreBrandingColors({
   const handleSave = async () => {
     if (!storeId) {
       setError('Store not found');
+      return;
+    }
+
+    // Defense in depth alongside the disabled Save button: never save from
+    // an unverified baseline if the initial branding fetch failed.
+    if (loadError) {
+      setError('Current branding colors could not be confirmed. Retry loading before saving.');
       return;
     }
 
@@ -105,6 +140,16 @@ export function StoreBrandingColors({
     }
     if (!isSecondaryValid) {
       setError('Secondary color must be a valid hex color (e.g., #4ECDC4)');
+      return;
+    }
+
+    // Live-validity check (see isPrimaryPickerValid/isSecondaryPickerValid
+    // above): isPrimaryValid/isSecondaryValid only see the last-committed
+    // value, which stays valid even while the visible field shows invalid
+    // text the user hasn't finished correcting. Block save until the field
+    // itself is valid, not just what was last committed from it.
+    if (!isPrimaryPickerValid || !isSecondaryPickerValid) {
+      setError('Fix the highlighted color field before saving.');
       return;
     }
 
@@ -178,10 +223,16 @@ export function StoreBrandingColors({
       </p>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <ColorPicker value={primaryColor} onChange={setPrimaryColor} label="Primary Color" />
+        <ColorPicker
+          value={primaryColor}
+          onChange={setPrimaryColor}
+          onValidityChange={setIsPrimaryPickerValid}
+          label="Primary Color"
+        />
         <ColorPicker
           value={secondaryColor || '#FFFFFF'}
           onChange={setSecondaryColor}
+          onValidityChange={setIsSecondaryPickerValid}
           label="Secondary Color (optional)"
         />
       </div>
@@ -209,6 +260,24 @@ export function StoreBrandingColors({
         </div>
       </div>
 
+      {loadError && (
+        <div className="flex items-start justify-between gap-2 mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-800">{loadError}</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchBranding}
+            disabled={isLoading}
+            className="flex-shrink-0 h-7 px-2 text-xs"
+          >
+            Retry
+          </Button>
+        </div>
+      )}
+
       {error && (
         <div className="flex items-start gap-2 mt-3">
           <AlertCircle className="w-3.5 h-3.5 text-red-600 flex-shrink-0 mt-0.5" />
@@ -227,7 +296,15 @@ export function StoreBrandingColors({
         <Button
           size="sm"
           onClick={handleSave}
-          disabled={isSaving || !hasChanges || !isPrimaryValid || !isSecondaryValid}
+          disabled={
+            isSaving ||
+            !hasChanges ||
+            !isPrimaryValid ||
+            !isSecondaryValid ||
+            !isPrimaryPickerValid ||
+            !isSecondaryPickerValid ||
+            !!loadError
+          }
           className="gap-2"
         >
           {isSaving ? (

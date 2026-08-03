@@ -1,6 +1,6 @@
 # Dashboard Status
 
-Last updated: 2026-07-28.
+Last updated: 2026-08-03.
 
 This file is a human/agent-maintained snapshot, not an automatically guaranteed source of truth. Verify code before implementation work.
 
@@ -25,7 +25,7 @@ This file is a human/agent-maintained snapshot, not an automatically guaranteed 
 - Merchant onboarding: current signup is invite-token based, but a full guided readiness checklist was not found.
 - Store setup/status: dashboard home has status-style cards, but no canonical setup readiness model was identified.
 - Shopify connection/configuration: current dashboard server routes perform OAuth and collection reads; backend-mediated tenant policy needs verification.
-- Branding/theme setup: logo upload exists; broader theme configuration was not verified.
+- Branding/theme setup: logo upload exists. Primary/secondary color editing was added (`components/settings/StoreBrandingColors.tsx`, wired into `app/dashboard/settings/page.tsx`'s Store Branding section), consuming the existing, already-validated `GET`/`PATCH /admin/stores/:storeId/branding` endpoint with no backend changes. Verified manually via a headless-browser pass — no automated test suite exists in this repo to add coverage to (see the Testing/CI gap below) — covering: default-color rendering when a store has no `primaryColor`/`secondaryColor` set; an invalid hex value blocks Save without corrupting the last-committed color; a valid change enables the otherwise-disabled Save button; a save attempted without a valid store context surfaces an error rather than failing silently. Known gaps, not yet resolved: no automated test coverage; `StoreBrandingColors` fetches branding independently of `StoreLogoUpload` rather than through shared state (one redundant `GET` per page load); the backend `PATCH` only ever sets a color and never clears one to `null`, so there is no "clear color" affordance; any broader "theme" fields beyond primary/secondary color were not audited as part of this work.
 - Home module editor: module types exist, but draft/publish/status semantics and backend/mobile contract enforcement need verification.
 - Collection/product picker: collection selector exists; product picker was not identified.
 - Preview/build handoff: homescreen preview exists; build/release handoff was not identified.
