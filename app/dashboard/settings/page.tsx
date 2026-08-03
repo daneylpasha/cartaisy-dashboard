@@ -197,14 +197,25 @@ function SettingsContent() {
             currentLogo={store?.logo}
             storeName={store?.name || session?.user?.storeName || 'Store'}
             onLogoChange={(logoUrl) => {
-              setStore({ ...store, logo: logoUrl });
+              // Functional update (not `{ ...store, ... }` against the
+              // render-captured `store`): a logo save and a color save can
+              // resolve close together, and spreading a stale closure would
+              // let whichever callback runs second silently discard the
+              // other's fields. Caught in review on PR #13 for the new
+              // onColorsChange callback below; applied here too so both
+              // updates in this section compose safely instead of racing.
+              setStore((currentStore: typeof store) => ({ ...currentStore, logo: logoUrl }));
             }}
           />
           <StoreBrandingColors
             currentPrimaryColor={store?.primaryColor}
             currentSecondaryColor={store?.secondaryColor}
             onColorsChange={(colors) => {
-              setStore({ ...store, primaryColor: colors.primaryColor, secondaryColor: colors.secondaryColor });
+              setStore((currentStore: typeof store) => ({
+                ...currentStore,
+                primaryColor: colors.primaryColor,
+                secondaryColor: colors.secondaryColor,
+              }));
             }}
           />
         </div>
