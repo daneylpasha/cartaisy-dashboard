@@ -10,6 +10,7 @@ import { StoreSettingsForm } from '@/components/settings/StoreSettingsForm';
 import { DeleteStoreDialog } from '@/components/settings/DeleteStoreDialog';
 import { SyncStatusCard } from '@/components/settings/SyncStatusCard';
 import { StoreLogoUpload } from '@/components/settings/StoreLogoUpload';
+import { StoreBrandingColors } from '@/components/settings/StoreBrandingColors';
 import { Button } from '@/components/ui/button';
 import { useShopifyStatus } from '@/hooks/useShopifyStatus';
 import {
@@ -197,6 +198,13 @@ function SettingsContent() {
             storeName={store?.name || session?.user?.storeName || 'Store'}
             onLogoChange={(logoUrl) => {
               setStore({ ...store, logo: logoUrl });
+            }}
+          />
+          <StoreBrandingColors
+            currentPrimaryColor={store?.primaryColor}
+            currentSecondaryColor={store?.secondaryColor}
+            onColorsChange={(colors) => {
+              setStore({ ...store, primaryColor: colors.primaryColor, secondaryColor: colors.secondaryColor });
             }}
           />
         </div>
