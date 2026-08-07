@@ -25,7 +25,7 @@ import type {
   UpdateProfileResponse
 } from '../cartaisyAPI.schemas';
 
-import { customInstance } from '../../mutator/custom-instance';
+import { customInstance, API_URL } from '../../mutator/custom-instance';
 
 /**
  * Register a new user
@@ -110,11 +110,15 @@ export type loginResponseError = (loginResponse401 | loginResponse403 | loginRes
 export type loginResponse = (loginResponseSuccess | loginResponseError)
 
 export const getLoginUrl = () => {
-
-
-  
-
-  return `https://cartaisy-backend-production.up.railway.app/api/v1/auth/login`
+  // NOTE: hand-patched (not orval-regenerated). This function used to return
+  // a hardcoded literal pointing at production, which sent every dashboard
+  // login attempt to the production backend regardless of NEXT_PUBLIC_API_URL.
+  // API_URL (from the customInstance mutator) already resolves this correctly
+  // at runtime, so reuse it here. This same hardcoded-URL pattern exists in
+  // every other getXUrl() function across lib/api/generated/** (it's baked in
+  // by orval.config.ts's `baseUrl` at generation time) - out of scope for this
+  // fix, tracked separately, see PR description.
+  return `${API_URL}/auth/login`
 }
 
 export const login = async (loginRequest: LoginRequest, options?: RequestInit): Promise<loginResponse> => {

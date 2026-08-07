@@ -3,7 +3,11 @@
  * Includes token management, auto-refresh, and auth interceptors
  */
 
-const API_URL =
+// Exported so generated API-client URL builders (lib/api/generated/**) can
+// resolve the configured backend at runtime instead of a value baked in at
+// orval generation time. See lib/api/generated/authentication/authentication.ts
+// getLoginUrl() for the first consumer.
+export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   'https://cartaisy-backend-production.up.railway.app/api/v1';
 
