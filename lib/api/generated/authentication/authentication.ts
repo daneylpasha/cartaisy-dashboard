@@ -25,7 +25,7 @@ import type {
   UpdateProfileResponse
 } from '../cartaisyAPI.schemas';
 
-import { customInstance } from '../../mutator/custom-instance';
+import { customInstance, API_URL } from '../../mutator/custom-instance';
 
 /**
  * Register a new user
@@ -56,11 +56,8 @@ export type registerResponseError = (registerResponse400 | registerResponse500) 
 export type registerResponse = (registerResponseSuccess | registerResponseError)
 
 export const getRegisterUrl = () => {
-
-
-  
-
-  return `https://cartaisy-backend-production.up.railway.app/api/v1/auth/register`
+  // Hand-patched, see getLoginUrl() below for why.
+  return `${API_URL}/auth/register`
 }
 
 export const register = async (registerRequest: RegisterRequest, options?: RequestInit): Promise<registerResponse> => {
@@ -110,11 +107,20 @@ export type loginResponseError = (loginResponse401 | loginResponse403 | loginRes
 export type loginResponse = (loginResponseSuccess | loginResponseError)
 
 export const getLoginUrl = () => {
-
-
-  
-
-  return `https://cartaisy-backend-production.up.railway.app/api/v1/auth/login`
+  // NOTE: hand-patched (not orval-regenerated). Every getXUrl() function in
+  // this file used to return a hardcoded literal pointing at production,
+  // ignoring NEXT_PUBLIC_API_URL entirely (baked in by orval.config.ts's
+  // `baseUrl` at generation time). That's a real problem for this specific
+  // file: getProfile()/refreshToken() below are called directly by
+  // auth-context.tsx's session-verification flow, so leaving them hardcoded
+  // meant login could succeed against a local backend while the very next
+  // profile check silently hit production and 401'd, clearing the session.
+  // Fixed every URL builder in this file (auth domain) to use API_URL from
+  // the customInstance mutator, which already resolves it correctly at
+  // runtime. Left every OTHER generated file (products, cart, checkout, etc.)
+  // untouched - same underlying issue, but unrelated to this auth-bugs ticket
+  // and a larger change (see PR description).
+  return `${API_URL}/auth/login`
 }
 
 export const login = async (loginRequest: LoginRequest, options?: RequestInit): Promise<loginResponse> => {
@@ -154,11 +160,8 @@ export type forgotPasswordResponseError = (forgotPasswordResponse500) & {
 export type forgotPasswordResponse = (forgotPasswordResponseSuccess | forgotPasswordResponseError)
 
 export const getForgotPasswordUrl = () => {
-
-
-  
-
-  return `https://cartaisy-backend-production.up.railway.app/api/v1/auth/forgot-password`
+  // Hand-patched, see getLoginUrl() above for why.
+  return `${API_URL}/auth/forgot-password`
 }
 
 export const forgotPassword = async (forgotPasswordRequest: ForgotPasswordRequest, options?: RequestInit): Promise<forgotPasswordResponse> => {
@@ -203,11 +206,8 @@ export type resetPasswordResponseError = (resetPasswordResponse400 | resetPasswo
 export type resetPasswordResponse = (resetPasswordResponseSuccess | resetPasswordResponseError)
 
 export const getResetPasswordUrl = () => {
-
-
-  
-
-  return `https://cartaisy-backend-production.up.railway.app/api/v1/auth/reset-password`
+  // Hand-patched, see getLoginUrl() above for why.
+  return `${API_URL}/auth/reset-password`
 }
 
 export const resetPassword = async (resetPasswordRequest: ResetPasswordRequest, options?: RequestInit): Promise<resetPasswordResponse> => {
@@ -262,11 +262,8 @@ export type refreshTokenResponseError = (refreshTokenResponse400 | refreshTokenR
 export type refreshTokenResponse = (refreshTokenResponseSuccess | refreshTokenResponseError)
 
 export const getRefreshTokenUrl = () => {
-
-
-  
-
-  return `https://cartaisy-backend-production.up.railway.app/api/v1/auth/refresh-token`
+  // Hand-patched, see getLoginUrl() above for why.
+  return `${API_URL}/auth/refresh-token`
 }
 
 export const refreshToken = async (refreshTokenRequest: RefreshTokenRequest, options?: RequestInit): Promise<refreshTokenResponse> => {
@@ -311,11 +308,11 @@ export type getProfileResponseError = (getProfileResponse401 | getProfileRespons
 export type getProfileResponse = (getProfileResponseSuccess | getProfileResponseError)
 
 export const getGetProfileUrl = () => {
-
-
-  
-
-  return `https://cartaisy-backend-production.up.railway.app/api/v1/auth/profile`
+  // Hand-patched, see getLoginUrl() above for why. This one matters most:
+  // called directly by auth-context.tsx's initAuth()/refreshUser() to verify
+  // the session, so a wrong backend here breaks auth even after a correct
+  // local login.
+  return `${API_URL}/auth/profile`
 }
 
 export const getProfile = async ( options?: RequestInit): Promise<getProfileResponse> => {
@@ -369,11 +366,8 @@ export type updateProfileResponseError = (updateProfileResponse400 | updateProfi
 export type updateProfileResponse = (updateProfileResponseSuccess | updateProfileResponseError)
 
 export const getUpdateProfileUrl = () => {
-
-
-  
-
-  return `https://cartaisy-backend-production.up.railway.app/api/v1/auth/profile`
+  // Hand-patched, see getLoginUrl() above for why.
+  return `${API_URL}/auth/profile`
 }
 
 export const updateProfile = async (updateProfileRequest: UpdateProfileRequest, options?: RequestInit): Promise<updateProfileResponse> => {
@@ -423,11 +417,8 @@ export type changePasswordResponseError = (changePasswordResponse401 | changePas
 export type changePasswordResponse = (changePasswordResponseSuccess | changePasswordResponseError)
 
 export const getChangePasswordUrl = () => {
-
-
-  
-
-  return `https://cartaisy-backend-production.up.railway.app/api/v1/auth/change-password`
+  // Hand-patched, see getLoginUrl() above for why.
+  return `${API_URL}/auth/change-password`
 }
 
 export const changePassword = async (changePasswordRequest: ChangePasswordRequest, options?: RequestInit): Promise<changePasswordResponse> => {
@@ -482,11 +473,8 @@ export type deleteAccountResponseError = (deleteAccountResponse400 | deleteAccou
 export type deleteAccountResponse = (deleteAccountResponseSuccess | deleteAccountResponseError)
 
 export const getDeleteAccountUrl = () => {
-
-
-  
-
-  return `https://cartaisy-backend-production.up.railway.app/api/v1/auth/account`
+  // Hand-patched, see getLoginUrl() above for why.
+  return `${API_URL}/auth/account`
 }
 
 export const deleteAccount = async (deleteAccountRequest: DeleteAccountRequest, options?: RequestInit): Promise<deleteAccountResponse> => {

@@ -56,8 +56,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               name: profileUser.fullName || storedUser.name,
               fullName: profileUser.fullName,
               role: profileUser.role,
-              storeId: storedUser.storeId, // Keep storeId from stored user (not in profile)
-              storeName: storedUser.storeName, // Keep storeName from stored user
+              // GET /auth/profile always returns storeId/storeName freshly
+              // resolved from the DB (see cartaisy-backend authTsoaController.ts
+              // getProfile) - it's never actually missing them, so trust it
+              // over the cached localStorage copy, which goes stale whenever
+              // the account's store changes or an old session lingers.
+              // Use `??`, not `||`: the backend defaults storeId/storeName to
+              // '' (empty string) for a user with no store, and `||` would
+              // treat that legitimate empty value as "missing" and silently
+              // fall back to the stale cached value - the same bug this is
+              // fixing. Only fall back on a genuinely absent (null/undefined)
+              // field.
+              storeId: profileUser.storeId ?? storedUser.storeId,
+              storeName: profileUser.storeName ?? storedUser.storeName,
               isActive: profileUser.isActive,
               isEmailVerified: profileUser.isEmailVerified,
               avatar: profileUser.avatar,
@@ -210,8 +221,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           name: profileUser.fullName || storedUser?.name,
           fullName: profileUser.fullName,
           role: profileUser.role,
-          storeId: storedUser?.storeId,
-          storeName: storedUser?.storeName,
+          // Same fix and reasoning as initAuth() above: trust the fresh
+          // profile response, `??` (not `||`) so a legitimate '' storeId
+          // isn't mistaken for "missing" and overwritten by a stale cache.
+          storeId: profileUser.storeId ?? storedUser?.storeId,
+          storeName: profileUser.storeName ?? storedUser?.storeName,
           isActive: profileUser.isActive,
           isEmailVerified: profileUser.isEmailVerified,
           avatar: profileUser.avatar,
