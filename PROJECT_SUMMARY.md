@@ -1,3 +1,5 @@
+> **Stale document (marked 2026-09-23).** This file describes an early scaffold (NextAuth file layout, phases 1–5, and an incomplete route list). It is not the current source of truth. Use `CARTAISY_CONTEXT.md`, `docs/STATUS.md`, and `docs/ARCHITECTURE.md`. New Shopify connects do not store an access token in the dashboard.
+
 # Cartaisy Dashboard - Complete Project Summary
 
 ## 📋 Project Overview

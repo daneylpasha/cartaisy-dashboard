@@ -23,15 +23,19 @@ export function useShopifyCollections(): UseShopifyCollectionsReturn {
       setError(null);
 
       const response = await fetch('/api/shopify/collections');
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch collections');
+        throw new Error(
+          typeof data.error === 'string'
+            ? data.error
+            : "We couldn't load your collections. Try again."
+        );
       }
 
       setCollections(data.data?.collections || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch collections');
+      setError(err instanceof Error ? err.message : "We couldn't load your collections. Try again.");
       setCollections([]);
     } finally {
       setIsLoading(false);

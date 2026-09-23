@@ -44,11 +44,6 @@
       "count": 4
     }
   },
-  "app/api/shopify/collections/route.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 2
-    }
-  },
   "app/blog/[slug]/page.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2

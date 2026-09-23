@@ -85,7 +85,7 @@ async function runTests() {
   console.log('\nTest 2: GET /api/shopify/collections without authentication');
   try {
     const result = await testEndpoint('GET', '/api/shopify/collections');
-    if (result.status === 401 && result.data.error === 'Unauthorized') {
+    if (result.status === 401 && result.data.error === 'Sign in again to load your collections.') {
       addResult(
         'Unauthenticated collections GET',
         'pass',

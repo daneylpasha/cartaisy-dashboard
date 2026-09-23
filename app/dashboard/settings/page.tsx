@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { canManageSettings } from '@/lib/utils/permissions';
 import { useStoreStats } from '@/hooks/useStoreStats';
+import { shopifyReturnCopy } from '@/lib/shopify/merchantCopy';
 
 function SettingsContent() {
   const searchParams = useSearchParams();
@@ -41,9 +42,12 @@ function SettingsContent() {
   const [store, setStore] = useState<any>(null);
   const [isLoadingStore, setIsLoadingStore] = useState(true);
   const [storeError, setStoreError] = useState('');
-  const [showSuccessAlert, setShowSuccessAlert] = useState(false);
-  const [showErrorAlert, setShowErrorAlert] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const returnCopy = shopifyReturnCopy(
+    searchParams?.get('shopify') ?? null,
+    searchParams?.get('reason') ?? searchParams?.get('error')
+  );
 
   const canManage = canManageSettings(session?.user?.role);
 
@@ -68,17 +72,6 @@ function SettingsContent() {
       fetchStore();
     }
   }, [session?.user?.id]);
-
-  useEffect(() => {
-    const shopifyParam = searchParams?.get('shopify');
-    if (shopifyParam === 'connected') {
-      setShowSuccessAlert(true);
-      setTimeout(() => setShowSuccessAlert(false), 5000);
-    } else if (shopifyParam === 'error') {
-      setShowErrorAlert(true);
-      setTimeout(() => setShowErrorAlert(false), 5000);
-    }
-  }, [searchParams]);
 
   if (isLoadingStore) {
     return (
@@ -138,28 +131,25 @@ function SettingsContent() {
         </div>
       </div>
 
-      {/* Success Alert */}
-      {showSuccessAlert && (
-        <div className="flex items-center gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-xl animate-in fade-in slide-in-from-top-2">
-          <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+      {returnCopy && (
+        <div
+          role="status"
+          className={`flex items-center gap-3 rounded-xl border p-4 ${
+            returnCopy.tone === 'success'
+              ? 'border-slate-200 bg-white'
+              : 'border-slate-200 bg-slate-50'
+          }`}
+        >
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-slate-100">
+            {returnCopy.tone === 'success' ? (
+              <CheckCircle2 className="h-4 w-4 text-slate-700" />
+            ) : (
+              <AlertCircle className="h-4 w-4 text-slate-700" />
+            )}
           </div>
           <div>
-            <p className="text-sm font-semibold text-emerald-900">Shopify Connected Successfully!</p>
-            <p className="text-xs text-emerald-700">Your Shopify store is now connected and syncing.</p>
-          </div>
-        </div>
-      )}
-
-      {/* Error Alert */}
-      {showErrorAlert && (
-        <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl animate-in fade-in slide-in-from-top-2">
-          <div className="w-9 h-9 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-            <AlertCircle className="w-4 h-4 text-red-600" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-red-900">Connection Failed</p>
-            <p className="text-xs text-red-700">Failed to connect to Shopify. Please try again.</p>
+            <p className="text-sm font-medium text-slate-900">{returnCopy.title}</p>
+            <p className="text-sm text-slate-600">{returnCopy.body}</p>
           </div>
         </div>
       )}

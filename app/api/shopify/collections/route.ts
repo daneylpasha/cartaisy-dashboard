@@ -1,111 +1,103 @@
-import { getServerSession, authConfig } from '@/lib/auth/server';
+import { NextResponse } from 'next/server';
+import { getAuthToken } from '@/lib/auth/server';
 
-import { NextRequest, NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/db';
-import { Store } from '@/models/Store';
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  'https://cartaisy-backend-production.up.railway.app/api/v1';
 
-export async function GET(request: NextRequest) {
+type BackendCollection = {
+  id?: unknown;
+  title?: unknown;
+  handle?: unknown;
+  image?: { src?: unknown } | null;
+  productsCount?: unknown;
+};
+
+/**
+ * The backend returns Shopify GIDs. Home modules already store the numeric
+ * collection id from the old REST payload, so keep that id shape.
+ */
+function collectionId(raw: unknown): string {
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return String(raw);
+  }
+  if (typeof raw !== 'string') {
+    return '';
+  }
+  const trimmed = raw.trim();
+  const gid = trimmed.match(/\/(\d+)$/);
+  if (gid) {
+    return gid[1];
+  }
+  return trimmed;
+}
+
+function normalizeCollection(raw: BackendCollection) {
+  const id = collectionId(raw.id);
+  const imageSrc = typeof raw.image?.src === 'string' ? raw.image.src : null;
+  const productsCount =
+    typeof raw.productsCount === 'number' && Number.isFinite(raw.productsCount)
+      ? raw.productsCount
+      : 0;
+
+  return {
+    id,
+    numericId: /^\d+$/.test(id) ? Number(id) : undefined,
+    title: typeof raw.title === 'string' ? raw.title : '',
+    handle: typeof raw.handle === 'string' ? raw.handle : '',
+    image: imageSrc ? { src: imageSrc } : null,
+    productsCount,
+  };
+}
+
+/**
+ * Collections are read with the backend store token.
+ * This route does not read `shopify.accessToken` from the dashboard database.
+ */
+export async function GET() {
+  const token = await getAuthToken();
+  if (!token) {
+    return NextResponse.json({ error: 'Sign in again to load your collections.' }, { status: 401 });
+  }
+
   try {
-    const session = await getServerSession(authConfig);
+    const response = await fetch(`${API_URL}/shopify/collections`, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      cache: 'no-store',
+    });
 
-    if (!session?.user?.storeId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    await connectToDatabase();
-
-    // Use lean() to get plain JS object without Mongoose schema filtering
-    const store = await Store.findById(session.user.storeId).lean();
-
-    if (!store) {
-      return NextResponse.json(
-        { error: 'Store not found' },
-        { status: 404 }
-      );
-    }
-
-    if (!store.shopify?.isConnected || !store.shopify?.accessToken) {
-      return NextResponse.json(
-        { error: 'Shopify not connected' },
-        { status: 400 }
-      );
-    }
-
-    const shopDomain = store.shopify.shop;
-    const accessToken = store.shopify.accessToken;
-
-    // Fetch collections from Shopify API
-    const response = await fetch(
-      `https://${shopDomain}/admin/api/2024-01/custom_collections.json`,
-      {
-        headers: {
-          'X-Shopify-Access-Token': accessToken,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    const body = (await response.json().catch(() => null)) as
+      | { data?: { collections?: BackendCollection[] }; error?: unknown }
+      | null;
 
     if (!response.ok) {
-      console.error('Shopify API error:', await response.text());
+      const notConnected = response.status === 400 || response.status === 409;
       return NextResponse.json(
-        { error: 'Failed to fetch from Shopify' },
-        { status: response.status }
+        {
+          error: notConnected
+            ? 'Connect your Shopify store to see collections.'
+            : "We couldn't load your collections. Try again.",
+        },
+        { status: notConnected ? 400 : response.status }
       );
     }
 
-    const customCollections = await response.json();
-
-    // Also fetch smart collections
-    const smartResponse = await fetch(
-      `https://${shopDomain}/admin/api/2024-01/smart_collections.json`,
-      {
-        headers: {
-          'X-Shopify-Access-Token': accessToken,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
-
-    let smartCollections = { smart_collections: [] };
-    if (smartResponse.ok) {
-      smartCollections = await smartResponse.json();
-    }
-
-    // Combine both types of collections
-    const allCollections = [
-      ...(customCollections.custom_collections || []).map((c: any) => ({
-        id: c.id,
-        title: c.title,
-        handle: c.handle,
-        image: c.image ? { src: c.image.src } : null,
-        productsCount: c.products_count || 0,
-        type: 'custom',
-        updatedAt: c.updated_at,
-      })),
-      ...(smartCollections.smart_collections || []).map((c: any) => ({
-        id: c.id,
-        title: c.title,
-        handle: c.handle,
-        image: c.image ? { src: c.image.src } : null,
-        productsCount: c.products_count || 0,
-        type: 'smart',
-        updatedAt: c.updated_at,
-      })),
-    ];
+    const collections = Array.isArray(body?.data?.collections)
+      ? body.data.collections.map(normalizeCollection).filter((collection) => collection.id)
+      : [];
 
     return NextResponse.json({
-      data: {
-        collections: allCollections
-      }
+      data: { collections },
     });
   } catch (error) {
-    console.error('Shopify collections error:', error);
+    console.error('Shopify collections proxy error:', error instanceof Error ? error.message : 'unknown');
     return NextResponse.json(
-      { error: 'Failed to fetch collections' },
-      { status: 500 }
+      { error: "We couldn't load your collections. Try again." },
+      { status: 502 }
     );
   }
 }

@@ -13,11 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useSyncStatus } from '@/hooks/useSyncStatus';
-import { tokenStorage } from '@/lib/api/mutator/custom-instance';
-
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  'https://cartaisy-backend-production.up.railway.app/api/v1';
+import { syncShopify } from '@/lib/api/shopifyConnection';
 
 export function SyncStatusCard() {
   const { syncStatus, isLoading, isRefetching, error, refetch } = useSyncStatus();
@@ -26,42 +22,16 @@ export function SyncStatusCard() {
   const [syncSuccess, setSyncSuccess] = useState<string | null>(null);
 
   const handleTriggerSync = async () => {
-    const token = tokenStorage.getToken();
-
-    if (!token) {
-      setSyncError('Not authenticated');
-      return;
-    }
-
     try {
       setIsSyncing(true);
       setSyncError(null);
       setSyncSuccess(null);
 
-      const response = await fetch(`${API_URL}/shopify/sync/full`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to trigger sync');
-      }
-
-      // Show success message with counts
-      const results = data.data?.results || data.results || {};
-      setSyncSuccess(
-        `Sync completed! Products: ${results.products?.synced || 0}, Customers: ${results.customers?.synced || 0}, Orders: ${results.orders?.synced || 0}`
-      );
-
-      // Refresh status after sync
+      await syncShopify();
+      setSyncSuccess('Your store data is up to date.');
       setTimeout(() => refetch(), 1000);
     } catch (err) {
-      setSyncError(err instanceof Error ? err.message : 'Failed to trigger sync');
+      setSyncError(err instanceof Error ? err.message : "We couldn't sync your store. Try again.");
     } finally {
       setIsSyncing(false);
     }
@@ -182,7 +152,7 @@ export function SyncStatusCard() {
           <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-lg">
             <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
             <div>
-              <p className="text-sm font-medium text-red-900">Failed to load sync status</p>
+              <p className="text-sm font-medium text-red-900">Couldn&apos;t load sync details</p>
               <p className="text-xs text-red-700">{error}</p>
             </div>
           </div>
@@ -314,7 +284,7 @@ export function SyncStatusCard() {
             ) : (
               <>
                 <Play className="w-4 h-4" />
-                Sync Now
+                Sync again
               </>
             )}
           </Button>

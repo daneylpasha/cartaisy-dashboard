@@ -11,6 +11,7 @@
   - `npm run type-check`: runs `tsc --noEmit`.
   - `npm run test:api`: runs `ts-node scripts/test-api.ts`.
   - `npm run generate:api`: runs `orval`.
+- Optional local check, not part of CI: `node --experimental-strip-types lib/onboarding/normalizers.check.ts` asserts onboarding sync, connection, and build-gate normalizers. That file is excluded from `tsc` because Node needs the `.ts` import suffix.
 - Lint command: `npm run lint`. ESLint 9 flat config in `eslint.config.mjs`, composing `eslint-config-next`'s `core-web-vitals` and `typescript` configs. `lib/api/generated/**` is ignored because it is Orval output.
 - Typecheck command: `npm run type-check`. `tsconfig.json` already sets `noEmit`, so no extra flags are needed, and it passes on a clean checkout without a prior `next build`.
 - Test command: no general `test` script was found. `test:api` exists and expects a development server at `http://localhost:3000` according to `scripts/test-api.ts`, while `npm run dev` uses port 3002.
@@ -38,7 +39,7 @@
 - For docs-only changes: inspect `git diff --stat` and `git diff --name-only` to confirm only docs/context files changed.
 - For any code change: run `npm run lint` and `npm run type-check`. CI runs both on the PR, so failing them locally first is cheaper than failing them in Actions.
 - For behavior changes: run `npm run build` at minimum, plus any relevant manual checks for affected routes.
-- For auth/store/Shopify/module publishing changes: verify tenant/store scoping manually and request human review.
+- For auth/store/Shopify/module publishing changes: verify tenant/store scoping manually and request human review. Shopify connect is high-risk: confirm the dashboard routes under `app/api/shopify/connect`, `callback`, `status`, and `disconnect` do not exchange a code or write an access token, and that the settings card and the onboarding connect step call the backend connect endpoint. The wizard's `liveRedirectEnabled` flag is the live-redirect switch; do not add a second OAuth client inside the wizard shell.
 - For generated API changes: verify `npm run generate:api` output and backend API compatibility.
 
 ## Related docs/issues:

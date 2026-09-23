@@ -38,22 +38,22 @@ export function CollectionSelector({
         setError('');
 
         const response = await fetch('/api/shopify/collections');
+        const data = await response.json().catch(() => ({}));
 
-        if (response.status === 401) {
-          setError('Shopify not connected. Please connect Shopify in settings first.');
+        if (!response.ok) {
+          const message =
+            typeof data.error === 'string'
+              ? data.error
+              : "We couldn't load your collections. Try again.";
+          setError(message);
           setCollections([]);
           return;
         }
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch collections');
-        }
-
-        const data = await response.json();
         setCollections(data.data?.collections || []);
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : 'Failed to load collections'
+          err instanceof Error ? err.message : "We couldn't load your collections. Try again."
         );
         setCollections([]);
       } finally {

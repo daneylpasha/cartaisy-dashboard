@@ -196,6 +196,8 @@ export interface ShopifyStatus {
   shop: string | null;
   connectedAt: string | null;
   scope: string | null;
+  status?: 'connected' | 'disconnected';
+  lastSyncAt?: string | null;
 }
 
 export interface ShopifyCollection {

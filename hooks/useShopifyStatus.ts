@@ -26,7 +26,7 @@ export function useShopifyStatus(): UseShopifyStatusReturn {
       const data = await shopifyService.getConnectionStatus();
       setStatus(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch Shopify status');
+      setError(err instanceof Error ? err.message : "We couldn't check your Shopify connection. Refresh and try again.");
       setStatus(null);
     } finally {
       setIsLoading(false);

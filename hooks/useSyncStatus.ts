@@ -63,13 +63,13 @@ export function useSyncStatus(autoRefreshInterval = 60000): UseSyncStatusReturn 
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch sync status');
+        throw new Error("We couldn't load sync details. Try again.");
       }
 
       const data = await response.json();
       setSyncStatus(data.data || data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch sync status');
+      setError(err instanceof Error ? err.message : "We couldn't load sync details. Try again.");
       setSyncStatus(null);
     } finally {
       setIsLoading(false);
