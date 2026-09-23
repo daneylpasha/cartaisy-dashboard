@@ -14,10 +14,19 @@ export type SyncGateState =
   | 'succeeded'
   | 'failed';
 
-/** Normalized sync gate. Build stays off unless state is `succeeded`. */
+export type BuildEligibilityReason = 'shopify_not_connected' | 'catalog_sync_not_succeeded';
+
+/**
+ * Normalized sync gate.
+ * `eligibleForBuild` is true only when GET /shopify/sync reports
+ * `eligibleForBuild` and a succeeded catalog status. `shopify.lastSyncAt`
+ * is never success.
+ */
 export interface SyncGate {
   state: SyncGateState;
   detail: string | null;
+  eligibleForBuild: boolean;
+  eligibilityReason: BuildEligibilityReason | null;
 }
 
 /**
@@ -57,8 +66,12 @@ export interface BrandingDraft {
   iconPersisted: boolean;
 }
 
+export type BuildNextAction = 'connect' | 'sync' | 'retry';
+
 export interface BuildRequestAvailability {
-  /** True only when sync succeeded. The button still does not call a build API. */
+  /** True only when catalog sync succeeded and Shopify is connected. */
   enabled: boolean;
   reason: string | null;
+  /** Next step when the merchant cannot submit yet. */
+  action: BuildNextAction | null;
 }

@@ -6,7 +6,7 @@
 - Verified commands include `npm run lint`, `npm run type-check`, `npm run build`, `npm run dev`, `npm run start`, `npm run test:api`, and `npm run generate:api`.
 - CI exists as of 2026-07-28: `.github/workflows/ci.yml` runs `npm ci`, `npm run lint` and `npm run type-check` on every pull request against `main`, on Node 20, with actions pinned by commit SHA. There is still no automated test suite, so CI proves the code lints and type-checks — not that it behaves correctly.
 - No environment example file was found during the audit.
-- The dashboard currently includes settings, Shopify connection, store branding/logo upload, app-builder modules, homescreen preview, admin onboarding token pages, and a post-signup setup wizard at `/dashboard/onboarding`. The wizard ready step does not submit an app build.
+- The dashboard currently includes settings, Shopify connection, store branding/logo upload, app-builder modules, homescreen preview, admin onboarding token pages, and a post-signup setup wizard at `/dashboard/onboarding`. The wizard ready step submits a tracked build request when the catalog sync succeeded and Shopify is connected.
 
 ## Target state:
 
@@ -18,16 +18,16 @@ Before release, verify:
 - Store context: every dashboard route uses the authenticated store context and respects role permissions.
 - Backend API compatibility: generated/direct backend calls match deployed backend endpoints and response shapes.
 - Shopify: connect, status, reconnect, sync again, disconnect, and collections go through the backend. Confirm a new connect does not write `shopify.accessToken` on the dashboard store. The retired dashboard callback redirects to settings and does not exchange a code.
-- Merchant onboarding: token creation, token expiry/revocation, email delivery if enabled, signup token validation, store creation, first-user role, post-signup login, and the `/dashboard/onboarding` steps. Connect Shopify opens the backend authorize URL. A return with `shopify=error&reason=` shows plain copy on the connect step. Branding save, smart-default preview, and the build button remaining disabled until sync succeeded still apply. Confirm the wizard did not write a Shopify access token.
+- Merchant onboarding: token creation, token expiry/revocation, email delivery if enabled, signup token validation, store creation, first-user role, post-signup login, and the `/dashboard/onboarding` steps. Connect Shopify opens the backend authorize URL. A return with `shopify=error&reason=` shows plain copy on the connect step. Branding save and the smart-default preview still apply. Build my app stays disabled until `GET /api/v1/shopify/sync` reports `eligibleForBuild` and Shopify is connected. Confirm the wizard did not write a Shopify access token.
 - Branding/theme configuration: logo upload/remove, current branding fetch, and any mobile-consumed theme fields.
 - Home module publishing/editor checks: module create/edit/reorder/visibility, collection reference selection, homescreen preview, backend/mobile contract compatibility, and validation of store-owned Shopify references.
-- Build/status workflow: onboarding preview shows a smart-default home. "Build my app" must not submit a request. Dedicated build status remains dashboard #17. Also verify the existing app-builder homescreen preview.
+- Build/status workflow: onboarding preview shows a smart-default home. On the ready step, an ineligible store cannot submit and sees Connect Shopify or Sync again. An eligible store can request Android, iOS, or both and sees per-platform status, including Waiting on Apple for iOS. The screen must not show a build log or an EAS id. Also verify the existing app-builder homescreen preview.
 - Rollback notes: identify the deployed version, environment variables changed, database migrations/manual scripts, and any generated API client changes before release.
 
 ## Known gaps:
 
 - Do not assume any feature or behavior described above is implemented unless verified in the current code.
-- Dedicated build request, app-store submission, release status, and rollback automation were not found in the audited files.
+- App-store submission, release publishing, and rollback automation were not found in the audited files. The tracked build request on the ready step is the v1 handoff.
 - CI covers lint and typecheck only. There is no unit, integration or e2e test runner, and no build step in CI, so a release still needs manual verification of the flows listed above.
 - No env example file was found; deployments must be checked without exposing secrets.
 - Current Shopify and branding flows include direct dashboard/backend API calls that need security review before major release changes.

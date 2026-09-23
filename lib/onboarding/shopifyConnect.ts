@@ -21,7 +21,7 @@ import { merchantMessageForShopifyAction } from '@/lib/shopify/merchantCopy';
  * Expected backend contract:
  * - POST /shopify/oauth/connect { shop } -> { data: { authorizationUrl } }
  * - GET  /shopify/status -> connection facts, no access token
- * - GET  /shopify/sync/status -> sync gate (in-memory today; explicit state later)
+ * - GET  /shopify/sync -> durable catalog sync (`idle|syncing|succeeded|failed`) and `eligibleForBuild`
  * - GET  /shopify/overview -> product and order counts
  * - GET  /shopify/collections -> collection names, read-only
  */
@@ -34,7 +34,7 @@ export const shopifyConnectContract: {
 const ENDPOINTS = {
   start: '/shopify/oauth/connect',
   status: '/shopify/status',
-  syncStatus: '/shopify/sync/status',
+  syncStatus: '/shopify/sync',
   overview: '/shopify/overview',
   collections: '/shopify/collections',
 } as const;

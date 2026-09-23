@@ -334,8 +334,9 @@ export function OnboardingWizard() {
             <ReadyStep
               connection={connection}
               sync={sync}
-              appName={draft.appName}
               onBack={() => go('preview')}
+              onConnectShopify={() => go('connect')}
+              onCatalogUpdated={() => setReloadKey((value) => value + 1)}
             />
           )}
         </motion.div>

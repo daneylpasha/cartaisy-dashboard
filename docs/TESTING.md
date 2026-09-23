@@ -11,7 +11,7 @@
   - `npm run type-check`: runs `tsc --noEmit`.
   - `npm run test:api`: runs `ts-node scripts/test-api.ts`.
   - `npm run generate:api`: runs `orval`.
-- Optional local check, not part of CI: `node --experimental-strip-types lib/onboarding/normalizers.check.ts` asserts onboarding sync, connection, and build-gate normalizers. That file is excluded from `tsc` because Node needs the `.ts` import suffix.
+- Optional local checks, not part of CI: `node --experimental-strip-types lib/onboarding/normalizers.check.ts` asserts onboarding sync, connection, and the catalog-sync build gate (including that `lastSyncAt` is not success). `node --experimental-strip-types lib/build/contract.check.ts` asserts build-request labels, polling, and the create payload. `npx tsx lib/build/view.check.tsx` renders the Build my app screen states. Those files are excluded from `tsc` because Node needs the `.ts` import suffix.
 - Lint command: `npm run lint`. ESLint 9 flat config in `eslint.config.mjs`, composing `eslint-config-next`'s `core-web-vitals` and `typescript` configs. `lib/api/generated/**` is ignored because it is Orval output.
 - Typecheck command: `npm run type-check`. `tsconfig.json` already sets `noEmit`, so no extra flags are needed, and it passes on a clean checkout without a prior `next build`.
 - Test command: no general `test` script was found. `test:api` exists and expects a development server at `http://localhost:3000` according to `scripts/test-api.ts`, while `npm run dev` uses port 3002.
