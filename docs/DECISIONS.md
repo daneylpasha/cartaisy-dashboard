@@ -56,6 +56,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Onboarding docs and UI should distinguish implemented steps from target steps.
 - Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/STATUS.md`.
 
+### Onboarding wizard does not store Shopify access tokens
+
+- Date: 2026-09-23.
+- Decision: The post-signup wizard (`/dashboard/onboarding`) must not write Shopify access tokens into dashboard Mongo. Connect is a backend-only client in `lib/onboarding/shopifyConnect.ts`. Live redirect to Shopify stays off until dashboard #15 and backend #153 return the merchant to the wizard after approval. Merchants may continue to branding with a sync warning. "Build my app" stays disabled until normalized sync status is `succeeded`, and even then it does not call a build API (dashboard #17).
+- Reason: Dual token ownership is unsafe, and the build request screen is a separate issue. The wizard should still be usable before those APIs are finished.
+- Impact: Settings-page Shopify connect is unchanged and can still persist a dashboard token. New onboarding work must keep using the isolated client. Flipping `liveRedirectEnabled` is the intended plug-in point for #15.
+- Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/STATUS.md`, `docs/ARCHITECTURE.md`. GitHub issues: dashboard `#15`, `#16`, `#17`; backend `#152`, `#153`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.
