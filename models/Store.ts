@@ -5,7 +5,6 @@ export interface IStore extends Document {
   slug: string;
   shopify?: {
     shop?: string;
-    accessToken?: string;
     isConnected: boolean;
     connectedAt?: Date;
     scope?: string;
@@ -38,9 +37,11 @@ const StoreSchema = new Schema<IStore>(
       trim: true,
       index: true,
     },
+    // Connection display fields only. The backend owns shopify.accessToken
+    // for new connects. This schema has no token path, so Mongoose strict
+    // mode drops a dashboard write of shopify.accessToken.
     shopify: {
       shop: String,
-      accessToken: String,
       isConnected: {
         type: Boolean,
         default: false,

@@ -1,44 +1,9 @@
-import { getServerSession, authConfig } from '@/lib/auth/server';
+import { retiredShopifyJson } from '@/lib/shopify/retiredDashboardOAuth';
 
-import { NextRequest, NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/db';
-import { Store } from '@/models/Store';
-
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authConfig);
-
-    if (!session?.user?.storeId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    await connectToDatabase();
-
-    // Get store's Shopify connection status from MongoDB
-    const store = await Store.findById(session.user.storeId);
-
-    if (!store) {
-      return NextResponse.json(
-        { error: 'Store not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      data: {
-        isConnected: store.shopify?.isConnected || false,
-        shop: store.shopify?.shop || null,
-        connectedAt: store.shopify?.connectedAt || null,
-      }
-    });
-  } catch (error) {
-    console.error('Shopify status error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch Shopify status' },
-      { status: 500 }
-    );
-  }
+/**
+ * Retired. Connection status is GET /api/v1/shopify/status on the backend.
+ * The dashboard store record is not the source of truth.
+ */
+export async function GET() {
+  return retiredShopifyJson();
 }

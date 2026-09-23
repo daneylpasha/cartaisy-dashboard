@@ -13,11 +13,11 @@
 Before release, verify:
 
 - Pre-release checks: dependencies installed, `npm run lint` and `npm run type-check` pass (both are enforced on every PR by CI), build passes, relevant manual dashboard flows checked, and no unrelated files are included. The 176 pre-existing violations of three rules are recorded in `eslint-suppressions.json` and those rules stay at `error`, so the debt cannot grow: a violation in an unrecorded file, a count above the recorded one, or a fix in one file paired with a new violation in another all fail. See `eslint.config.mjs` for the one case that does not fail — swapping a violation for another within the same file for the same rule.
-- Environment variables: backend API URL, auth/session URLs, MongoDB connection, Shopify API credentials, email provider credentials, and any analytics settings are configured in deployment without exposing secret values in frontend code.
+- Environment variables: backend API URL, auth/session URLs, MongoDB connection, email provider credentials, and any analytics settings are configured in deployment without exposing secret values in frontend code. Partner app secrets (`SHOPIFY_CLIENT_ID`, `SHOPIFY_CLIENT_SECRET`, `SHOPIFY_REDIRECT_URI`, `SHOPIFY_SCOPES`) stay on the backend. Set backend `SHOPIFY_OAUTH_RETURN_URL` to the dashboard settings page so the merchant returns there after Shopify authorizes. The dashboard connect flow does not read `SHOPIFY_API_KEY` or `SHOPIFY_API_SECRET`.
 - Auth/session: login, token cookie handling, backend profile verification, protected dashboard redirects, and signout behavior.
 - Store context: every dashboard route uses the authenticated store context and respects role permissions.
 - Backend API compatibility: generated/direct backend calls match deployed backend endpoints and response shapes.
-- Shopify: connect, callback, status, collections, disconnect, and backend-mediated tenant-safe operations where applicable.
+- Shopify: connect, status, reconnect, sync again, disconnect, and collections go through the backend. Confirm a new connect does not write `shopify.accessToken` on the dashboard store. The retired dashboard callback redirects to settings and does not exchange a code.
 - Merchant onboarding: token creation, token expiry/revocation, email delivery if enabled, signup token validation, store creation, first-user role, and post-signup login.
 - Branding/theme configuration: logo upload/remove, current branding fetch, and any mobile-consumed theme fields.
 - Home module publishing/editor checks: module create/edit/reorder/visibility, collection reference selection, homescreen preview, backend/mobile contract compatibility, and validation of store-owned Shopify references.

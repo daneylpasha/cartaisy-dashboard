@@ -56,6 +56,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Onboarding docs and UI should distinguish implemented steps from target steps.
 - Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/STATUS.md`.
 
+### New Shopify connects keep the access token on the backend only
+
+- Date: 2026-09-23.
+- Decision: For new merchant connects, the backend is the only owner of the Shopify Admin access token. The dashboard starts connect, reads status, disconnects, and triggers sync through the backend APIs. It does not exchange the OAuth code and does not persist `shopify.accessToken` (or the Storefront token) on the dashboard `Store`.
+- Reason: Two writers of the same secret caused split connection state and blocked a simple connect flow. Parent epic: cartaisy-backend #152. Backend contract: cartaisy-backend #153 / PR #157. Dashboard issue: #15.
+- Impact: Reconnect is the same connect call, not a second token path. Operators set `SHOPIFY_OAUTH_RETURN_URL` on the backend. Historical dashboard tokens are left in place until a separate migration. Shopify, auth, and store-ownership changes still need human review.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, backend `docs/cartaisy/SHOPIFY_API_POLICY.md`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

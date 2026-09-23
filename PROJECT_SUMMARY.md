@@ -1,3 +1,5 @@
+> **Stale.** This file is an early snapshot. It still describes local Shopify routes, NextAuth, and mock collections. It is not the current architecture. Read `CARTAISY_CONTEXT.md` and `docs/STATUS.md`. New Shopify connects do not store an access token in the dashboard.
+
 # Cartaisy Dashboard - Complete Project Summary
 
 ## 📋 Project Overview

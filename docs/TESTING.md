@@ -38,7 +38,7 @@
 - For docs-only changes: inspect `git diff --stat` and `git diff --name-only` to confirm only docs/context files changed.
 - For any code change: run `npm run lint` and `npm run type-check`. CI runs both on the PR, so failing them locally first is cheaper than failing them in Actions.
 - For behavior changes: run `npm run build` at minimum, plus any relevant manual checks for affected routes.
-- For auth/store/Shopify/module publishing changes: verify tenant/store scoping manually and request human review.
+- For auth/store/Shopify/module publishing changes: verify tenant/store scoping manually and request human review. Shopify connect is high-risk: confirm the dashboard routes under `app/api/shopify/connect`, `callback`, `status`, and `disconnect` do not exchange a code or write an access token, and that the settings card calls the backend connect, status, disconnect, and sync endpoints.
 - For generated API changes: verify `npm run generate:api` output and backend API compatibility.
 
 ## Related docs/issues:

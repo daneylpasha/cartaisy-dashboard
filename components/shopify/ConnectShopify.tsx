@@ -13,154 +13,229 @@ import {
   DialogContent,
   DialogDescription,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
-import { AlertCircle, CheckCircle2, Loader2, Unlink } from 'lucide-react';
-import { formatDate } from '@/lib/utils';
+import { Loader2 } from 'lucide-react';
+
+function formatQuietDate(value: string | null | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(date);
+}
+
+function Notice({ tone, children }: { tone: 'error' | 'success'; children: string }) {
+  const styles =
+    tone === 'error'
+      ? 'border-slate-200 bg-slate-50 text-slate-700'
+      : 'border-slate-200 bg-white text-slate-700';
+
+  return (
+    <p role="alert" className={`rounded-md border px-3 py-2 text-sm ${styles}`}>
+      {children}
+    </p>
+  );
+}
 
 export function ConnectShopify() {
   const { data: session } = useSession();
   const { status, isLoading, error, refetch } = useShopifyStatus();
   const [shop, setShop] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
-  const [connectError, setConnectError] = useState('');
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [actionError, setActionError] = useState('');
+  const [syncMessage, setSyncMessage] = useState('');
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
-  const [disconnectConfirm, setDisconnectConfirm] = useState(false);
 
-  const handleConnect = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setConnectError('');
+  const connectedShop = status?.isConnected ? status.shop : null;
+  const connectedOn = formatQuietDate(status?.connectedAt);
+  const lastSynced = formatQuietDate(status?.lastSyncAt);
 
-    if (!shop.trim()) {
-      setConnectError('Please enter a shop name');
-      return;
-    }
+  const beginConnect = async (shopValue: string) => {
+    setActionError('');
+    setSyncMessage('');
 
     if (!session?.user) {
-      setConnectError('You must be logged in');
+      setActionError('Sign in again to connect your store.');
       return;
     }
 
     setIsConnecting(true);
     try {
-      const result = await shopifyService.initiateOAuth(shop);
-      // Redirect to Shopify authorization URL
-      if (result.authorizationUrl) {
-        window.location.href = result.authorizationUrl;
-      }
+      const result = await shopifyService.initiateOAuth(shopValue);
+      window.location.href = result.authorizationUrl;
     } catch (err) {
-      setConnectError(err instanceof Error ? err.message : 'Failed to connect Shopify');
-    } finally {
+      setActionError(err instanceof Error ? err.message : "We couldn't connect your store. Try again.");
       setIsConnecting(false);
     }
   };
 
-  const handleDisconnect = async () => {
-    if (!session?.user) return;
+  const handleConnect = async (event: React.FormEvent) => {
+    event.preventDefault();
+    await beginConnect(shop);
+  };
 
+  const handleReconnect = async () => {
+    if (!connectedShop) {
+      setActionError('Enter your store address, like your-store.myshopify.com.');
+      return;
+    }
+    await beginConnect(connectedShop);
+  };
+
+  const handleSync = async () => {
+    setActionError('');
+    setSyncMessage('');
+    setIsSyncing(true);
+    try {
+      await shopifyService.syncAgain();
+      setSyncMessage('Your store data is up to date.');
+      await refetch();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "We couldn't sync your store. Try again.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    setActionError('');
     setIsDisconnecting(true);
     try {
       await shopifyService.disconnect();
       setShowDisconnectDialog(false);
+      setSyncMessage('');
       await refetch();
     } catch (err) {
-      setConnectError(err instanceof Error ? err.message : 'Failed to disconnect');
+      setActionError(err instanceof Error ? err.message : "We couldn't disconnect your store. Try again.");
+      setShowDisconnectDialog(false);
     } finally {
       setIsDisconnecting(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Shopify Connection</CardTitle>
-          <CardDescription>Connect your Shopify store to manage products and collections</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>Shopify Connection</CardTitle>
-          <CardDescription>Connect your Shopify store to manage products and collections</CardDescription>
+      <Card className="border-slate-200 shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-base font-medium text-slate-900">Shopify</CardTitle>
+          <CardDescription className="text-sm text-slate-500">
+            Connect the store this app sells from.
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          {status?.isConnected ? (
-            // Connected state
+        <CardContent className="space-y-4">
+          {isLoading ? (
+            <p className="flex items-center gap-2 text-sm text-slate-500">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Checking your store…
+            </p>
+          ) : connectedShop ? (
             <div className="space-y-4">
-              <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <div>
-                  <p className="font-medium text-green-900">Connected</p>
-                  <p className="text-sm text-green-700">{status.shop}</p>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="connected-shop" className="text-sm font-medium text-slate-700">
+                  Store address
+                </Label>
+                <Input
+                  id="connected-shop"
+                  value={connectedShop}
+                  readOnly
+                  aria-readonly="true"
+                  className="h-10 bg-slate-50 text-slate-800"
+                />
+                <p className="text-sm text-slate-500">
+                  <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-emerald-600 align-middle" />
+                  Connected{connectedOn ? ` on ${connectedOn}` : ''}
+                  {lastSynced ? ` · Last synced ${lastSynced}` : ''}
+                </p>
               </div>
 
-              {status.connectedAt && (
-                <div className="text-sm text-slate-600">
-                  <p>Connected on {formatDate(new Date(status.connectedAt))}</p>
-                </div>
-              )}
+              {(error || actionError) && <Notice tone="error">{error || actionError}</Notice>}
+              {syncMessage && <Notice tone="success">{syncMessage}</Notice>}
 
-              <Button
-                variant="destructive"
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Button
+                  type="button"
+                  onClick={handleReconnect}
+                  disabled={isConnecting || isSyncing}
+                  className="sm:min-w-36"
+                >
+                  {isConnecting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Opening Shopify…
+                    </>
+                  ) : (
+                    'Reconnect'
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleSync}
+                  disabled={isConnecting || isSyncing}
+                  className="sm:min-w-36"
+                >
+                  {isSyncing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Syncing…
+                    </>
+                  ) : (
+                    'Sync again'
+                  )}
+                </Button>
+              </div>
+              <p className="text-sm text-slate-500">
+                Reconnect opens Shopify again for this same store.
+              </p>
+
+              <button
+                type="button"
                 onClick={() => setShowDisconnectDialog(true)}
-                className="gap-2"
+                className="text-sm text-slate-500 underline-offset-4 hover:text-slate-800 hover:underline"
               >
-                <Unlink className="w-4 h-4" />
-                Disconnect Shopify
-              </Button>
+                Disconnect
+              </button>
             </div>
           ) : (
-            // Not connected state
             <form onSubmit={handleConnect} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="shop" className="text-sm font-medium">
-                  Shopify Store Name
+                <Label htmlFor="shop" className="text-sm font-medium text-slate-700">
+                  Store address
                 </Label>
                 <Input
                   id="shop"
                   type="text"
-                  placeholder="your-store or your-store.myshopify.com"
+                  placeholder="your-store.myshopify.com"
                   value={shop}
-                  onChange={(e) => setShop(e.target.value)}
+                  onChange={(event) => setShop(event.target.value)}
                   disabled={isConnecting}
+                  autoComplete="off"
                   className="h-10"
                 />
-                <p className="text-xs text-slate-500">
-                  Enter your Shopify store name (without .myshopify.com if not needed)
+                <p className="text-sm text-slate-500">
+                  Use the address from your Shopify admin. You can leave off .myshopify.com.
                 </p>
               </div>
 
-              {(error || connectError) && (
-                <div className="flex items-start gap-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-700">{error || connectError}</p>
-                </div>
-              )}
+              {(error || actionError) && <Notice tone="error">{error || actionError}</Notice>}
 
-              <Button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700"
-                disabled={isConnecting || !shop.trim()}
-              >
+              <Button type="submit" disabled={isConnecting || !shop.trim()} className="w-full sm:w-auto">
                 {isConnecting ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    Connecting...
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Opening Shopify…
                   </>
                 ) : (
-                  'Connect Shopify Store'
+                  'Connect Shopify'
                 )}
               </Button>
             </form>
@@ -168,26 +243,26 @@ export function ConnectShopify() {
         </CardContent>
       </Card>
 
-      {/* Disconnect Confirmation Dialog */}
       <Dialog open={showDisconnectDialog} onOpenChange={setShowDisconnectDialog}>
         <DialogContent>
-          <DialogTitle>Disconnect Shopify?</DialogTitle>
+          <DialogTitle>Disconnect this store?</DialogTitle>
           <DialogDescription>
-            This will disconnect your Shopify store. You can reconnect anytime.
+            Your app will stop using this Shopify store until you connect it again.
           </DialogDescription>
-          <div className="flex gap-3 justify-end pt-4">
-            <Button variant="outline" onClick={() => setShowDisconnectDialog(false)}>
-              Cancel
-            </Button>
+          <div className="flex justify-end gap-2 pt-4">
             <Button
-              variant="destructive"
-              onClick={handleDisconnect}
+              type="button"
+              variant="outline"
+              onClick={() => setShowDisconnectDialog(false)}
               disabled={isDisconnecting}
             >
+              Cancel
+            </Button>
+            <Button type="button" variant="outline" onClick={handleDisconnect} disabled={isDisconnecting}>
               {isDisconnecting ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  Disconnecting...
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Disconnecting…
                 </>
               ) : (
                 'Disconnect'

@@ -30,6 +30,28 @@ export interface UpdateStoreInput {
 }
 
 /**
+ * Fields safe to send to the browser. Shopify tokens are not included,
+ * even if an older document still has them in MongoDB.
+ */
+function publicShopify(shopify: {
+  shop?: string;
+  isConnected?: boolean;
+  connectedAt?: Date;
+  scope?: string;
+} | null | undefined) {
+  if (!shopify) {
+    return undefined;
+  }
+
+  return {
+    shop: shopify.shop,
+    isConnected: Boolean(shopify.isConnected),
+    connectedAt: shopify.connectedAt,
+    scope: shopify.scope,
+  };
+}
+
+/**
  * Get current store details
  */
 export async function getStore(storeId: string): Promise<any> {
@@ -44,7 +66,7 @@ export async function getStore(storeId: string): Promise<any> {
     id: store._id.toString(),
     name: store.name,
     slug: store.slug,
-    shopify: store.shopify,
+    shopify: publicShopify(store.shopify),
     plan: store.plan,
     settings: store.settings,
     isActive: store.isActive,
@@ -93,7 +115,7 @@ export async function updateStore(
     id: store._id.toString(),
     name: store.name,
     slug: store.slug,
-    shopify: store.shopify,
+    shopify: publicShopify(store.shopify),
     plan: store.plan,
     settings: store.settings,
     isActive: store.isActive,
