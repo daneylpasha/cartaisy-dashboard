@@ -237,6 +237,19 @@ export default function HomePage() {
         </div>
       </div>
 
+      <Link
+        href="/dashboard/onboarding"
+        className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white px-5 py-4 transition-colors hover:border-slate-300"
+      >
+        <div>
+          <p className="text-sm font-medium text-slate-950">Set up your app</p>
+          <p className="mt-1 text-sm text-slate-600">
+            Connect Shopify, confirm your brand, and preview a starting home.
+          </p>
+        </div>
+        <span className="shrink-0 text-sm font-medium text-slate-950">Continue</span>
+      </Link>
+
       {/* Quick Actions Grid */}
       <div>
         <div className="flex items-center justify-between mb-3">

@@ -133,7 +133,7 @@ function SignupForm() {
       const result = await login({ email, password });
 
       if (result.success) {
-        router.push('/dashboard');
+        router.push('/dashboard/onboarding');
       } else {
         // Registration succeeded but login failed - redirect to login
         router.push('/login?registered=true');

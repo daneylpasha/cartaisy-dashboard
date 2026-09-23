@@ -60,9 +60,17 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 
 - Date: 2026-09-23.
 - Decision: For new merchant connects, the backend is the only owner of the Shopify Admin access token. The dashboard starts connect, reads status, disconnects, and triggers sync through the backend APIs. It does not exchange the OAuth code and does not persist `shopify.accessToken` (or the Storefront token) on the dashboard `Store`.
-- Reason: Two writers of the same secret caused split connection state and blocked a simple connect flow. Parent epic: cartaisy-backend #152. Backend contract: cartaisy-backend #153 / PR #157. Dashboard issue: #15.
-- Impact: Reconnect is the same connect call, not a second token path. Operators set `SHOPIFY_OAUTH_RETURN_URL` on the backend. Historical dashboard tokens are left in place until a separate migration. Shopify, auth, and store-ownership changes still need human review.
+- Reason: Two writers of the same secret caused split connection state and blocked a simple connect flow. Parent epic: cartaisy-backend #152. Backend contract: cartaisy-backend #153 / PR #157 (merged). Dashboard issue: #15.
+- Impact: Reconnect is the same connect call, not a second token path. The backend ignores a client `returnTo` and redirects only to `SHOPIFY_OAUTH_RETURN_URL`. Point that at `/dashboard/onboarding?step=connect` so new merchants return to the wizard. Settings understands the same `shopify` and `reason` query if the URL points there instead. Historical dashboard tokens are left in place until a separate migration. Shopify, auth, and store-ownership changes still need human review.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, backend `docs/cartaisy/SHOPIFY_API_POLICY.md`.
+
+### Onboarding wizard does not store Shopify access tokens
+
+- Date: 2026-09-23. Updated the same day after backend #157 merged.
+- Decision: The post-signup wizard (`/dashboard/onboarding`) must not write Shopify access tokens into dashboard Mongo. Connect stays in `lib/onboarding/shopifyConnect.ts`. `liveRedirectEnabled` is true: Connect Shopify opens the backend authorize URL. The wizard shell (steps, chrome, branding, preview, ready) stays as dashboard #16 / PR #18. "Build my app" stays disabled until normalized sync status is `succeeded`, and even then it does not call a build API (dashboard #17).
+- Reason: Dual token ownership is unsafe, and the build request screen is a separate issue. The live return path is the merged backend callback plus `SHOPIFY_OAUTH_RETURN_URL`, not a second OAuth implementation.
+- Impact: Settings connect is also backend-only and does not persist a dashboard token. New onboarding work must keep using the isolated client.
+- Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/STATUS.md`, `docs/ARCHITECTURE.md`. GitHub issues: dashboard `#15`, `#16`, `#17`; backend `#152`, `#153`.
 
 ### High-risk auth/store ownership/publishing changes require human review
 
