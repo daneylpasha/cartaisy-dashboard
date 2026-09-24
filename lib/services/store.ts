@@ -8,6 +8,7 @@ import { CalloutBanner } from '@/models/CalloutBanner';
 import { CollectionDisplay } from '@/models/CollectionDisplay';
 import { CollectionShowcase } from '@/models/CollectionShowcase';
 import { CategoryCollectionGrid } from '@/models/CategoryCollectionGrid';
+import { deleteStoreBrandAssets } from '@/lib/services/storeBrandAssets';
 
 export interface StoreStats {
   teamMemberCount: number;
@@ -192,6 +193,7 @@ export async function deleteStore(storeId: string): Promise<void> {
 
   // Delete all users associated with store
   await User.deleteMany({ storeId });
+  await deleteStoreBrandAssets(storeId);
 
   // TODO: Delete AppConfig
   // TODO: Delete other store-related data

@@ -141,8 +141,16 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Date: 2026-09-24.
 - Decision: The brand step and the preview step share `SmartHomePreview`. It draws the branding draft held in the wizard, so name, logo, icon, primary color, secondary color, and splash update in that render without a save or a reload. Inside the device there is no Cartaisy wordmark, logo, or marketing chrome. The wizard header outside the phone may still say Cartaisy. Synced products stay on the shelf when catalog sync has succeeded. The preview does not call Shopify and does not receive an Admin token.
 - Reason: Dashboard #30. Merchants should see their own app while they edit the brand, not a second product brand inside the frame.
-- Impact: Onboarding and branding presentation. Build my app, connect, and the branding save calls are unchanged. Splash and icon still persist only when those upload routes succeed.
+- Impact: Onboarding and branding presentation. Build my app and connect are unchanged. Icon and splash now persist with the brand; see the decision below.
 - Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/STATUS.md`, `docs/ARCHITECTURE.md`. GitHub issue: `#30`.
+
+### App icon and splash persist with the brand
+
+- Date: 2026-09-24.
+- Decision: The brand step saves an app icon and a splash image with the rest of the brand. The shared phone shows the in-memory draft immediately, then the saved https URL after upload, the same way the logo already works. Upload tries `POST /admin/stores/:storeId/branding/icon` and `.../branding/splash` first. The live branding contract stores logo, primary color, and secondary color. When those asset routes are missing, the file uses the existing signed store-image upload and the https URL is stored on a store-scoped dashboard record. Reload prefers `iconUrl` or `appIconUrl` and `splashUrl` or `splashImageUrl` from the branding payload when they are present. Shopify Admin tokens are not written. Build my app shows the icon with the app name. It does not show the splash, because that screen did not already show one.
+- Reason: Dashboard #35. Icon and splash were preview-only drafts, so a reload dropped them.
+- Impact: Onboarding and branding. Connect, Sync again, and Reconnect are unchanged. This does not start an EAS build. Human review is required because the brand save path and a backend upload are involved.
+- Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/STATUS.md`, `docs/ARCHITECTURE.md`. GitHub issue: `#35`.
 
 ### High-risk auth/store ownership/publishing changes require human review
 

@@ -5,14 +5,16 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useSession } from '@/lib/auth';
 import { tokenStorage } from '@/lib/api/mutator/custom-instance';
+import { mergeStoredBrandAssets } from '@/lib/onboarding/brandAssets';
 import {
   emptyBrandingDraft,
   fetchBranding,
-  fetchStoreName,
+  fetchStoreProfile,
   saveAppName,
   saveBrandColors,
+  saveStoredBrandAsset,
+  uploadBrandAsset,
   uploadLogo,
-  uploadOptionalBrandAsset,
 } from '@/lib/onboarding/branding';
 import {
   EMPTY_CATALOG,
@@ -81,11 +83,14 @@ export function OnboardingWizard() {
   const [starting, setStarting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [logoUploading, setLogoUploading] = useState(false);
+  const [iconUploading, setIconUploading] = useState(false);
+  const [splashUploading, setSplashUploading] = useState(false);
   const [primaryValid, setPrimaryValid] = useState(true);
   const [secondaryValid, setSecondaryValid] = useState(true);
-  const [splashFile, setSplashFile] = useState<File | null>(null);
-  const [iconFile, setIconFile] = useState<File | null>(null);
   const persistedLogoRef = useRef<string | null>(null);
+  const persistedIconRef = useRef<string | null>(null);
+  const persistedSplashRef = useRef<string | null>(null);
+  const assetRequestRef = useRef({ icon: 0, splash: 0 });
   const [reloadKey, setReloadKey] = useState(0);
   const [returnNotice, setReturnNotice] = useState<ShopifyReturnCopy | null>(() =>
     shopifyReturnCopy(searchParams.get('shopify'), searchParams.get('reason') ?? searchParams.get('error'))
@@ -147,10 +152,10 @@ export function OnboardingWizard() {
         return;
       }
 
-      const [snapshot, branding, storeName] = await Promise.all([
+      const [snapshot, branding, profile] = await Promise.all([
         loadShopifySnapshot(token, storeId),
         fetchBranding(storeId, token),
-        fetchStoreName(),
+        fetchStoreProfile(),
       ]);
       if (cancelled) return;
 
@@ -158,19 +163,26 @@ export function OnboardingWizard() {
       setCatalog(snapshot.catalog);
       if (!syncLock.current) setSync(snapshot.sync);
 
-      const fallbackName = (storeName || sessionName).trim();
+      const fallbackName = (profile.name || sessionName).trim();
       if (!branding) {
         setDraft(emptyBrandingDraft(fallbackName));
         persistedLogoRef.current = null;
+        persistedIconRef.current = null;
+        persistedSplashRef.current = null;
         setSavedName(fallbackName);
         setBrandingError('We could not load your brand. Try again before saving.');
       } else {
-        const next: BrandingDraft = {
-          ...branding,
-          appName: (branding.appName || fallbackName).trim(),
-        };
+        const next = mergeStoredBrandAssets(
+          {
+            ...branding,
+            appName: (branding.appName || fallbackName).trim(),
+          },
+          profile.brandAssets
+        );
         setDraft(next);
         persistedLogoRef.current = next.logoUrl;
+        persistedIconRef.current = next.iconUrl;
+        persistedSplashRef.current = next.splashUrl;
         setSavedName(next.appName);
         setSavedPrimary(next.primaryColor);
         setSavedSecondary(next.secondaryColor);
@@ -276,18 +288,73 @@ export function OnboardingWizard() {
   });
   const connectNotice = step === 'connect' ? returnNotice : null;
 
-  const rememberLocalImage = (kind: 'splash' | 'icon', file: File) => {
-    const nextUrl = URL.createObjectURL(file);
+  const handleBrandAsset = async (kind: 'icon' | 'splash', file: File) => {
+    const token = tokenStorage.getToken();
+    const label = kind === 'icon' ? 'app icon' : 'splash image';
+    if (!storeId || !token) {
+      setFieldError(`Sign in again to upload the ${label}.`);
+      return;
+    }
+
+    const requestId = ++assetRequestRef.current[kind];
+    const previewUrl = URL.createObjectURL(file);
+    const persistedRef = kind === 'icon' ? persistedIconRef : persistedSplashRef;
+    const setUploading = kind === 'icon' ? setIconUploading : setSplashUploading;
+
     setDraft((current) => {
-      const previous = kind === 'splash' ? current.splashUrl : current.iconUrl;
+      const previous = kind === 'icon' ? current.iconUrl : current.splashUrl;
       if (previous?.startsWith('blob:')) URL.revokeObjectURL(previous);
-      if (kind === 'splash') {
-        return { ...current, splashUrl: nextUrl, splashPersisted: false };
-      }
-      return { ...current, iconUrl: nextUrl, iconPersisted: false };
+      if (kind === 'icon') return { ...current, iconUrl: previewUrl, iconPersisted: false };
+      return { ...current, splashUrl: previewUrl, splashPersisted: false };
     });
-    if (kind === 'splash') setSplashFile(file);
-    else setIconFile(file);
+    setUploading(true);
+    setFieldError(null);
+
+    const uploaded = await uploadBrandAsset(storeId, token, kind, file);
+    if (assetRequestRef.current[kind] !== requestId) {
+      URL.revokeObjectURL(previewUrl);
+      return;
+    }
+
+    let url = uploaded.ok ? uploaded.url : null;
+    let saveError: string | null = null;
+    if (url) {
+      const saved = await saveStoredBrandAsset(kind, url);
+      if (!saved.ok) {
+        url = null;
+        saveError = saved.error;
+      }
+    }
+
+    if (assetRequestRef.current[kind] !== requestId) {
+      URL.revokeObjectURL(previewUrl);
+      return;
+    }
+
+    setUploading(false);
+    if (!url) {
+      URL.revokeObjectURL(previewUrl);
+      setDraft((current) => {
+        const showing = kind === 'icon' ? current.iconUrl : current.splashUrl;
+        if (showing !== previewUrl) return current;
+        if (kind === 'icon') return { ...current, iconUrl: persistedRef.current, iconPersisted: true };
+        return { ...current, splashUrl: persistedRef.current, splashPersisted: true };
+      });
+      setFieldError(saveError ?? uploaded.error ?? `We could not upload the ${label}.`);
+      return;
+    }
+
+    const persistedUrl = url;
+    let applied = false;
+    setDraft((current) => {
+      const showing = kind === 'icon' ? current.iconUrl : current.splashUrl;
+      if (showing !== previewUrl) return current;
+      applied = true;
+      if (kind === 'icon') return { ...current, iconUrl: persistedUrl, iconPersisted: true };
+      return { ...current, splashUrl: persistedUrl, splashPersisted: true };
+    });
+    if (applied) persistedRef.current = persistedUrl;
+    URL.revokeObjectURL(previewUrl);
   };
 
   const handleLogoFile = async (file: File) => {
@@ -383,29 +450,7 @@ export function OnboardingWizard() {
       setSavedSecondary(saved.draft?.secondaryColor ?? draft.secondaryColor);
     }
 
-    let next = { ...draft, appName: name };
-    if (splashFile) {
-      const uploaded = await uploadOptionalBrandAsset(storeId, token, 'splash', splashFile);
-      if (uploaded.persisted && uploaded.url) {
-        if (next.splashUrl?.startsWith('blob:')) URL.revokeObjectURL(next.splashUrl);
-        next = { ...next, splashUrl: uploaded.url, splashPersisted: true };
-        setSplashFile(null);
-      } else {
-        next = { ...next, splashPersisted: false };
-      }
-    }
-    if (iconFile) {
-      const uploaded = await uploadOptionalBrandAsset(storeId, token, 'icon', iconFile);
-      if (uploaded.persisted && uploaded.url) {
-        if (next.iconUrl?.startsWith('blob:')) URL.revokeObjectURL(next.iconUrl);
-        next = { ...next, iconUrl: uploaded.url, iconPersisted: true };
-        setIconFile(null);
-      } else {
-        next = { ...next, iconPersisted: false };
-      }
-    }
-
-    setDraft(next);
+    setDraft((current) => ({ ...current, appName: name }));
     setSaving(false);
     go('preview');
   };
@@ -461,14 +506,16 @@ export function OnboardingWizard() {
               fieldError={fieldError}
               saving={saving}
               logoUploading={logoUploading}
+              iconUploading={iconUploading}
+              splashUploading={splashUploading}
               primaryValid={primaryValid}
               secondaryValid={secondaryValid}
               onDraftChange={setDraft}
               onPrimaryValidity={setPrimaryValid}
               onSecondaryValidity={setSecondaryValid}
               onLogoFile={handleLogoFile}
-              onSplashFile={(file) => rememberLocalImage('splash', file)}
-              onIconFile={(file) => rememberLocalImage('icon', file)}
+              onSplashFile={(file) => void handleBrandAsset('splash', file)}
+              onIconFile={(file) => void handleBrandAsset('icon', file)}
               onImageError={setFieldError}
               onBack={() => go('connect')}
               onContinue={handleSaveBrand}
@@ -486,6 +533,7 @@ export function OnboardingWizard() {
             />
           ) : (
             <ReadyStep
+              draft={draft}
               connection={connection}
               sync={sync}
               productCount={catalog.productCount}
