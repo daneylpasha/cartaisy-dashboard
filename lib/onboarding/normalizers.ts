@@ -2,6 +2,7 @@ import {
   ONBOARDING_STEPS,
   type BuildEligibilityReason,
   type BuildRequestAvailability,
+  type CatalogPreviewProduct,
   type LockedCatalog,
   type OnboardingStep,
   type ShopifyConnectionSnapshot,
@@ -21,7 +22,11 @@ export const EMPTY_CATALOG: LockedCatalog = {
   productCount: null,
   orderCount: null,
   collections: [],
+  products: [],
 };
+
+/** Preview shelf size. The phone is a two-column grid. */
+export const PREVIEW_PRODUCT_LIMIT = 4;
 
 export const UNAVAILABLE_SYNC: SyncGate = {
   state: 'unavailable',
@@ -249,6 +254,258 @@ export function normalizeCollectionNames(payload: unknown, ok: boolean): string[
     if (name) names.push(name);
   }
   return names;
+}
+
+function readAmount(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value) && value >= 0) return value;
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!/^\d+(\.\d+)?$/.test(trimmed)) return null;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function readCurrency(value: unknown): string | null {
+  const text = readString(value);
+  if (!text || !/^[A-Za-z]{3}$/.test(text)) return null;
+  return text.toUpperCase();
+}
+
+function isKnownCurrency(code: string): boolean {
+  try {
+    return typeof Intl.supportedValuesOf === 'function' && Intl.supportedValuesOf('currency').includes(code);
+  } catch {
+    return false;
+  }
+}
+
+/** Formats a preview price. Invalid currency codes fall back to a plain amount. */
+export function formatPreviewPrice(amount: number, currency: string | null): string | null {
+  if (!Number.isFinite(amount) || amount < 0) return null;
+  const code = currency && /^[A-Za-z]{3}$/.test(currency) ? currency.toUpperCase() : null;
+  if (code && isKnownCurrency(code)) {
+    try {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: code }).format(amount);
+    } catch {
+      // Unknown ISO code. Show the amount without a symbol.
+    }
+  }
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+function safeProductImage(value: string | null): string | null {
+  const url = safeImageUrl(value);
+  if (!url) return null;
+  if (/shpat_|shpss_|shpca_|shpct_|shpua_|access_token|bearer\s/i.test(url)) return null;
+  return url;
+}
+
+function imageFromUnknown(value: unknown): string | null {
+  if (typeof value === 'string') return safeProductImage(value);
+  const record = asRecord(value);
+  if (!record) return null;
+  return safeProductImage(
+    readString(record.url) ??
+      readString(record.src) ??
+      readString(record.originalSrc) ??
+      readString(record.srcUrl)
+  );
+}
+
+function readProductImage(record: Record<string, unknown>): string | null {
+  const mobile = asRecord(record.mobileDisplay);
+  const direct = [
+    record.imageUrl,
+    record.image,
+    record.featuredImage,
+    record.thumbnailUrl,
+    mobile?.thumbnailUrl,
+    mobile?.imageUrl,
+  ];
+  for (const candidate of direct) {
+    const url = imageFromUnknown(candidate);
+    if (url) return url;
+  }
+
+  if (!Array.isArray(record.images)) return null;
+  const ranked = [...record.images].sort((left, right) => {
+    const leftRecord = asRecord(left);
+    const rightRecord = asRecord(right);
+    const leftPosition = typeof leftRecord?.position === 'number' ? leftRecord.position : 999;
+    const rightPosition = typeof rightRecord?.position === 'number' ? rightRecord.position : 999;
+    return leftPosition - rightPosition;
+  });
+  for (const item of ranked) {
+    const url = imageFromUnknown(item);
+    if (url) return url;
+  }
+  return null;
+}
+
+function readMoney(record: Record<string, unknown>): { amount: number; currency: string | null } | null {
+  const currency = readCurrency(record.currency) ?? readCurrency(record.currencyCode);
+  const direct = readAmount(record.price);
+  if (direct !== null) return { amount: direct, currency };
+
+  const priceObject = asRecord(record.price);
+  if (priceObject) {
+    const amount = readAmount(priceObject.amount) ?? readAmount(priceObject.value);
+    if (amount !== null) {
+      return {
+        amount,
+        currency: readCurrency(priceObject.currencyCode) ?? readCurrency(priceObject.currency) ?? currency,
+      };
+    }
+  }
+
+  const range = asRecord(record.priceRange);
+  const min = asRecord(range?.minVariantPrice) ?? asRecord(range?.min);
+  if (min) {
+    const amount = readAmount(min.amount) ?? readAmount(min.value);
+    if (amount !== null) {
+      return {
+        amount,
+        currency: readCurrency(min.currencyCode) ?? readCurrency(min.currency) ?? currency,
+      };
+    }
+  }
+
+  if (!Array.isArray(record.variants)) return null;
+  for (const variant of record.variants) {
+    const item = asRecord(variant);
+    if (!item) continue;
+    const nested = asRecord(item.price);
+    const amount = readAmount(item.price) ?? (nested ? readAmount(nested.amount) : null);
+    if (amount === null) continue;
+    return {
+      amount,
+      currency: readCurrency(item.currency) ?? (nested ? readCurrency(nested.currencyCode) : null) ?? currency,
+    };
+  }
+  return null;
+}
+
+function readProductId(value: unknown): string | null {
+  const text = readString(value);
+  if (text) return text.length > 80 ? text.slice(0, 80) : text;
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  const record = asRecord(value);
+  if (!record) return null;
+  return readString(record.$oid) ?? readString(record.id);
+}
+
+function unwrapProductNode(item: unknown): unknown {
+  const record = asRecord(item);
+  const node = record ? asRecord(record.node) : null;
+  return node ?? item;
+}
+
+function readProductList(payload: unknown): unknown[] {
+  const root = asRecord(payload);
+  const dataField = root ? (root.data ?? root) : null;
+  if (Array.isArray(dataField)) return dataField.map(unwrapProductNode);
+
+  const data = readData(payload);
+  if (!data) return [];
+
+  const listKeys = ['previewProducts', 'recentProducts', 'featuredProducts', 'products'] as const;
+  const nestedKeys = ['items', 'results', 'list', 'nodes', 'edges'] as const;
+  for (const key of listKeys) {
+    const value = data[key];
+    if (Array.isArray(value)) return value.map(unwrapProductNode);
+    const record = asRecord(value);
+    if (!record) continue;
+    for (const nested of nestedKeys) {
+      if (Array.isArray(record[nested])) return record[nested].map(unwrapProductNode);
+    }
+  }
+  return [];
+}
+
+/**
+ * Products for the preview phone.
+ * Accepts GET /products (`data.products[]`) and an overview payload that
+ * nests a list under `products.items` (or `recentProducts` / `featuredProducts`).
+ * A count object such as `{ products: { total } }` yields no tiles.
+ * Image URLs must be http(s). Token-shaped URLs are dropped.
+ */
+export function normalizePreviewProducts(payload: unknown, ok: boolean): CatalogPreviewProduct[] {
+  if (!ok) return [];
+  const products: CatalogPreviewProduct[] = [];
+  for (const item of readProductList(payload)) {
+    if (products.length >= PREVIEW_PRODUCT_LIMIT) break;
+    const record = asRecord(item);
+    if (!record) continue;
+    const title = readString(record.title) ?? readString(record.name);
+    if (!title) continue;
+    const rawId = readProductId(record.id ?? record._id ?? record.productId ?? record.handle);
+    const id =
+      rawId && !/shpat_|shpss_|access_token/i.test(rawId) ? rawId : `preview-${products.length + 1}`;
+    const money = readMoney(record);
+    products.push({
+      id,
+      title: title.length > 160 ? title.slice(0, 160) : title,
+      imageUrl: readProductImage(record),
+      priceLabel: money ? formatPreviewPrice(money.amount, money.currency) : null,
+    });
+  }
+  return products;
+}
+
+export type PreviewShelf =
+  | { kind: 'loading'; message: string }
+  | { kind: 'empty'; message: string }
+  | { kind: 'products' };
+
+/** What the preview phone should draw for the product shelf. */
+export function previewShelf(
+  sync: SyncGate,
+  products: readonly CatalogPreviewProduct[],
+  pending = false
+): PreviewShelf {
+  if (pending) return { kind: 'loading', message: 'Loading your products' };
+  switch (sync.state) {
+    case 'in_progress':
+      return { kind: 'loading', message: 'Syncing your catalog' };
+    case 'succeeded':
+      return products.length > 0
+        ? { kind: 'products' }
+        : { kind: 'empty', message: 'No products in this catalog yet.' };
+    case 'failed':
+      return { kind: 'empty', message: 'Products show here after a successful sync.' };
+    case 'unavailable':
+      return { kind: 'empty', message: 'Products show here after we can confirm sync.' };
+    case 'not_started':
+      return { kind: 'empty', message: 'Products show here after your store syncs.' };
+  }
+}
+
+/** Copy under the phone. Real products do not get a sample-catalog apology. */
+export function previewFootnote(catalog: LockedCatalog, sync: SyncGate, pending = false): string {
+  if (!pending && sync.state === 'succeeded' && catalog.products.length > 0) {
+    if (catalog.collections.length > 0) return 'Collection names shown here cannot be edited.';
+    return 'These products are from your synced catalog.';
+  }
+  return 'Your name, colors, and images are on this preview.';
+}
+
+/** Left-column sentence on the preview step. */
+export function previewStepDetail(
+  sync: SyncGate,
+  products: readonly CatalogPreviewProduct[],
+  pending = false
+): string {
+  const shelf = previewShelf(sync, products, pending);
+  if (shelf.kind === 'products') return 'Featured products are from your synced catalog.';
+  if (shelf.kind === 'loading') {
+    return pending ? 'Loading your products.' : 'Your catalog is still syncing.';
+  }
+  if (sync.state === 'succeeded') return 'Your catalog synced. Nothing is on the shelf yet.';
+  if (sync.state === 'failed') return 'The last sync did not succeed. Products show here after it does.';
+  return 'Products show here after a successful sync.';
 }
 
 export function normalizeShopDomainInput(input: string): string | null {
