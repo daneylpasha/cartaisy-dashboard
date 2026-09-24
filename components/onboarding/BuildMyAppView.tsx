@@ -1,5 +1,6 @@
 'use client';
 
+import { Check } from 'lucide-react';
 import {
   ACCESS_NOTES_MAX,
   isSettledBuildRequest,
@@ -65,17 +66,29 @@ function PlatformRow({
   status: PlatformStatus | 'unknown' | null;
   onChange: (value: boolean) => void;
 }) {
+  const box = checked
+    ? 'border-slate-950 bg-slate-950 text-white'
+    : locked
+      ? 'border-slate-200 bg-slate-50'
+      : 'border-slate-300 bg-white';
+
   return (
-    <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 px-4 py-3.5">
-      <label className="flex min-w-0 items-center gap-3">
+    <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3.5">
+      <label className={`flex min-w-0 items-center gap-3 ${locked ? 'cursor-default' : 'cursor-pointer'}`}>
         <input
           type="checkbox"
           name={platform}
           checked={checked}
           disabled={locked}
           onChange={(event) => onChange(event.target.checked)}
-          className="h-4 w-4 shrink-0 accent-slate-950 disabled:cursor-not-allowed"
+          className="peer sr-only"
         />
+        <span
+          aria-hidden
+          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border peer-focus-visible:ring-2 peer-focus-visible:ring-slate-400 peer-focus-visible:ring-offset-2 ${box}`}
+        >
+          {checked ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
+        </span>
         <span className="text-sm font-medium text-slate-950">{label}</span>
       </label>
       {status && (
@@ -109,7 +122,15 @@ export function BuildMyAppView({
   onRetry,
 }: BuildMyAppViewProps) {
   if (phase === 'loading') {
-    return <p className="mt-8 text-sm text-slate-600">Loading your build...</p>;
+    return (
+      <div className="mt-8" aria-busy="true">
+        <p className="text-sm text-slate-600">Loading your build...</p>
+        <div className="mt-6 space-y-2" aria-hidden>
+          <div className="h-[52px] rounded-xl border border-slate-200 bg-slate-50" />
+          <div className="h-[52px] rounded-xl border border-slate-200 bg-slate-50" />
+        </div>
+      </div>
+    );
   }
 
   if (phase === 'error') {

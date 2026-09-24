@@ -39,7 +39,7 @@ export function ReadyStep({
         onRefreshConnection={onRefreshConnection}
       />
 
-      <div className="mt-10 flex items-center justify-between border-t border-slate-100 pt-6">
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-slate-100 pt-6">
         <button
           type="button"
           onClick={onBack}

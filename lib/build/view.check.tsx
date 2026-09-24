@@ -120,6 +120,7 @@ const waiting = html({
 });
 assert.ok(waiting.includes('Waiting on you'));
 assert.ok(waiting.includes('Waiting on Apple'));
+assert.equal((waiting.match(/checked=""/g) ?? []).length, 2);
 assert.equal(waiting.includes('>Build my app<'), false);
 assert.ok(waiting.includes('Apple developer invite sent.'));
 assertCalm(waiting);
