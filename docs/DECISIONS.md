@@ -67,9 +67,17 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 ### Onboarding wizard does not store Shopify access tokens
 
 - Date: 2026-09-23. Updated the same day after backend #157 merged.
-- Decision: The post-signup wizard (`/dashboard/onboarding`) must not write Shopify access tokens into dashboard Mongo. Connect stays in `lib/onboarding/shopifyConnect.ts`. `liveRedirectEnabled` is true: Connect Shopify opens the backend authorize URL. The wizard shell (steps, chrome, branding, preview, ready) stays as dashboard #16 / PR #18. "Build my app" stays disabled until normalized sync status is `succeeded`, and even then it does not call a build API (dashboard #17).
-- Reason: Dual token ownership is unsafe, and the build request screen is a separate issue. The live return path is the merged backend callback plus `SHOPIFY_OAUTH_RETURN_URL`, not a second OAuth implementation.
+- Decision: The post-signup wizard (`/dashboard/onboarding`) must not write Shopify access tokens into dashboard Mongo. Connect stays in `lib/onboarding/shopifyConnect.ts`. `liveRedirectEnabled` is true: Connect Shopify opens the backend authorize URL. The wizard shell (steps, chrome, branding, preview, ready) stays as dashboard #16 / PR #18. The ready step's build behavior is the later decision below; this decision no longer keeps the button from calling a build API.
+- Reason: Dual token ownership is unsafe. The live return path is the merged backend callback plus `SHOPIFY_OAUTH_RETURN_URL`, not a second OAuth implementation.
 - Impact: Settings connect is also backend-only and does not persist a dashboard token. New onboarding work must keep using the isolated client.
+
+### Build my app v1 is a tracked request with polled status
+
+- Date: 2026-09-23.
+- Decision: The merchant Build my app screen submits a tracked request for Android, iOS, or both and shows live per-platform status. v1 does not start EAS, App Store Connect, or Play Console. Eligibility is `GET /api/v1/shopify/sync` `eligibleForBuild` plus a connected Shopify store. `shopify.lastSyncAt` is not success. `waiting_on_merchant` is shown as Waiting on Apple on iOS and Waiting on you on Android. The only checklist field is a short access note.
+- Reason: Dashboard #17 and backend `docs/cartaisy/BUILD_REQUEST_API.md` (issue #155 / PR #159). Android can be ready while iOS is still waiting on Apple.
+- Impact: The ready step calls `POST /api/v1/build-requests` and polls `GET /api/v1/build-requests/:id`. It does not call `PATCH /api/v1/admin/build-requests/:id/status`. Ineligible stores see Connect Shopify or Sync again instead of a successful submit. This is onboarding and a backend API contract; it does not change token storage.
+- Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/STATUS.md`, `docs/ARCHITECTURE.md`. GitHub issues: dashboard `#17`; backend `#154`, `#155`.
 - Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/STATUS.md`, `docs/ARCHITECTURE.md`. GitHub issues: dashboard `#15`, `#16`, `#17`; backend `#152`, `#153`.
 
 ### High-risk auth/store ownership/publishing changes require human review

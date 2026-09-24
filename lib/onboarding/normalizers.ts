@@ -1,5 +1,6 @@
 import {
   ONBOARDING_STEPS,
+  type BuildEligibilityReason,
   type BuildRequestAvailability,
   type LockedCatalog,
   type OnboardingStep,
@@ -25,7 +26,32 @@ export const EMPTY_CATALOG: LockedCatalog = {
 export const UNAVAILABLE_SYNC: SyncGate = {
   state: 'unavailable',
   detail: null,
+  eligibleForBuild: false,
+  eligibilityReason: null,
 };
+
+const CATALOG_SYNC_STATUSES = new Set(['idle', 'syncing', 'succeeded', 'failed']);
+
+function closedGate(state: SyncGateState, detail: string | null = null): SyncGate {
+  return {
+    state,
+    detail,
+    eligibleForBuild: false,
+    eligibilityReason: null,
+  };
+}
+
+function eligibilityReasonOf(value: unknown): BuildEligibilityReason | null {
+  if (value === 'shopify_not_connected' || value === 'catalog_sync_not_succeeded') return value;
+  return null;
+}
+
+/** Drops token-shaped text. `errorSummary` from catalog sync is otherwise safe to show. */
+function safeSyncDetail(value: string | null): string | null {
+  if (!value || value.length > 180) return null;
+  if (/shpat_|shpss_|shpca_|shpct_|shpua_|access_token|bearer\s/i.test(value)) return null;
+  return value;
+}
 
 export function isOnboardingStep(value: string | null): value is OnboardingStep {
   return ONBOARDING_STEPS.some((step) => step === value);
@@ -113,13 +139,51 @@ function explicitSyncState(value: string): SyncGateState | null {
 }
 
 /**
- * Accepts today's in-memory sync payload (`inProgress`, `lastFullSync`, `errors`)
- * and a future explicit `state` / `status` string from backend #154.
+ * Durable catalog sync from GET /api/v1/shopify/sync.
+ * `eligibleForBuild` is taken only from that field, and only when status is
+ * `succeeded`. `lastSyncAt` and `lastSucceededAt` do not count as success.
+ * A failed HTTP response still parses when the body includes this shape
+ * (for example POST sync returning 502 with `status: failed`).
+ */
+function normalizeDurableCatalogSync(data: Record<string, unknown>): SyncGate | null {
+  const rawStatus = readString(data.status)?.toLowerCase() ?? null;
+  const catalogStatus = rawStatus && CATALOG_SYNC_STATUSES.has(rawStatus) ? rawStatus : null;
+  const hasEligibility = 'eligibleForBuild' in data || 'eligibilityReason' in data;
+  if (!catalogStatus && !hasEligibility) return null;
+
+  const status = catalogStatus ?? 'idle';
+  const state: SyncGateState =
+    status === 'succeeded'
+      ? 'succeeded'
+      : status === 'syncing'
+        ? 'in_progress'
+        : status === 'failed'
+          ? 'failed'
+          : 'not_started';
+  const eligible = data.eligibleForBuild === true && status === 'succeeded';
+  const reason = eligible ? null : eligibilityReasonOf(data.eligibilityReason);
+
+  return {
+    state,
+    detail: state === 'failed' ? safeSyncDetail(readString(data.errorSummary)) : null,
+    eligibleForBuild: eligible,
+    eligibilityReason: reason,
+  };
+}
+
+/**
+ * Accepts the durable catalog sync payload (`status`, `eligibleForBuild`) and
+ * the older in-memory sync payload (`inProgress`, `lastFullSync`, `errors`).
+ * The in-memory shape never sets `eligibleForBuild`.
  */
 export function normalizeSyncStatus(payload: unknown, ok: boolean): SyncGate {
-  if (!ok) return UNAVAILABLE_SYNC;
   const data = readData(payload);
-  if (!data) return UNAVAILABLE_SYNC;
+  if (data) {
+    const durable = normalizeDurableCatalogSync(data);
+    if (durable) return durable;
+  }
+
+  if (!ok || !data) return UNAVAILABLE_SYNC;
 
   const explicit =
     readString(data.state) ??
@@ -129,7 +193,7 @@ export function normalizeSyncStatus(payload: unknown, ok: boolean): SyncGate {
   if (explicit) {
     const state = explicitSyncState(explicit);
     if (state) {
-      return { state, detail: readString(data.message) ?? readString(data.detail) };
+      return closedGate(state, readString(data.message) ?? readString(data.detail));
     }
   }
 
@@ -141,10 +205,10 @@ export function normalizeSyncStatus(payload: unknown, ok: boolean): SyncGate {
   const errors = Array.isArray(data.errors) ? data.errors : [];
   const completed = Boolean(data.lastFullSync || data.lastIncrementalSync);
 
-  if (inProgress) return { state: 'in_progress', detail: null };
-  if (errors.length > 0) return { state: 'failed', detail: null };
-  if (completed) return { state: 'succeeded', detail: null };
-  return { state: 'not_started', detail: null };
+  if (inProgress) return closedGate('in_progress');
+  if (errors.length > 0) return closedGate('failed');
+  if (completed) return closedGate('succeeded');
+  return closedGate('not_started');
 }
 
 export function normalizeCatalog(payload: unknown, ok: boolean): Pick<LockedCatalog, 'productCount' | 'orderCount'> {
@@ -266,31 +330,59 @@ export function readableTextOn(hex: string): '#111111' | '#ffffff' {
   return luminance > 0.64 ? '#111111' : '#ffffff';
 }
 
-export function buildRequestAvailability(sync: SyncGate): BuildRequestAvailability {
-  if (sync.state === 'succeeded') {
-    return { enabled: true, reason: null };
+/**
+ * Submit stays off unless catalog sync succeeded and Shopify is connected.
+ * Connection is the wizard snapshot from GET /shopify/status. When it is
+ * omitted, eligibility follows the sync payload alone.
+ */
+export function buildRequestAvailability(
+  sync: SyncGate,
+  connection?: { isConnected: boolean; statusKnown: boolean }
+): BuildRequestAvailability {
+  const shopifyConfirmed = !connection || (connection.statusKnown && connection.isConnected);
+  if (sync.eligibleForBuild && shopifyConfirmed) {
+    return { enabled: true, reason: null, action: null };
   }
-  if (sync.state === 'unavailable') {
+
+  const disconnected =
+    sync.eligibilityReason === 'shopify_not_connected' ||
+    (connection?.statusKnown === true && connection.isConnected === false);
+  if (disconnected) {
     return {
       enabled: false,
-      reason: 'Build stays off until we can confirm your store has synced.',
+      action: 'connect',
+      reason: 'Connect Shopify before requesting a build.',
     };
   }
+
+  if (sync.state === 'unavailable' || (connection && !connection.statusKnown && !sync.eligibilityReason)) {
+    return {
+      enabled: false,
+      action: 'retry',
+      reason: 'We could not confirm your catalog sync. Try again.',
+    };
+  }
+
   if (sync.state === 'in_progress') {
     return {
       enabled: false,
-      reason: 'Your store is still syncing. Build stays off until that finishes.',
+      action: 'sync',
+      reason: 'Syncing your catalog…',
     };
   }
+
   if (sync.state === 'failed') {
     return {
       enabled: false,
-      reason: 'The last sync did not succeed. Build stays off until a sync succeeds.',
+      action: 'sync',
+      reason: sync.detail ?? 'The last sync did not succeed. Use Sync again.',
     };
   }
+
   return {
     enabled: false,
-    reason: 'Build stays off until your store has synced.',
+    action: 'sync',
+    reason: 'Your catalog has not synced yet. Use Sync again.',
   };
 }
 

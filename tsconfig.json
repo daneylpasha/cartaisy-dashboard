@@ -31,5 +31,10 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "lib/onboarding/normalizers.check.ts"]
+  "exclude": [
+    "node_modules",
+    "lib/onboarding/normalizers.check.ts",
+    "lib/build/contract.check.ts",
+    "lib/build/view.check.tsx"
+  ]
 }

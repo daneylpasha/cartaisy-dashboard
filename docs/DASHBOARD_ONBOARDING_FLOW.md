@@ -12,7 +12,7 @@
 - The guided wizard at `app/dashboard/onboarding/page.tsx` is the post-signup path: Connect Shopify, confirm brand, preview a starting home, then a ready-for-build step. It does not replace invite signup and it does not require the home module editor. The wizard shell comes from dashboard #16 / PR #18. This change does not restyle it.
 - Connect stays in `lib/onboarding/shopifyConnect.ts` and calls backend Shopify routes only. `liveRedirectEnabled` is true. Connect Shopify opens the authorize URL from `POST /api/v1/shopify/oauth/connect`. The merged backend ignores a client `returnTo` and sends the browser to `SHOPIFY_OAUTH_RETURN_URL`, adding `shopify=connected` or `shopify=error` plus `reason`. The connect step reads that query. This wizard does not write `shopify.accessToken` in dashboard Mongo.
 - Branding reuses `GET`/`PATCH /admin/stores/:storeId/branding` and `POST .../branding/logo` for colors and logo. App name is saved with `PATCH /api/store` `{ name }`. Splash and icon upload to `.../branding/splash` and `.../branding/icon` when those routes exist; otherwise they stay in the preview for the session.
-- The ready step keeps "Build my app" disabled until a normalized sync status is `succeeded`. Clicking it when enabled only explains that the build request screen is not open yet. It does not call a build API.
+- The ready step is the Build my app screen. It calls `POST /api/v1/build-requests` with Android and iOS booleans and an optional access note, then polls `GET /api/v1/build-requests/:id` until each requested platform is ready or failed. Submit stays disabled unless `GET /api/v1/shopify/sync` says `eligibleForBuild` and Shopify is connected. `shopify.lastSyncAt` does not enable it.
 - Store setup can still continue through dashboard settings. That Shopify card also uses the backend and does not persist an access token. Reconnect and Sync again are one button each.
 
 ## Target state:
@@ -34,13 +34,13 @@
 
 - Do not assume any feature or behavior described above is implemented unless verified in the current code.
 - The wizard is a guided setup path, not a canonical persisted readiness record. Leaving and returning does not remember an "onboarding complete" flag.
-- Live Shopify connect from the wizard is on. The merchant still can continue to branding with a sync warning. Build stays off until sync succeeded, including when the sync status API cannot be read. The browser returns to the wizard only when backend `SHOPIFY_OAUTH_RETURN_URL` points at `/dashboard/onboarding?step=connect`.
+- Live Shopify connect from the wizard is on. The merchant still can continue to branding with a sync warning. Build stays off until `GET /api/v1/shopify/sync` reports a succeeded catalog sync and Shopify is connected, including when that status cannot be read. The browser returns to the wizard only when backend `SHOPIFY_OAUTH_RETURN_URL` points at `/dashboard/onboarding?step=connect`.
 - Splash and app icon are not fields on the current branding API. The wizard keeps them editable for preview and will persist them if those upload routes start returning 200.
 - Token master-admin authorization is implemented with hard-coded real email identifiers in audited files; this is both an operational ownership concern and a security/PII concern because source-embedded identifiers persist in git history and may appear in client bundle analysis. Future work should move this allowlist to a server-side environment variable or database-backed admin record instead of expanding the in-source list.
 - Historical access tokens that were written by the old dashboard callback are not migrated. A store that was connected only in that database shows as disconnected until the merchant connects again.
 - Branding/theme setup beyond logo, timezone, and currency was not verified.
 - Product picker was not identified.
-- Preview exists; build/release handoff was not identified.
+- Preview exists. The ready step requests a tracked build and shows live status. App-store submission was not identified.
 - Email delivery depends on provider configuration; no env example was found.
 
 ## Related docs/issues:

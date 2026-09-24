@@ -45,6 +45,8 @@ assert.equal(unknown.statusKnown, false);
 assert.deepEqual(normalizeSyncStatus({ data: { state: 'succeeded' } }, true), {
   state: 'succeeded',
   detail: null,
+  eligibleForBuild: false,
+  eligibilityReason: null,
 });
 
 assert.equal(
@@ -71,6 +73,28 @@ assert.equal(
 );
 
 assert.equal(normalizeSyncStatus({ data: { unexpected: true } }, true).state, 'unavailable');
+assert.equal(
+  normalizeSyncStatus({ data: { lastSyncAt: '2026-09-23T00:00:00.000Z' } }, true).eligibleForBuild,
+  false
+);
+assert.equal(
+  normalizeSyncStatus({ data: { lastSyncAt: '2026-09-23T00:00:00.000Z' } }, true).state,
+  'unavailable'
+);
+assert.equal(
+  normalizeSyncStatus(
+    {
+      data: {
+        status: 'failed',
+        eligibleForBuild: false,
+        eligibilityReason: 'catalog_sync_not_succeeded',
+        errorSummary: 'shpat_secret leaked',
+      },
+    },
+    false
+  ).detail,
+  null
+);
 assert.equal(normalizeSyncStatus(null, false).state, 'unavailable');
 
 assert.deepEqual(
@@ -102,9 +126,98 @@ assert.equal(
 assert.equal(readAuthorizationUrl({ data: { authorizationUrl: 'https://evil.example/steal' } }), null);
 assert.equal(readAuthorizationUrl({ data: { authorizationUrl: 'javascript:alert(1)' } }), null);
 
-assert.equal(buildRequestAvailability({ state: 'succeeded', detail: null }).enabled, true);
-assert.equal(buildRequestAvailability({ state: 'not_started', detail: null }).enabled, false);
-assert.equal(buildRequestAvailability({ state: 'unavailable', detail: null }).enabled, false);
+assert.equal(
+  normalizeSyncStatus(
+    {
+      data: {
+        status: 'succeeded',
+        eligibleForBuild: true,
+        eligibilityReason: null,
+        lastSyncAt: '2026-09-23T00:00:00.000Z',
+      },
+    },
+    true
+  ).eligibleForBuild,
+  true
+);
+
+const idleDespiteTimestamps = normalizeSyncStatus(
+  {
+    data: {
+      status: 'idle',
+      eligibleForBuild: false,
+      eligibilityReason: 'catalog_sync_not_succeeded',
+      lastSyncAt: '2026-09-23T00:00:00.000Z',
+      lastSucceededAt: '2026-09-01T00:00:00.000Z',
+    },
+  },
+  true
+);
+assert.equal(idleDespiteTimestamps.state, 'not_started');
+assert.equal(idleDespiteTimestamps.eligibleForBuild, false);
+
+const succeededButDisconnected = normalizeSyncStatus(
+  {
+    data: {
+      status: 'succeeded',
+      eligibleForBuild: false,
+      eligibilityReason: 'shopify_not_connected',
+      lastSyncAt: '2026-09-23T00:00:00.000Z',
+    },
+  },
+  true
+);
+assert.equal(succeededButDisconnected.eligibleForBuild, false);
+assert.equal(succeededButDisconnected.eligibilityReason, 'shopify_not_connected');
+
+assert.equal(
+  normalizeSyncStatus(
+    { data: { inProgress: false, errors: [], lastFullSync: '2026-09-01T00:00:00.000Z' } },
+    true
+  ).eligibleForBuild,
+  false
+);
+
+const eligibleSync = {
+  state: 'succeeded' as const,
+  detail: null,
+  eligibleForBuild: true,
+  eligibilityReason: null,
+};
+assert.equal(buildRequestAvailability(eligibleSync, connected).enabled, true);
+assert.equal(buildRequestAvailability(eligibleSync, disconnected).enabled, false);
+assert.equal(buildRequestAvailability(eligibleSync, disconnected).action, 'connect');
+assert.equal(
+  buildRequestAvailability({
+    state: 'succeeded',
+    detail: null,
+    eligibleForBuild: false,
+    eligibilityReason: null,
+  }).enabled,
+  false
+);
+assert.equal(
+  buildRequestAvailability({
+    state: 'not_started',
+    detail: null,
+    eligibleForBuild: false,
+    eligibilityReason: 'catalog_sync_not_succeeded',
+  }).action,
+  'sync'
+);
+assert.equal(
+  buildRequestAvailability({
+    state: 'unavailable',
+    detail: null,
+    eligibleForBuild: false,
+    eligibilityReason: null,
+  }).action,
+  'retry'
+);
+assert.equal(
+  buildRequestAvailability(succeededButDisconnected, connected).action,
+  'connect'
+);
 
 assert.equal(
   onboardingSyncWarning({
