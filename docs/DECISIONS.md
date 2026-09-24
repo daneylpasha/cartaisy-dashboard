@@ -88,6 +88,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Middleware calls the backend status route with the existing session bearer token and does not read or write a Shopify access token. The dashboard shell and Home use that same connected/disconnected fact. Orders, customers, collections, analytics, and the app builder stay linked before connect. In the sidebar they sit behind an "After you connect" disclosure so a new merchant is not faced with a wall of empty tools. Opening the disclosure, or going to the URL directly, still works. Human review still applies because this changes where a session lands after login.
 - Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/ARCHITECTURE.md`, `docs/STATUS.md`.
 
+### Login and signup use the setup wizard's calm card
+
+- Date: 2026-09-24.
+- Decision: `/login` and `/signup` share a centered card (about 440px) on the neutral `#f5f5f6` surface already used by the setup wizard. They use the existing shadcn card, input, and primary button. They do not stretch full-bleed, and they do not use a separate dark or purple marketing theme.
+- Reason: The live invite signup page stretched to the browser width on a black shell, so the form and primary button looked unfinished against Cartaisy's calm, white-label chrome.
+- Impact: Presentation only. Onboarding token validation, account creation, and sign-in behavior stay as they are. Invite fields remain locked when the token pre-fills them.
+- Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/ARCHITECTURE.md`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

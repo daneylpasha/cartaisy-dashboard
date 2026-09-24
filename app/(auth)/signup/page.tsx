@@ -4,16 +4,78 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Eye, EyeOff, CheckCircle2, XCircle, Loader2, ShieldX, Clock } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle2, Circle, Loader2, ShieldX, Clock } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface TokenData {
   email: string;
   storeName?: string;
   expiresAt: string;
+}
+
+const lockedFieldClass =
+  'disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-800 disabled:opacity-100';
+
+function PasswordInput({
+  id,
+  value,
+  onChange,
+  shown,
+  onToggle,
+  placeholder,
+  disabled,
+  autoComplete,
+}: {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  shown: boolean;
+  onToggle: () => void;
+  placeholder: string;
+  disabled: boolean;
+  autoComplete: string;
+}) {
+  return (
+    <div className="relative">
+      <Input
+        id={id}
+        type={shown ? 'text' : 'password'}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        autoComplete={autoComplete}
+        className="h-11 pr-11"
+        required
+      />
+      <button
+        type="button"
+        onClick={onToggle}
+        className="absolute top-1/2 right-3 -translate-y-1/2 text-slate-500 hover:text-slate-900 disabled:opacity-50"
+        disabled={disabled}
+        aria-label={shown ? 'Hide password' : 'Show password'}
+      >
+        {shown ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+      </button>
+    </div>
+  );
+}
+
+function Rule({ met, label }: { met: boolean; label: string }) {
+  return (
+    <li className="flex items-center gap-2">
+      {met ? (
+        <CheckCircle2 className="size-3.5 shrink-0 text-emerald-600" aria-hidden />
+      ) : (
+        <Circle className="size-3.5 shrink-0 text-slate-300" aria-hidden />
+      )}
+      <span className={met ? 'text-slate-700' : 'text-slate-500'}>{label}</span>
+    </li>
+  );
 }
 
 function SignupForm() {
@@ -62,7 +124,7 @@ function SignupForm() {
           setTokenValid(false);
           setTokenError(data.error || 'Invalid token');
         }
-      } catch (err) {
+      } catch {
         setTokenValid(false);
         setTokenError('Failed to validate token');
       } finally {
@@ -80,7 +142,6 @@ function SignupForm() {
     hasNumber: /\d/.test(password),
   };
 
-  const isPasswordStrong = Object.values(passwordStrength).filter(Boolean).length >= 3;
   const passwordsMatch = password === confirmPassword && password.length > 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -138,301 +199,211 @@ function SignupForm() {
         // Registration succeeded but login failed - redirect to login
         router.push('/login?registered=true');
       }
-    } catch (error) {
+    } catch {
       setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Loading state while validating token
   if (isValidatingToken) {
     return (
-      <div className="w-full">
-        <Card className="border-0 shadow-lg">
-          <CardContent className="py-16">
-            <div className="flex flex-col items-center justify-center gap-4">
-              <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-              <p className="text-slate-600">Validating your signup link...</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // No token or invalid token - show access denied
-  if (!tokenValid) {
-    return (
-      <div className="w-full">
-        <Card className="border-0 shadow-lg">
-          <CardContent className="py-12">
-            <div className="flex flex-col items-center justify-center gap-6 text-center">
-              {tokenError === 'no_token' ? (
-                <>
-                  <div className="p-4 bg-amber-100 rounded-full">
-                    <ShieldX className="w-12 h-12 text-amber-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-slate-900 mb-2">Access Required</h2>
-                    <p className="text-slate-600 max-w-sm">
-                      Signup is invite-only. You need a valid onboarding link to create an account.
-                    </p>
-                  </div>
-                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-200 max-w-sm">
-                    <p className="text-sm text-slate-600">
-                      If you're a store owner and would like to use Cartaisy, please contact us to get your onboarding link.
-                    </p>
-                  </div>
-                </>
-              ) : tokenError.includes('expired') ? (
-                <>
-                  <div className="p-4 bg-red-100 rounded-full">
-                    <Clock className="w-12 h-12 text-red-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-slate-900 mb-2">Link Expired</h2>
-                    <p className="text-slate-600 max-w-sm">
-                      This signup link has expired. Please contact us to get a new onboarding link.
-                    </p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="p-4 bg-red-100 rounded-full">
-                    <ShieldX className="w-12 h-12 text-red-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-slate-900 mb-2">Invalid Link</h2>
-                    <p className="text-slate-600 max-w-sm">
-                      {tokenError === 'Token has already been used'
-                        ? 'This signup link has already been used.'
-                        : 'This signup link is invalid or has been revoked.'}
-                    </p>
-                  </div>
-                </>
-              )}
-
-              <div className="flex flex-col gap-3 w-full max-w-xs">
-                <Link href="/login">
-                  <Button variant="outline" className="w-full">
-                    Go to Login
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Valid token - show signup form
-  return (
-    <div className="w-full">
-      <Card className="border-0 shadow-lg">
-        <CardHeader className="space-y-1">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-green-600 text-sm font-medium">
-              <CheckCircle2 className="w-4 h-4" />
-              Valid onboarding link
-            </div>
-            <CardTitle className="text-3xl font-bold">Create Your Account</CardTitle>
-            <CardDescription>
-              Complete your signup to get started with Cartaisy
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="storeName" className="text-sm font-medium">
-                Store Name
-              </Label>
-              <Input
-                id="storeName"
-                type="text"
-                placeholder="e.g., Nike Official Store"
-                value={storeName}
-                onChange={(e) => setStoreName(e.target.value)}
-                disabled={isLoading || !!tokenData?.storeName}
-                className="h-10"
-                required
-              />
-              {tokenData?.storeName && (
-                <p className="text-xs text-slate-500">Store name pre-filled from your invitation</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">
-                Email Address
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading || !!tokenData?.email}
-                className="h-10"
-                required
-              />
-              {tokenData?.email && (
-                <p className="text-xs text-slate-500">Email pre-filled from your invitation</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">
-                Password
-              </Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Create a strong password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
-                  className="h-10 pr-10"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
-                  disabled={isLoading}
-                >
-                  {showPassword ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-
-              {password && (
-                <div className="space-y-2 mt-3 p-3 bg-slate-50 rounded-lg">
-                  <div className="text-xs font-semibold text-slate-600">Password strength:</div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      {passwordStrength.hasMinLength ? (
-                        <CheckCircle2 className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <XCircle className="w-4 h-4 text-slate-300" />
-                      )}
-                      <span className="text-xs text-slate-600">At least 6 characters</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {passwordStrength.hasUpperCase ? (
-                        <CheckCircle2 className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <XCircle className="w-4 h-4 text-slate-300" />
-                      )}
-                      <span className="text-xs text-slate-600">Uppercase letter</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {passwordStrength.hasLowerCase ? (
-                        <CheckCircle2 className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <XCircle className="w-4 h-4 text-slate-300" />
-                      )}
-                      <span className="text-xs text-slate-600">Lowercase letter</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {passwordStrength.hasNumber ? (
-                        <CheckCircle2 className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <XCircle className="w-4 h-4 text-slate-300" />
-                      )}
-                      <span className="text-xs text-slate-600">Number</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-sm font-medium">
-                Confirm Password
-              </Label>
-              <div className="relative">
-                <Input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  placeholder="Confirm your password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  disabled={isLoading}
-                  className="h-10 pr-10"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700"
-                  disabled={isLoading}
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-
-              {confirmPassword && (
-                <div className="flex items-center gap-2 mt-2">
-                  {passwordsMatch ? (
-                    <>
-                      <CheckCircle2 className="w-4 h-4 text-green-600" />
-                      <span className="text-xs text-green-600 font-medium">Passwords match</span>
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="w-4 h-4 text-red-600" />
-                      <span className="text-xs text-red-600 font-medium">Passwords don't match</span>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {error && (
-              <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
-                {error}
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              className="w-full h-10 bg-blue-600 hover:bg-blue-700"
-              disabled={isLoading || !passwordsMatch || storeName.length < 2}
-            >
-              {isLoading ? 'Creating account...' : 'Create Account'}
-            </Button>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-slate-500">Already have an account?</span>
-              </div>
-            </div>
-          </form>
-
-          <div className="mt-6 space-y-4">
-            <p className="text-center text-sm text-slate-600">
-              <Link href="/login" className="font-semibold text-blue-600 hover:underline">
-                Sign in instead
-              </Link>
-            </p>
-          </div>
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center gap-3 py-10">
+          <Loader2 className="size-6 animate-spin text-slate-700" />
+          <p className="text-sm text-slate-600">Validating your signup link...</p>
         </CardContent>
       </Card>
-    </div>
+    );
+  }
+
+  if (!tokenValid) {
+    const expired = tokenError.includes('expired');
+    const missing = tokenError === 'no_token';
+    const Icon = expired ? Clock : ShieldX;
+
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center gap-5 py-2 text-center">
+          <div
+            className={cn(
+              'flex size-12 items-center justify-center rounded-full',
+              missing ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'
+            )}
+          >
+            <Icon className="size-6" aria-hidden />
+          </div>
+          <div className="space-y-2">
+            <h1 className="font-heading text-2xl font-semibold tracking-tight text-slate-950">
+              {missing ? 'Access required' : expired ? 'Link expired' : 'Invalid link'}
+            </h1>
+            <p className="text-sm leading-6 text-slate-600">
+              {missing
+                ? 'Signup is invite-only. You need a valid onboarding link to create an account.'
+                : expired
+                  ? 'This signup link has expired. Contact us for a new onboarding link.'
+                  : tokenError === 'Token has already been used'
+                    ? 'This signup link has already been used.'
+                    : 'This signup link is invalid or has been revoked.'}
+            </p>
+          </div>
+          {missing && (
+            <div className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm leading-6 text-slate-600">
+              If you are a store owner and would like to use Cartaisy, contact us for an onboarding link.
+            </div>
+          )}
+          <Button variant="outline" className="h-11 w-full" asChild>
+            <Link href="/login">Go to login</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const storeLocked = !!tokenData?.storeName;
+  const emailLocked = !!tokenData?.email;
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-col gap-4">
+        <div className="inline-flex w-fit items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800">
+          <CheckCircle2 className="size-3.5" aria-hidden />
+          Valid onboarding link
+        </div>
+        <div className="space-y-1.5">
+          <h1 className="font-heading text-2xl font-semibold tracking-tight text-slate-950">
+            Create your account
+          </h1>
+          <CardDescription className="text-sm leading-6">
+            Complete your signup to get started with Cartaisy
+          </CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="storeName">Store name</Label>
+            <Input
+              id="storeName"
+              type="text"
+              placeholder="e.g., Nike Official Store"
+              value={storeName}
+              onChange={(e) => setStoreName(e.target.value)}
+              disabled={isLoading || storeLocked}
+              autoComplete="organization"
+              aria-describedby={storeLocked ? 'storeName-hint' : undefined}
+              className={cn('h-11', storeLocked && lockedFieldClass)}
+              required
+            />
+            {storeLocked && (
+              <p id="storeName-hint" className="text-xs leading-5 text-slate-500">
+                Store name pre-filled from your invitation
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email address</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isLoading || emailLocked}
+              autoComplete="email"
+              aria-describedby={emailLocked ? 'email-hint' : undefined}
+              className={cn('h-11', emailLocked && lockedFieldClass)}
+              required
+            />
+            {emailLocked && (
+              <p id="email-hint" className="text-xs leading-5 text-slate-500">
+                Email pre-filled from your invitation
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <PasswordInput
+              id="password"
+              value={password}
+              onChange={setPassword}
+              shown={showPassword}
+              onToggle={() => setShowPassword((current) => !current)}
+              placeholder="Create a strong password"
+              disabled={isLoading}
+              autoComplete="new-password"
+            />
+            {password && (
+              <ul className="space-y-1.5 pt-1 text-xs">
+                <Rule met={passwordStrength.hasMinLength} label="At least 6 characters" />
+                <Rule met={passwordStrength.hasUpperCase} label="Uppercase letter" />
+                <Rule met={passwordStrength.hasLowerCase} label="Lowercase letter" />
+                <Rule met={passwordStrength.hasNumber} label="Number" />
+              </ul>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm password</Label>
+            <PasswordInput
+              id="confirmPassword"
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              shown={showConfirmPassword}
+              onToggle={() => setShowConfirmPassword((current) => !current)}
+              placeholder="Confirm your password"
+              disabled={isLoading}
+              autoComplete="new-password"
+            />
+            {confirmPassword && (
+              <p
+                className={cn(
+                  'flex items-center gap-2 text-xs font-medium',
+                  passwordsMatch ? 'text-emerald-700' : 'text-red-700'
+                )}
+              >
+                {passwordsMatch ? (
+                  <CheckCircle2 className="size-3.5" aria-hidden />
+                ) : (
+                  <Circle className="size-3.5" aria-hidden />
+                )}
+                {passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
+              </p>
+            )}
+          </div>
+
+          {error && (
+            <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-800">
+              {error}
+            </div>
+          )}
+
+          <Button
+            type="submit"
+            className="h-11 w-full"
+            disabled={isLoading || !passwordsMatch || storeName.length < 2}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="animate-spin" />
+                Creating account...
+              </>
+            ) : (
+              'Create account'
+            )}
+          </Button>
+        </form>
+
+        <p className="mt-6 border-t border-slate-100 pt-5 text-center text-sm text-slate-600">
+          Already have an account?{' '}
+          <Link href="/login" className="font-medium text-slate-950 underline-offset-4 hover:underline">
+            Sign in
+          </Link>
+        </p>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -440,16 +411,12 @@ export default function SignupPage() {
   return (
     <Suspense
       fallback={
-        <div className="w-full">
-          <Card className="border-0 shadow-lg">
-            <CardContent className="py-16">
-              <div className="flex flex-col items-center justify-center gap-4">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-                <p className="text-slate-600">Loading...</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center gap-3 py-10">
+            <Loader2 className="size-6 animate-spin text-slate-700" />
+            <p className="text-sm text-slate-600">Loading...</p>
+          </CardContent>
+        </Card>
       }
     >
       <SignupForm />

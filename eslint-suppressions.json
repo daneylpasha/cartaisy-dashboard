@@ -1,9 +1,4 @@
 {
-  "app/(auth)/signup/page.tsx": {
-    "react/no-unescaped-entities": {
-      "count": 2
-    }
-  },
   "app/api/blogs/[id]/route.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
