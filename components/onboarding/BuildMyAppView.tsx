@@ -34,6 +34,10 @@ export interface BuildMyAppViewProps {
   syncBusy: boolean;
   noteSaving: boolean;
   formError: string | null;
+  /** Product count and last sync, when the catalog status has them. */
+  statusLine?: string | null;
+  /** Operational webhook registration error. Does not block a build by itself. */
+  webhookNote?: string | null;
   onAndroidChange: (value: boolean) => void;
   onIosChange: (value: boolean) => void;
   onNotesChange: (value: string) => void;
@@ -112,6 +116,8 @@ export function BuildMyAppView({
   syncBusy,
   noteSaving,
   formError,
+  statusLine = null,
+  webhookNote = null,
   onAndroidChange,
   onIosChange,
   onNotesChange,
@@ -166,6 +172,17 @@ export function BuildMyAppView({
           {availability.reason}
         </p>
       )}
+      {mode === 'compose' && statusLine && (
+        <p className={`text-sm leading-6 text-slate-500 ${availability.reason ? 'mt-1' : ''}`}>{statusLine}</p>
+      )}
+      {mode === 'compose' && webhookNote && (
+        <p className="mt-2 text-sm leading-6 text-slate-600">{webhookNote}</p>
+      )}
+      {mode === 'compose' && webhookNote && availability.enabled && (
+        <button type="button" onClick={() => onPrimary('connect')} className={QUIET_BUTTON}>
+          Reconnect Shopify
+        </button>
+      )}
       {summary && (
         <p className="text-sm leading-6 text-slate-600" role="status">
           {summary}
@@ -178,7 +195,9 @@ export function BuildMyAppView({
       )}
 
       <fieldset
-        className={`min-w-0 ${mode === 'compose' && availability.reason ? 'mt-6' : summary || formError ? 'mt-6' : ''}`}
+        className={`min-w-0 ${
+          mode === 'compose' && (availability.reason || statusLine || webhookNote) ? 'mt-6' : summary || formError ? 'mt-6' : ''
+        }`}
       >
         <legend className="text-sm font-medium text-slate-950">Platforms</legend>
         <div className="mt-3 space-y-2" aria-live="polite">

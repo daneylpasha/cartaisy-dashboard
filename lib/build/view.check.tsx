@@ -72,13 +72,13 @@ const disconnected = html({
   availability: {
     enabled: false,
     action: 'connect',
-    reason: 'Connect Shopify before requesting a build.',
+    reason: 'Shopify is disconnected. Reconnect before requesting a build.',
   },
   android: false,
   ios: false,
 });
-assert.ok(disconnected.includes('Connect Shopify'));
-assert.ok(disconnected.includes('Connect Shopify before requesting a build.'));
+assert.ok(disconnected.includes('Reconnect Shopify'));
+assert.ok(disconnected.includes('Shopify is disconnected. Reconnect before requesting a build.'));
 assert.equal(disconnected.includes('>Build my app<'), false);
 assertCalm(disconnected);
 

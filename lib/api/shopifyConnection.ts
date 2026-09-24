@@ -35,6 +35,7 @@ export interface ShopifyConnectionStatus {
   scope: string | null;
   connectedAt: string | null;
   lastSyncAt: string | null;
+  webhookRegistrationError: string | null;
 }
 
 type BackendBody = {
@@ -156,7 +157,24 @@ export async function getShopifyConnectionStatus(): Promise<ShopifyConnectionSta
     scope: isConnected && data ? asNullableString(data.scope) : null,
     connectedAt: isConnected && data ? asNullableString(data.connectedAt) : null,
     lastSyncAt: isConnected && data ? asNullableString(data.lastSyncAt) : null,
+    webhookRegistrationError:
+      isConnected && data ? asNullableString(data.webhookRegistrationError) : null,
   };
+}
+
+/** Product total from GET /shopify/overview. Null when the overview cannot be read. */
+export async function getOverviewProductCount(): Promise<number | null> {
+  try {
+    const body = await backendRequest('status', '/shopify/overview', { method: 'GET' });
+    const data = asRecord(body.data);
+    const products = data ? asRecord(data.products) : null;
+    const fromProducts = products ? products.total : undefined;
+    const total = typeof fromProducts === 'number' ? fromProducts : data ? data.productCount : undefined;
+    if (typeof total !== 'number' || !Number.isFinite(total) || total < 0) return null;
+    return Math.floor(total);
+  } catch {
+    return null;
+  }
 }
 
 export async function disconnectShopify(): Promise<void> {

@@ -172,7 +172,7 @@ assert.deepEqual(
     syncBusy: false,
     canSubmit: true,
   }),
-  { kind: 'connect', label: 'Connect Shopify', disabled: false }
+  { kind: 'connect', label: 'Reconnect Shopify', disabled: false }
 );
 assert.deepEqual(
   primaryBuildAction({

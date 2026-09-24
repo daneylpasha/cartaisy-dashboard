@@ -7,6 +7,7 @@ import type { ShopifyConnectionSnapshot, SyncGate } from '@/lib/onboarding/types
 interface ReadyStepProps {
   connection: ShopifyConnectionSnapshot;
   sync: SyncGate;
+  productCount: number | null;
   onBack: () => void;
   onConnectShopify: () => void;
   onCatalogUpdated: () => void;
@@ -16,6 +17,7 @@ interface ReadyStepProps {
 export function ReadyStep({
   connection,
   sync,
+  productCount,
   onBack,
   onConnectShopify,
   onCatalogUpdated,
@@ -34,6 +36,7 @@ export function ReadyStep({
       <BuildMyAppPanel
         connection={connection}
         initialSync={sync}
+        productCount={productCount}
         onConnectShopify={onConnectShopify}
         onCatalogUpdated={onCatalogUpdated}
         onRefreshConnection={onRefreshConnection}

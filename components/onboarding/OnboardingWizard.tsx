@@ -51,6 +51,8 @@ const EMPTY_CONNECTION: ShopifyConnectionSnapshot = {
   shopDomain: null,
   shopId: null,
   connectedAt: null,
+  lastSyncAt: null,
+  webhookRegistrationError: null,
 };
 
 export function OnboardingWizard() {
@@ -486,6 +488,7 @@ export function OnboardingWizard() {
             <ReadyStep
               connection={connection}
               sync={sync}
+              productCount={catalog.productCount}
               onBack={() => go('preview')}
               onConnectShopify={() => go('connect')}
               onCatalogUpdated={() => setReloadKey((value) => value + 1)}

@@ -27,6 +27,10 @@ export interface SyncGate {
   detail: string | null;
   eligibleForBuild: boolean;
   eligibilityReason: BuildEligibilityReason | null;
+  /** Present on the durable GET /shopify/sync payload. Not a success signal. */
+  finishedAt?: string | null;
+  /** Present on the durable GET /shopify/sync payload. Not a success signal. */
+  lastSucceededAt?: string | null;
 }
 
 /**
@@ -39,6 +43,13 @@ export interface ShopifyConnectionSnapshot {
   shopDomain: string | null;
   shopId: string | null;
   connectedAt: string | null;
+  /** Written by a catalog sync. Never treated as `eligibleForBuild`. */
+  lastSyncAt: string | null;
+  /**
+   * Short text from GET /shopify/status when operational webhook registration
+   * did not finish. Null when disconnected, in flight, or token-shaped.
+   */
+  webhookRegistrationError: string | null;
 }
 
 /** A synced product safe to draw on the preview phone. */

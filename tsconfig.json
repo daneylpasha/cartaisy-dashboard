@@ -38,6 +38,7 @@
     "lib/build/admin.check.ts",
     "lib/build/view.check.tsx",
     "lib/build/adminView.check.tsx",
-    "lib/dashboard/dashboard.check.ts"
+    "lib/dashboard/dashboard.check.ts",
+    "lib/shopify/recovery.check.ts"
   ]
 }

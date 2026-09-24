@@ -5,11 +5,9 @@ import { Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SetupNotice, WizardFooter } from '@/components/onboarding/WizardChrome';
-import {
-  connectCatalogView,
-  connectPrimaryAction,
-  normalizeShopDomainInput,
-} from '@/lib/onboarding/normalizers';
+import { connectPrimaryAction, normalizeShopDomainInput } from '@/lib/onboarding/normalizers';
+import { shopifyRecoveryView } from '@/lib/shopify/recovery';
+import { ShopifyRecoveryStatus } from '@/components/shopify/ShopifyRecoveryStatus';
 import { shopifyConnectContract } from '@/lib/onboarding/shopifyConnect';
 import type { ShopifyReturnCopy } from '@/lib/shopify/merchantCopy';
 import type { LockedCatalog, ShopifyConnectionSnapshot, SyncGate } from '@/lib/onboarding/types';
@@ -57,7 +55,16 @@ export function ConnectStep({
   const justConnected = returnNotice?.tone === 'success' && confirmed;
   const returnError = returnNotice?.tone === 'error' && !confirmed ? returnNotice : null;
   const unconfirmedReturn = returnNotice?.tone === 'success' && connection.statusKnown && !connection.isConnected;
-  const catalogView = confirmed ? connectCatalogView(sync, catalog.productCount) : null;
+  const catalogView = confirmed
+    ? shopifyRecoveryView({
+        statusKnown: true,
+        isConnected: true,
+        sync,
+        productCount: catalog.productCount,
+        webhookError: connection.webhookRegistrationError,
+        lastSyncAt: connection.lastSyncAt,
+      })
+    : null;
   const showWarning = Boolean(warning) && !confirmed && !returnError && !unconfirmedReturn;
 
   const handlePrimary = () => {
@@ -121,25 +128,16 @@ export function ConnectStep({
       )}
 
       {confirmed && catalogView ? (
-        <div className="mt-8 overflow-hidden rounded-xl border border-slate-200">
-          <div className="flex items-center gap-3 px-4 py-3.5 sm:px-5">
-            <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-600" aria-hidden />
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-slate-950">
-                {connection.shopDomain ?? 'Connected store'}
-              </p>
-              {connection.shopId && (
-                <p className="truncate text-sm text-slate-500">Shop ID {connection.shopId}</p>
-              )}
-            </div>
-          </div>
-          <div
-            className="border-t border-slate-100 px-4 py-4 sm:px-5"
-            aria-live="polite"
-            aria-busy={catalogView.busy || syncing}
-          >
-            <CatalogPanel view={catalogView} syncing={syncing} onSyncAgain={onSyncAgain} />
-          </div>
+        <div className="mt-8">
+          <ShopifyRecoveryStatus
+            shopDomain={connection.shopDomain}
+            view={catalogView}
+            pending={syncing || starting}
+            onSyncAgain={onSyncAgain}
+            onReconnect={() => {
+              if (connection.shopDomain) onStart(connection.shopDomain);
+            }}
+          />
         </div>
       ) : (
         <div className="mt-6 flex items-center gap-3 rounded-xl border border-slate-200 px-4 py-3.5">
@@ -197,7 +195,7 @@ export function ConnectStep({
 
       <WizardFooter
         primaryLabel={
-          action.kind === 'start' && (returnError || unconfirmedReturn) ? 'Try again' : action.label
+          action.kind === 'start' && (returnError || unconfirmedReturn) ? 'Reconnect Shopify' : action.label
         }
         onPrimary={handlePrimary}
         pending={starting}
@@ -206,74 +204,9 @@ export function ConnectStep({
         quietAction={
           action.kind === 'start'
             ? { label: 'Continue without connecting', onClick: onContinue }
-            : connection.isConnected && shopifyConnectContract.liveRedirectEnabled && connection.shopDomain
-              ? {
-                  label: 'Connect again',
-                  onClick: () => onStart(connection.shopDomain as string),
-                }
-              : undefined
+            : undefined
         }
       />
     </section>
-  );
-}
-
-function CatalogPanel({
-  view,
-  syncing,
-  onSyncAgain,
-}: {
-  view: ReturnType<typeof connectCatalogView>;
-  syncing: boolean;
-  onSyncAgain: () => void;
-}) {
-  const failed = view.headline === 'Sync failed';
-  const inlineAction = view.showSyncAgain && view.count !== null && !view.support;
-
-  return (
-    <div>
-      {view.count !== null && (
-        <div>
-          <p className="font-heading text-[2rem] font-semibold leading-none tracking-tight text-slate-950 tabular-nums">
-            {view.count.toLocaleString('en-US')}
-          </p>
-          <p className="mt-2 text-sm text-slate-600">{view.countNoun}</p>
-        </div>
-      )}
-
-      <div className={view.count !== null ? 'mt-5 flex items-center justify-between gap-3' : 'flex items-start justify-between gap-4'}>
-        <div className="min-w-0">
-          <p className={failed ? 'text-sm font-medium text-red-700' : view.count !== null ? 'text-sm text-slate-600' : 'text-sm font-medium text-slate-950'}>
-            {view.headline}
-          </p>
-          {view.support && <p className="mt-1 text-sm leading-6 text-slate-600">{view.support}</p>}
-        </div>
-        {(view.busy || syncing) && (
-          <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin text-slate-400" aria-hidden />
-        )}
-        {inlineAction && (
-          <SyncAgainButton onClick={onSyncAgain} disabled={syncing} />
-        )}
-      </div>
-
-      {view.showSyncAgain && !inlineAction && (
-        <div className="mt-4">
-          <SyncAgainButton onClick={onSyncAgain} disabled={syncing || view.busy} />
-        </div>
-      )}
-    </div>
-  );
-}
-
-function SyncAgainButton({ onClick, disabled }: { onClick: () => void; disabled: boolean }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-950 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
-    >
-      Sync again
-    </button>
   );
 }
