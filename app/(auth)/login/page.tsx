@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { AuthOrDivider, GoogleContinueButton } from '@/components/auth/GoogleContinueButton';
+import { isGoogleSignInEnabled } from '@/lib/auth/googleSession';
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,12 +16,31 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const registered = searchParams.get('registered') === 'true';
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
+  const googleEnabled = isGoogleSignInEnabled();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
+
+  const handleGoogleCredential = async (idToken: string) => {
+    setError('');
+    setGoogleBusy(true);
+    try {
+      const result = await loginWithGoogle(idToken);
+      if (result.success) {
+        router.push('/dashboard');
+      } else {
+        setError(result.error || 'Google sign-in failed. Please try again.');
+      }
+    } catch {
+      setError('An unexpected error occurred');
+    } finally {
+      setGoogleBusy(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +52,7 @@ function LoginForm() {
     }
 
     setIsLoading(true);
+    setGoogleBusy(false);
 
     try {
       const result = await login({ email, password });
@@ -67,6 +89,18 @@ function LoginForm() {
             </div>
           )}
 
+          {googleEnabled && (
+            <div className="mb-5 space-y-5">
+              {googleBusy && (
+                <p className="text-sm text-slate-600" role="status">
+                  Signing in with Google...
+                </p>
+              )}
+              <GoogleContinueButton onCredential={handleGoogleCredential} disabled={isLoading || googleBusy} />
+              <AuthOrDivider />
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -78,7 +112,7 @@ function LoginForm() {
                 placeholder="name@company.com"
                 autoComplete="email"
                 required
-                disabled={isLoading}
+                disabled={isLoading || googleBusy}
                 className="h-11"
               />
             </div>
@@ -94,14 +128,14 @@ function LoginForm() {
                   placeholder="Enter your password"
                   autoComplete="current-password"
                   required
-                  disabled={isLoading}
+                  disabled={isLoading || googleBusy}
                   className="h-11 pr-11"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((current) => !current)}
                   className="absolute top-1/2 right-3 -translate-y-1/2 text-slate-500 hover:text-slate-900 disabled:opacity-50"
-                  disabled={isLoading}
+                  disabled={isLoading || googleBusy}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -112,7 +146,7 @@ function LoginForm() {
             <Button
               type="submit"
               className="h-11 w-full disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-700 disabled:opacity-100"
-              disabled={isLoading}
+              disabled={isLoading || googleBusy}
             >
               {isLoading ? (
                 <>

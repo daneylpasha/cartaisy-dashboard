@@ -33,3 +33,6 @@ jobs:
 
       - name: Typecheck
         run: npm run type-check
+
+      - name: Google signup checks
+        run: npm run test:auth-google

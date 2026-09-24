@@ -96,6 +96,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Presentation only. Onboarding token validation, account creation, and sign-in behavior stay as they are. Invite fields remain locked when the token pre-fills them.
 - Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/ARCHITECTURE.md`.
 
+### Continue with Google stays behind the invite
+
+- Date: 2026-09-24.
+- Decision: Login and invite signup may offer Continue with Google when `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is set. Signup still requires a valid onboarding token. The Google ID token is verified on the dashboard server, `email_verified` is required, and the Google email must equal the invite email. The new user is created like a password signup, with `authProvider: 'google'`, `googleSub`, and a random password that the existing bcrypt pre-save hook hashes. The browser then signs in through backend `POST /auth/google`, which returns the same session shape as `POST /auth/login`. If the client id is unset, the button is hidden.
+- Reason: Merchants should be able to finish an invite without inventing a password, without opening signup to arbitrary Google accounts.
+- Impact: Auth and the User model change. Password signup is unchanged. Backend `/auth/google` is a parallel contract (`idToken` in, login response out) and must be able to see the user this dashboard just created. Human review is required.
+- Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `.env.example`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

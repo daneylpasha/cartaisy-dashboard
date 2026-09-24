@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, CheckCircle2, Circle, Loader2, ShieldX, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { AuthOrDivider, GoogleContinueButton } from '@/components/auth/GoogleContinueButton';
+import { isGoogleSignInEnabled } from '@/lib/auth/googleSession';
 
 interface TokenData {
   email: string;
@@ -82,7 +84,8 @@ function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
+  const googleEnabled = isGoogleSignInEnabled();
 
   // Token validation state
   const [isValidatingToken, setIsValidatingToken] = useState(true);
@@ -99,6 +102,7 @@ function SignupForm() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
 
   // Validate token on mount
   useEffect(() => {
@@ -143,6 +147,45 @@ function SignupForm() {
   };
 
   const passwordsMatch = password === confirmPassword && password.length > 0;
+
+  const busy = isLoading || googleBusy;
+
+  const handleGoogleCredential = async (idToken: string) => {
+    setError('');
+    if (!token) {
+      setError('Invalid signup link');
+      return;
+    }
+    if (!storeName || storeName.length < 2) {
+      setError('Store name must be at least 2 characters');
+      return;
+    }
+
+    setGoogleBusy(true);
+    try {
+      const signupRes = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, storeName, googleIdToken: idToken }),
+      });
+      const signupData = await signupRes.json();
+      if (!signupRes.ok) {
+        setError(signupData.message || 'Sign up failed. Please try again.');
+        return;
+      }
+
+      const result = await loginWithGoogle(idToken);
+      if (result.success) {
+        router.push('/dashboard/onboarding');
+      } else {
+        setError(result.error || 'Account created. Sign in with Google to continue.');
+      }
+    } catch {
+      setError('An error occurred. Please try again.');
+    } finally {
+      setGoogleBusy(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -289,7 +332,7 @@ function SignupForm() {
               placeholder="e.g., Nike Official Store"
               value={storeName}
               onChange={(e) => setStoreName(e.target.value)}
-              disabled={isLoading || storeLocked}
+              disabled={busy || storeLocked}
               autoComplete="organization"
               aria-describedby={storeLocked ? 'storeName-hint' : undefined}
               className={cn('h-11', storeLocked && lockedFieldClass)}
@@ -310,7 +353,7 @@ function SignupForm() {
               placeholder="name@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading || emailLocked}
+              disabled={busy || emailLocked}
               autoComplete="email"
               aria-describedby={emailLocked ? 'email-hint' : undefined}
               className={cn('h-11', emailLocked && lockedFieldClass)}
@@ -323,6 +366,18 @@ function SignupForm() {
             )}
           </div>
 
+          {googleEnabled && (
+            <div className="space-y-5">
+              {googleBusy && (
+                <p className="text-sm text-slate-600" role="status">
+                  Creating your account with Google...
+                </p>
+              )}
+              <GoogleContinueButton onCredential={handleGoogleCredential} disabled={busy} />
+              <AuthOrDivider />
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <PasswordInput
@@ -332,7 +387,7 @@ function SignupForm() {
               shown={showPassword}
               onToggle={() => setShowPassword((current) => !current)}
               placeholder="Create a strong password"
-              disabled={isLoading}
+              disabled={busy}
               autoComplete="new-password"
             />
             {password && (
@@ -354,7 +409,7 @@ function SignupForm() {
               shown={showConfirmPassword}
               onToggle={() => setShowConfirmPassword((current) => !current)}
               placeholder="Confirm your password"
-              disabled={isLoading}
+              disabled={busy}
               autoComplete="new-password"
             />
             {confirmPassword && (
@@ -383,7 +438,7 @@ function SignupForm() {
           <Button
             type="submit"
             className="h-11 w-full disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-700 disabled:opacity-100"
-            disabled={isLoading || !passwordsMatch || storeName.length < 2}
+            disabled={busy || !passwordsMatch || storeName.length < 2}
           >
             {isLoading ? (
               <>
