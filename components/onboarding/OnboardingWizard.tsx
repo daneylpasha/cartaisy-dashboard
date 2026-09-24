@@ -17,15 +17,20 @@ import {
 import {
   EMPTY_CATALOG,
   UNAVAILABLE_SYNC,
+  consumeShopifyReturnQuery,
   isOnboardingStep,
   onboardingSyncWarning,
   safeImageUrl,
+  safeReturnedShop,
+  shouldAutoStartCatalogSync,
 } from '@/lib/onboarding/normalizers';
 import {
   loadShopifySnapshot,
   onboardingReturnPath,
   startShopifyConnect,
 } from '@/lib/onboarding/shopifyConnect';
+import { fetchCatalogSync, syncCatalogAgain } from '@/lib/build/client';
+import { BUILD_STATUS_POLL_MS } from '@/lib/build/contract';
 import type {
   BrandingDraft,
   LockedCatalog,
@@ -38,7 +43,7 @@ import { ConnectStep } from '@/components/onboarding/steps/ConnectStep';
 import { BrandingStep } from '@/components/onboarding/steps/BrandingStep';
 import { PreviewStep } from '@/components/onboarding/steps/PreviewStep';
 import { ReadyStep } from '@/components/onboarding/steps/ReadyStep';
-import { shopifyReturnCopy } from '@/lib/shopify/merchantCopy';
+import { merchantMessageForShopifyAction, shopifyReturnCopy, type ShopifyReturnCopy } from '@/lib/shopify/merchantCopy';
 
 const EMPTY_CONNECTION: ShopifyConnectionSnapshot = {
   statusKnown: false,
@@ -79,6 +84,33 @@ export function OnboardingWizard() {
   const [splashFile, setSplashFile] = useState<File | null>(null);
   const [iconFile, setIconFile] = useState<File | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [returnNotice, setReturnNotice] = useState<ShopifyReturnCopy | null>(() =>
+    shopifyReturnCopy(searchParams.get('shopify'), searchParams.get('reason') ?? searchParams.get('error'))
+  );
+  const [returnedShop, setReturnedShop] = useState<string | null>(() =>
+    safeReturnedShop(searchParams.get('shop'))
+  );
+  const [syncing, setSyncing] = useState(false);
+  const returnedConnected = useRef(searchParams.get('shopify') === 'connected');
+  const autoSyncStarted = useRef(false);
+  const syncLock = useRef(false);
+  if (searchParams.get('shopify') === 'connected') {
+    returnedConnected.current = true;
+  }
+
+  useEffect(() => {
+    const current = searchParams.toString();
+    const consumed = consumeShopifyReturnQuery(current);
+    if (!consumed.changed) return;
+    const copy = shopifyReturnCopy(
+      searchParams.get('shopify'),
+      searchParams.get('reason') ?? searchParams.get('error')
+    );
+    if (copy) setReturnNotice(copy);
+    const shop = safeReturnedShop(searchParams.get('shop'));
+    if (shop) setReturnedShop(shop);
+    router.replace(consumed.query ? `/dashboard/onboarding?${consumed.query}` : '/dashboard/onboarding?step=connect');
+  }, [searchParams, router]);
 
   const go = useCallback(
     (next: OnboardingStep) => {
@@ -120,8 +152,8 @@ export function OnboardingWizard() {
       if (cancelled) return;
 
       setConnection(snapshot.connection);
-      setSync(snapshot.sync);
       setCatalog(snapshot.catalog);
+      if (!syncLock.current) setSync(snapshot.sync);
 
       const fallbackName = (storeName || sessionName).trim();
       if (!branding) {
@@ -150,14 +182,94 @@ export function OnboardingWizard() {
     };
   }, [status, storeId, reloadKey]);
 
+  const runCatalogSync = useCallback(async () => {
+    if (syncLock.current) return;
+    const token = tokenStorage.getToken();
+    if (!token) {
+      setSync((current) => ({
+        ...current,
+        state: 'failed',
+        detail: merchantMessageForShopifyAction('sync', 401, ''),
+        eligibleForBuild: false,
+      }));
+      return;
+    }
+
+    syncLock.current = true;
+    setSyncing(true);
+    setSync((current) => ({
+      ...current,
+      state: 'in_progress',
+      detail: null,
+      eligibleForBuild: false,
+    }));
+
+    try {
+      const next = await syncCatalogAgain(token);
+      if (next.state === 'in_progress') {
+        setSync(next);
+        return;
+      }
+      if (next.state === 'unavailable') {
+        setSync({
+          state: 'failed',
+          detail: merchantMessageForShopifyAction('sync', 500, ''),
+          eligibleForBuild: false,
+          eligibilityReason: null,
+        });
+        return;
+      }
+
+      const snapshot = await loadShopifySnapshot(token);
+      setConnection(snapshot.connection);
+      setCatalog(snapshot.catalog);
+      const terminal = snapshot.sync.state === 'succeeded' || snapshot.sync.state === 'failed';
+      setSync(terminal ? snapshot.sync : next);
+    } finally {
+      syncLock.current = false;
+      setSyncing(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (loading || syncing || !returnedConnected.current || autoSyncStarted.current) return;
+    if (!connection.statusKnown || !connection.isConnected) return;
+    if (!shouldAutoStartCatalogSync(sync.state)) return;
+    autoSyncStarted.current = true;
+    void runCatalogSync();
+  }, [loading, syncing, connection.statusKnown, connection.isConnected, sync.state, runCatalogSync]);
+
+  useEffect(() => {
+    if (syncing || sync.state !== 'in_progress') return;
+    let cancelled = false;
+
+    const timer = window.setInterval(() => {
+      void (async () => {
+        const token = tokenStorage.getToken();
+        if (!token || cancelled || syncLock.current) return;
+        const next = await fetchCatalogSync(token);
+        if (cancelled || next.state === 'unavailable' || next.state === 'in_progress') return;
+        const snapshot = await loadShopifySnapshot(token);
+        if (cancelled || syncLock.current) return;
+        setConnection(snapshot.connection);
+        setCatalog(snapshot.catalog);
+        const terminal = snapshot.sync.state === 'succeeded' || snapshot.sync.state === 'failed';
+        setSync(terminal ? snapshot.sync : next);
+      })();
+    }, BUILD_STATUS_POLL_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [sync.state, syncing]);
+
   const warning = onboardingSyncWarning({
     statusKnown: connection.statusKnown,
     isConnected: connection.isConnected,
     sync,
   });
-  const oauthReturn = shopifyReturnCopy(searchParams.get('shopify'), searchParams.get('reason'));
-  const connectError =
-    startError ?? (step === 'connect' && oauthReturn?.tone === 'error' ? oauthReturn.body : null);
+  const connectNotice = step === 'connect' ? returnNotice : null;
 
   const rememberLocalImage = (kind: 'splash' | 'icon', file: File) => {
     const nextUrl = URL.createObjectURL(file);
@@ -301,13 +413,19 @@ export function OnboardingWizard() {
           ) : step === 'connect' ? (
             <ConnectStep
               connection={connection}
+              sync={sync}
+              catalog={catalog}
               warning={warning}
               checking={refreshing}
-              startError={connectError}
+              startError={startError}
               starting={starting}
+              returnNotice={connectNotice}
+              suggestedShop={returnedShop}
+              syncing={syncing}
               onStart={handleStart}
               onContinue={() => go('brand')}
               onRefresh={() => setReloadKey((value) => value + 1)}
+              onSyncAgain={() => void runCatalogSync()}
             />
           ) : step === 'brand' ? (
             <BrandingStep
