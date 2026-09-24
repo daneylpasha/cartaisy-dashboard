@@ -128,6 +128,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Merchant Build my app screens are unchanged and still do not call the admin status route. The dashboard does not read `PLATFORM_OPS_EMAILS` and does not set `isPlatformOperator`. Profile responses do not include the flag, so the list call is the gate. Android `waiting_on_merchant` is labeled Waiting on merchant here; iOS stays Waiting on Apple. This is an authz boundary and a backend API contract. Human review is required.
 - Related docs: `docs/ARCHITECTURE.md`, `docs/STATUS.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`. GitHub issues: dashboard `#24`; backend `#164`, `#170`.
 
+### The onboarding phone is a white-label shopper home
+
+- Date: 2026-09-24.
+- Decision: The brand step and the preview step share `SmartHomePreview`. It draws the branding draft held in the wizard, so name, logo, icon, primary color, secondary color, and splash update in that render without a save or a reload. Inside the device there is no Cartaisy wordmark, logo, or marketing chrome. The wizard header outside the phone may still say Cartaisy. Synced products stay on the shelf when catalog sync has succeeded. The preview does not call Shopify and does not receive an Admin token.
+- Reason: Dashboard #30. Merchants should see their own app while they edit the brand, not a second product brand inside the frame.
+- Impact: Onboarding and branding presentation. Build my app, connect, and the branding save calls are unchanged. Splash and icon still persist only when those upload routes succeed.
+- Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/STATUS.md`, `docs/ARCHITECTURE.md`. GitHub issue: `#30`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.
