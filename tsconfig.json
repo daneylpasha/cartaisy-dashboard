@@ -35,7 +35,9 @@
     "node_modules",
     "lib/onboarding/normalizers.check.ts",
     "lib/build/contract.check.ts",
+    "lib/build/admin.check.ts",
     "lib/build/view.check.tsx",
+    "lib/build/adminView.check.tsx",
     "lib/dashboard/dashboard.check.ts"
   ]
 }

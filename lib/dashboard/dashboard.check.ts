@@ -218,5 +218,6 @@ assert.equal(pageTitle('/dashboard/orders/abc'), 'Orders');
 assert.equal(pageTitle('/dashboard/app-builder/preview'), 'App builder');
 assert.equal(pageTitle('/dashboard/settings/compliance'), 'Compliance');
 assert.equal(pageTitle('/dashboard/marketing/push-notifications'), 'Push notifications');
+assert.equal(pageTitle('/dashboard/admin/build-requests'), 'Build requests');
 
 console.log('dashboard checks passed');
