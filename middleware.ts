@@ -1,48 +1,107 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import {
+  AUTH_ENTRY_COOKIE,
+  entryNeedsShopifyStatus,
+  refererPathname,
+  resolveEntry,
+  shopifyConnectedFromStatus,
+} from '@/lib/dashboard/entry';
 
-// Public routes that don't require authentication
-const publicRoutes = [
-  "/login",
-  "/signup",
-  "/forgot-password",
-  "/reset-password",
-  "/invite",
-];
+const authRoutes = ['/login', '/signup'];
 
-// Routes that should redirect to dashboard if already authenticated
-const authRoutes = ["/login", "/signup"];
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  'https://cartaisy-backend-production.up.railway.app/api/v1';
+
+function matchesAuthRoute(pathname: string): boolean {
+  return authRoutes.some((route) => pathname === route || pathname.startsWith(route));
+}
+
+function applyEntryCookie(response: NextResponse, action: 'set' | 'clear' | 'keep', secure: boolean) {
+  if (action === 'keep') return response;
+  if (action === 'clear') {
+    response.cookies.set(AUTH_ENTRY_COOKIE, '', {
+      httpOnly: true,
+      path: '/',
+      maxAge: 0,
+      sameSite: 'lax',
+      secure,
+    });
+    return response;
+  }
+  response.cookies.set(AUTH_ENTRY_COOKIE, '1', {
+    httpOnly: true,
+    path: '/',
+    maxAge: 60 * 30,
+    sameSite: 'lax',
+    secure,
+  });
+  return response;
+}
+
+async function readShopifyConnected(token: string): Promise<boolean | null> {
+  try {
+    const response = await fetch(`${API_URL}/shopify/status`, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(4000),
+    });
+    const payload: unknown = await response.json().catch(() => null);
+    return shopifyConnectedFromStatus(payload, response.ok);
+  } catch {
+    return null;
+  }
+}
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  // Get token from cookie (set during login)
-  const token = request.cookies.get("cartaisy_token")?.value;
+  const token = request.cookies.get('cartaisy_token')?.value;
   const isAuthenticated = !!token;
+  const secure = request.nextUrl.protocol === 'https:';
 
-  // Check if current path is public
-  const isPublicRoute = publicRoutes.some(
-    (route) => pathname === route || pathname.startsWith(route + "/")
-  );
-
-  // Check if current path is auth route (login/signup)
-  const isAuthRoute = authRoutes.some(
-    (route) => pathname === route || pathname.startsWith(route)
-  );
-
-  // If authenticated and trying to access login/signup, redirect to dashboard
-  if (isAuthenticated && isAuthRoute) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
-  }
-
-  // If not authenticated and trying to access protected route (dashboard)
-  if (!isAuthenticated && pathname.startsWith("/dashboard")) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("callbackUrl", pathname);
+  if (!isAuthenticated && pathname.startsWith('/dashboard')) {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
+  const isAuthRoute = matchesAuthRoute(pathname);
+  const hasEntryCookie = request.cookies.get(AUTH_ENTRY_COOKIE)?.value === '1';
+  const refererPath = refererPathname(request.headers.get('referer'), request.nextUrl.origin);
+
+  let shopifyConnected: boolean | null = null;
+  if (
+    isAuthenticated &&
+    token &&
+    entryNeedsShopifyStatus({ pathname, isAuthRoute, hasEntryCookie, refererPath })
+  ) {
+    shopifyConnected = await readShopifyConnected(token);
+  }
+
+  const resolution = resolveEntry({
+    pathname,
+    isAuthenticated,
+    isAuthRoute,
+    hasEntryCookie,
+    shopifyConnected,
+    refererPath,
+  });
+
+  if (resolution.redirectTo) {
+    const response = NextResponse.redirect(new URL(resolution.redirectTo, request.url));
+    return applyEntryCookie(response, resolution.entryCookie, secure);
+  }
+
+  if (resolution.entryCookie === 'keep') {
+    return NextResponse.next();
+  }
+
+  return applyEntryCookie(NextResponse.next(), resolution.entryCookie, secure);
 }
 
 export const config = {
@@ -55,6 +114,6 @@ export const config = {
      * - favicon.ico (favicon file)
      * - public (public files)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|public).*)",
+    '/((?!api|_next/static|_next/image|favicon.ico|public).*)',
   ],
 };
