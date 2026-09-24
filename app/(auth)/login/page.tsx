@@ -109,7 +109,11 @@ function LoginForm() {
               </div>
             </div>
 
-            <Button type="submit" className="h-11 w-full" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="h-11 w-full disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-700 disabled:opacity-100"
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="animate-spin" />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCookieConsent } from '@/components/cookies';
@@ -10,21 +10,9 @@ const SURFACE = '#f5f5f6';
 export default function AuthLayout({ children }: { children: ReactNode }) {
   const { showBanner } = useCookieConsent();
 
-  useEffect(() => {
-    const html = document.documentElement;
-    const body = document.body;
-    const previousHtml = html.style.backgroundColor;
-    const previousBody = body.style.backgroundColor;
-    html.style.backgroundColor = SURFACE;
-    body.style.backgroundColor = SURFACE;
-    return () => {
-      html.style.backgroundColor = previousHtml;
-      body.style.backgroundColor = previousBody;
-    };
-  }, []);
-
   return (
     <div className="flex min-h-dvh flex-col bg-[#f5f5f6] text-slate-950">
+      <style>{`html, body { background-color: ${SURFACE} !important; }`}</style>
       <div className="flex flex-1 flex-col">
         <div className="flex-1" aria-hidden />
         <div className="mx-auto w-full max-w-[440px] px-4 py-10 sm:px-0">

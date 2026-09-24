@@ -382,7 +382,7 @@ function SignupForm() {
 
           <Button
             type="submit"
-            className="h-11 w-full"
+            className="h-11 w-full disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-700 disabled:opacity-100"
             disabled={isLoading || !passwordsMatch || storeName.length < 2}
           >
             {isLoading ? (
