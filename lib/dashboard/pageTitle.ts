@@ -1,6 +1,6 @@
 const PAGE_TITLES: { prefix: string; title: string; exact?: boolean }[] = [
   { prefix: '/dashboard/marketing/push-notifications', title: 'Push notifications' },
-  { prefix: '/dashboard/admin/onboarding', title: 'Onboarding' },
+  { prefix: '/dashboard/admin/onboarding', title: 'Invites' },
   { prefix: '/dashboard/notifications-test', title: 'Notifications' },
   { prefix: '/dashboard/settings/compliance', title: 'Compliance' },
   { prefix: '/dashboard/app-builder', title: 'App builder' },

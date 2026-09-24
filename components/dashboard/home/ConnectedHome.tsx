@@ -131,7 +131,7 @@ function StatusRow({
     <div className="flex flex-col gap-1 px-5 py-3.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-8">
       <p className="text-sm text-slate-500">{label}</p>
       <div className="min-w-0 sm:text-right">
-        <p className="text-sm font-medium text-slate-950">{value}</p>
+        <p className="text-sm font-medium break-words text-slate-950">{value}</p>
         {detail && <p className="mt-0.5 text-xs leading-5 text-slate-500">{detail}</p>}
         {href && hrefLabel && (
           <Link

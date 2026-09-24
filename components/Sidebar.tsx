@@ -7,6 +7,7 @@ import { useSession, useAuth } from '@/lib/auth';
 import {
   BarChart3,
   Bell,
+  ChevronDown,
   ChevronLeft,
   ClipboardList,
   FileText,
@@ -64,7 +65,6 @@ function SidebarContent({
   inSheet = false,
   onNavigate,
 }: SidebarContentProps) {
-  const pathname = usePathname();
   const { data: session } = useSession();
   const { logout, getToken } = useAuth();
   const { status, isLoading } = useDashboardShopify();
@@ -191,7 +191,7 @@ function SidebarContent({
     },
     {
       href: '/dashboard/admin/onboarding',
-      label: 'Onboarding',
+      label: 'Invites',
       icon: <KeyRound className="size-4" />,
       tier: 'account',
       group: 'Account',
@@ -254,47 +254,7 @@ function SidebarContent({
 
       <nav className="flex-1 space-y-4 overflow-y-auto px-2 py-3" aria-label="Dashboard">
         {groups.map((group) => (
-          <div key={group.id}>
-            {group.label && !collapsed && (
-              <p className="px-2.5 pb-1 text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">
-                {group.label}
-              </p>
-            )}
-            <ul className="space-y-0.5">
-              {group.items.map((item) => {
-                const isActive = isItemActive(pathname, item.href);
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      onClick={onNavigate}
-                      title={collapsed ? item.label : group.muted ? 'Available after Shopify is connected' : undefined}
-                      aria-current={isActive ? 'page' : undefined}
-                      className={cn(
-                        'flex items-center rounded-md text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400',
-                        collapsed ? 'justify-center p-2.5' : 'gap-2.5 px-2.5 py-2',
-                        isActive
-                          ? 'bg-slate-100 font-medium text-slate-950'
-                          : group.muted
-                            ? 'text-slate-500 hover:bg-slate-50 hover:text-slate-950'
-                            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          'shrink-0',
-                          isActive ? 'text-slate-950' : group.muted ? 'text-slate-400' : 'text-slate-500'
-                        )}
-                      >
-                        {item.icon}
-                      </span>
-                      {!collapsed && <span className="truncate">{item.label}</span>}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+          <NavGroup key={group.id} group={group} collapsed={collapsed} onNavigate={onNavigate} />
         ))}
       </nav>
 
@@ -309,6 +269,78 @@ function SidebarContent({
             <span>Sign out</span>
           </button>
         </div>
+      )}
+    </div>
+  );
+}
+
+function NavGroup({
+  group,
+  collapsed,
+  onNavigate,
+}: {
+  group: { id: string; label: string | null; items: NavItem[]; muted: boolean };
+  collapsed: boolean;
+  onNavigate?: () => void;
+}) {
+  const pathname = usePathname();
+  const containsActive = group.items.some((item) => isItemActive(pathname, item.href));
+  const [opened, setOpened] = useState(containsActive);
+  const expanded = !group.muted || collapsed || opened || containsActive;
+
+  return (
+    <div>
+      {group.label && !collapsed &&
+        (group.muted ? (
+          <button
+            type="button"
+            aria-expanded={expanded}
+            onClick={() => setOpened((value) => !value)}
+            className="flex min-h-11 w-full items-center justify-between rounded-md px-2.5 text-left text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+          >
+            {group.label}
+            <ChevronDown className={cn('size-3.5 shrink-0 transition-transform', expanded ? '' : '-rotate-90')} />
+          </button>
+        ) : (
+          <p className="px-2.5 pb-1 text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">
+            {group.label}
+          </p>
+        ))}
+      {expanded && (
+        <ul className="space-y-0.5">
+          {group.items.map((item) => {
+            const isActive = isItemActive(pathname, item.href);
+            return (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  onClick={onNavigate}
+                  title={collapsed ? item.label : group.muted ? 'Available after Shopify is connected' : undefined}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={cn(
+                    'flex items-center rounded-md text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400',
+                    collapsed ? 'justify-center p-2.5' : 'gap-2.5 px-2.5 py-2',
+                    isActive
+                      ? 'bg-slate-100 font-medium text-slate-950'
+                      : group.muted
+                        ? 'text-slate-500 hover:bg-slate-50 hover:text-slate-950'
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'shrink-0',
+                      isActive ? 'text-slate-950' : group.muted ? 'text-slate-400' : 'text-slate-500'
+                    )}
+                  >
+                    {item.icon}
+                  </span>
+                  {!collapsed && <span className="truncate">{item.label}</span>}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );
