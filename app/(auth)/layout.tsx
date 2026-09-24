@@ -1,9 +1,39 @@
-import { ReactNode } from 'react';
+'use client';
+
+import type { ReactNode } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useCookieConsent } from '@/components/cookies';
+
+const SURFACE = '#f5f5f6';
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
+  const { showBanner } = useCookieConsent();
+
   return (
-    <div className="fixed inset-0 bg-[#0A0A0A] overscroll-none">
-      {children}
+    <div className="flex min-h-dvh flex-col bg-[#f5f5f6] text-slate-950">
+      <style>{`html, body { background-color: ${SURFACE} !important; }`}</style>
+      <div className="flex flex-1 flex-col">
+        <div className="flex-1" aria-hidden />
+        <div className="mx-auto w-full max-w-[440px] px-4 py-10 sm:px-0">
+          <Link
+            href="/"
+            className="mb-8 flex justify-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
+          >
+            <Image
+              src="/cartaisy-black-logo.png"
+              alt="Cartaisy"
+              width={422}
+              height={100}
+              priority
+              className="h-7 w-auto"
+            />
+          </Link>
+          {children}
+        </div>
+        <div className="flex-1" aria-hidden />
+      </div>
+      {showBanner ? <div className="h-56 shrink-0" aria-hidden /> : null}
     </div>
   );
 }

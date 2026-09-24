@@ -12,6 +12,8 @@ export interface IUser extends Document {
   inviteToken?: string;
   inviteExpiresAt?: Date;
   isActive: boolean;
+  authProvider?: 'password' | 'google';
+  googleSub?: string;
   lastLoginAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -65,6 +67,16 @@ const UserSchema = new Schema<IUser>(
     isActive: {
       type: Boolean,
       default: true,
+    },
+    authProvider: {
+      type: String,
+      enum: ['password', 'google'],
+      default: 'password',
+    },
+    googleSub: {
+      type: String,
+      unique: true,
+      sparse: true,
     },
     lastLoginAt: {
       type: Date,

@@ -8,6 +8,8 @@
 - `app/api/admin/onboarding-tokens/route.ts` can list, create, expire, and revoke onboarding tokens for master admins.
 - `app/api/admin/send-onboarding-email/route.ts` can send onboarding emails through `sendOnboardingEmail`.
 - `/signup?token=...` validates token status through `app/api/auth/validate-token/route.ts`, pre-fills email/store name when available, then submits to `app/api/auth/signup/route.ts`.
+- Invite signup and `/login` share `app/(auth)/layout.tsx`, a centered card on the neutral `#f5f5f6` surface used by the setup wizard. When the token includes a store name or email, those fields stay locked and keep the invitation helper copy. Password checks and submit behavior are unchanged.
+- When `NEXT_PUBLIC_GOOGLE_CLIENT_ID` is set, a valid invite shows Continue with Google as the first action and the password form under an "or" divider. Login shows the same button above the email form. The Google account email must match the invite and have `email_verified`. Signup then calls backend `POST /auth/google` with that ID token and sends the merchant to `/dashboard/onboarding`. The button is omitted when the client id is unset.
 - Signup creates a `Store`, creates the first `User` as `super_admin`, marks the token as used, and on a successful sign-in redirects to `/dashboard/onboarding`.
 - Login still opens `/dashboard` from the auth page. Middleware (`lib/dashboard/entry.ts`) continues that visit to `/dashboard/onboarding` when `GET /api/v1/shopify/status`, parsed like the wizard, says the store is not connected. A connected store stays on Home. A status check that fails does not redirect. The redirect does not apply to other dashboard URLs, and Exit setup does not bounce back into the wizard. Home for a disconnected store is a checklist that links to the wizard steps; it does not replace the wizard.
 - The guided wizard at `app/dashboard/onboarding/page.tsx` is the post-signup path: Connect Shopify, confirm brand, preview a starting home, then a ready-for-build step. It does not replace invite signup and it does not require the home module editor. The wizard shell comes from dashboard #16 / PR #18. This change does not restyle it.
@@ -42,7 +44,7 @@
 - Branding/theme setup beyond logo, timezone, and currency was not verified.
 - Product picker was not identified.
 - Preview exists. The ready step requests a tracked build and shows live status. App-store submission was not identified.
-- Email delivery depends on provider configuration; no env example was found.
+- Email delivery depends on provider configuration. `.env.example` documents the Google client id only, not the email provider.
 
 ## Related docs/issues:
 

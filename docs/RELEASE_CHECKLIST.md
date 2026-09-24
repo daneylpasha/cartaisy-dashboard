@@ -4,7 +4,7 @@
 
 - Dashboard release readiness was not previously documented in a repo-level checklist.
 - Verified commands include `npm run lint`, `npm run type-check`, `npm run build`, `npm run dev`, `npm run start`, `npm run test:api`, and `npm run generate:api`.
-- CI exists as of 2026-07-28: `.github/workflows/ci.yml` runs `npm ci`, `npm run lint` and `npm run type-check` on every pull request against `main`, on Node 20, with actions pinned by commit SHA. There is still no automated test suite, so CI proves the code lints and type-checks — not that it behaves correctly.
+- CI exists as of 2026-07-28: `.github/workflows/ci.yml` runs `npm ci`, `npm run lint`, `npm run type-check`, and `npm run test:auth-google` on every pull request against `main`, on Node 20, with actions pinned by commit SHA. The Google check covers the invite signup decision only. There is still no general automated test suite.
 - No environment example file was found during the audit.
 - The dashboard currently includes settings, Shopify connection, store branding/logo upload, app-builder modules, homescreen preview, admin onboarding token pages, and a post-signup setup wizard at `/dashboard/onboarding`. The wizard ready step submits a tracked build request when the catalog sync succeeded and Shopify is connected.
 
@@ -13,7 +13,7 @@
 Before release, verify:
 
 - Pre-release checks: dependencies installed, `npm run lint` and `npm run type-check` pass (both are enforced on every PR by CI), build passes, relevant manual dashboard flows checked, and no unrelated files are included. The 176 pre-existing violations of three rules are recorded in `eslint-suppressions.json` and those rules stay at `error`, so the debt cannot grow: a violation in an unrecorded file, a count above the recorded one, or a fix in one file paired with a new violation in another all fail. See `eslint.config.mjs` for the one case that does not fail — swapping a violation for another within the same file for the same rule.
-- Environment variables: backend API URL, auth/session URLs, MongoDB connection, email provider credentials, and any analytics settings are configured in deployment without exposing secret values in frontend code. Partner app secrets (`SHOPIFY_CLIENT_ID`, `SHOPIFY_CLIENT_SECRET`, `SHOPIFY_REDIRECT_URI`, `SHOPIFY_SCOPES`) stay on the backend. Set backend `SHOPIFY_OAUTH_RETURN_URL` to `https://<dashboard>/dashboard/onboarding?step=connect` so a new merchant returns to the wizard after Shopify authorizes. The backend ignores any `returnTo` sent by the dashboard. Settings still reads `shopify` and `reason` if that URL is pointed at settings instead. The dashboard connect flow does not read `SHOPIFY_API_KEY` or `SHOPIFY_API_SECRET`.
+- Environment variables: backend API URL, auth/session URLs, MongoDB connection, email provider credentials, and any analytics settings are configured in deployment without exposing secret values in frontend code. Continue with Google needs `NEXT_PUBLIC_GOOGLE_CLIENT_ID` (the Identity Services client id). Optional `GOOGLE_CLIENT_ID` overrides the audience used when invite signup verifies the ID token; otherwise the public client id is used. The Google client must allow the dashboard origin. When the public client id is unset, the button is hidden. `.env.example` documents these two names only. Partner app secrets (`SHOPIFY_CLIENT_ID`, `SHOPIFY_CLIENT_SECRET`, `SHOPIFY_REDIRECT_URI`, `SHOPIFY_SCOPES`) stay on the backend. Set backend `SHOPIFY_OAUTH_RETURN_URL` to `https://<dashboard>/dashboard/onboarding?step=connect` so a new merchant returns to the wizard after Shopify authorizes. The backend ignores any `returnTo` sent by the dashboard. Settings still reads `shopify` and `reason` if that URL is pointed at settings instead. The dashboard connect flow does not read `SHOPIFY_API_KEY` or `SHOPIFY_API_SECRET`.
 - Auth/session: login, token cookie handling, backend profile verification, protected dashboard redirects, and signout behavior.
 - Store context: every dashboard route uses the authenticated store context and respects role permissions.
 - Backend API compatibility: generated/direct backend calls match deployed backend endpoints and response shapes.
@@ -29,7 +29,7 @@ Before release, verify:
 - Do not assume any feature or behavior described above is implemented unless verified in the current code.
 - App-store submission, release publishing, and rollback automation were not found in the audited files. The tracked build request on the ready step is the v1 handoff.
 - CI covers lint and typecheck only. There is no unit, integration or e2e test runner, and no build step in CI, so a release still needs manual verification of the flows listed above.
-- No env example file was found; deployments must be checked without exposing secrets.
+- `.env.example` documents `NEXT_PUBLIC_GOOGLE_CLIENT_ID` and optional `GOOGLE_CLIENT_ID` only. It is not a full environment catalog. Deployments must still be checked without exposing secrets.
 - Current Shopify and branding flows include direct dashboard/backend API calls that need security review before major release changes.
 
 ## Related docs/issues:

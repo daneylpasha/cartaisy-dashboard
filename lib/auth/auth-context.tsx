@@ -6,6 +6,7 @@ import React, {
   useEffect,
   useState,
   useCallback,
+  useRef,
 } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import type {
@@ -16,8 +17,41 @@ import type {
   AuthContextValue,
   UseSessionReturn,
 } from './types';
+import type { LoginResponseData } from '@/lib/api/generated/cartaisyAPI.schemas';
 import { tokenStorage } from '@/lib/api/mutator/custom-instance';
 import { login as apiLogin, getProfile } from '@/lib/api/generated/authentication/authentication';
+import { googleAuthErrorMessage, postGoogleLogin, readGoogleError } from '@/lib/auth/googleSession';
+
+function sessionFromLoginData(
+  payload: LoginResponseData | undefined,
+): { success: true; user: AuthUser; token: string; refreshToken: string } | { success: false; error: string } {
+  if (!payload?.token || !payload.refreshToken || !payload.user) {
+    return { success: false, error: 'Login failed. Please check your credentials.' };
+  }
+
+  const loginUser = payload.user;
+  if (!['super_admin', 'admin'].includes(loginUser.role)) {
+    return { success: false, error: 'Dashboard access requires admin privileges' };
+  }
+
+  return {
+    success: true,
+    token: payload.token,
+    refreshToken: payload.refreshToken,
+    user: {
+      id: loginUser.id,
+      email: loginUser.email,
+      name: loginUser.name,
+      role: loginUser.role,
+      storeId: loginUser.storeId,
+      storeName: loginUser.storeName,
+      isActive: loginUser.isActive,
+      isEmailVerified: loginUser.isEmailVerified,
+      avatar: loginUser.avatar,
+      lastLoginAt: loginUser.lastLoginAt,
+    },
+  };
+}
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
@@ -34,6 +68,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: false,
     error: null,
   });
+  // A fresh sign-in on this page chooses its own destination (dashboard vs onboarding).
+  const signedInHere = useRef(false);
 
   // Initialize auth state from storage on mount
   useEffect(() => {
@@ -113,7 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Redirect based on auth state - only for auth routes (login/signup)
   // Dashboard protection is handled by middleware.ts to avoid race conditions
   useEffect(() => {
-    if (state.isLoading) return;
+    if (state.isLoading || signedInHere.current) return;
 
     const isAuthRoute = authRoutes.some((route) => pathname?.startsWith(route));
 
@@ -140,42 +176,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: errorMessage };
       }
 
-      const { token, refreshToken, user: loginUser } = response.data.data;
-
-      // Validate admin role for dashboard access
-      if (!['super_admin', 'admin'].includes(loginUser.role)) {
+      const session = sessionFromLoginData(response.data.data);
+      if (!session.success) {
         setState((prev) => ({
           ...prev,
           isLoading: false,
-          error: 'Dashboard access requires admin privileges',
+          error: session.error,
         }));
-        return { success: false, error: 'Dashboard access requires admin privileges' };
+        return session;
       }
 
-      // Map login response to AuthUser
-      const user: AuthUser = {
-        id: loginUser.id,
-        email: loginUser.email,
-        name: loginUser.name,
-        role: loginUser.role,
-        storeId: loginUser.storeId,
-        storeName: loginUser.storeName,
-        isActive: loginUser.isActive,
-        isEmailVerified: loginUser.isEmailVerified,
-        avatar: loginUser.avatar,
-        lastLoginAt: loginUser.lastLoginAt,
-      };
-
       // Debug: Log cookie being set
-      console.log('[Auth] Login successful, setting cookie for token:', token.substring(0, 20) + '...');
-      console.log('[Auth] User storeId:', user.storeId, 'storeName:', user.storeName);
+      console.log('[Auth] Login successful, setting cookie for token:', session.token.substring(0, 20) + '...');
+      console.log('[Auth] User storeId:', session.user.storeId, 'storeName:', session.user.storeName);
 
-      // Store tokens and user
-      tokenStorage.setTokens(token, refreshToken);
-      tokenStorage.setUser(user);
+      signedInHere.current = true;
+      tokenStorage.setTokens(session.token, session.refreshToken);
+      tokenStorage.setUser(session.user);
 
       setState({
-        user,
+        user: session.user,
         isLoading: false,
         isAuthenticated: true,
         error: null,
@@ -187,6 +207,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         error instanceof Error
           ? error.message
           : 'An error occurred during login';
+      setState((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: message,
+      }));
+      return { success: false, error: message };
+    }
+  }, []);
+
+  const loginWithGoogle = useCallback(async (idToken: string): Promise<LoginResult> => {
+    setState((prev) => ({ ...prev, isLoading: true, error: null }));
+
+    try {
+      const response = await postGoogleLogin(idToken);
+
+      if (response.status !== 200 || !response.data?.data) {
+        const parsed = readGoogleError(response.data);
+        const errorMessage = googleAuthErrorMessage(parsed.code, parsed.message);
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: errorMessage,
+        }));
+        return { success: false, error: errorMessage };
+      }
+
+      const session = sessionFromLoginData(response.data.data);
+      if (!session.success) {
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: session.error,
+        }));
+        return session;
+      }
+
+      signedInHere.current = true;
+      tokenStorage.setTokens(session.token, session.refreshToken);
+      tokenStorage.setUser(session.user);
+      setState({
+        user: session.user,
+        isLoading: false,
+        isAuthenticated: true,
+        error: null,
+      });
+      return { success: true };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'An error occurred during login';
       setState((prev) => ({
         ...prev,
         isLoading: false,
@@ -250,6 +318,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         ...state,
         login,
+        loginWithGoogle,
         logout,
         refreshUser,
         getToken,
