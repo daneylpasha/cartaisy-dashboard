@@ -29,6 +29,7 @@ export interface BuildMyAppViewProps {
   ios: boolean;
   accessNotes: string;
   submitting: boolean;
+  rechecking?: boolean;
   syncBusy: boolean;
   noteSaving: boolean;
   formError: string | null;
@@ -77,7 +78,9 @@ function PlatformRow({
         />
         <span className="text-sm font-medium text-slate-950">{label}</span>
       </label>
-      {status && <span className={statusClass(status)}>{platformStatusLabel(platform, status)}</span>}
+      {status && (
+        <span className={`${statusClass(status)} shrink-0 text-right`}>{platformStatusLabel(platform, status)}</span>
+      )}
     </div>
   );
 }
@@ -92,6 +95,7 @@ export function BuildMyAppView({
   ios,
   accessNotes,
   submitting,
+  rechecking = false,
   syncBusy,
   noteSaving,
   formError,
@@ -152,7 +156,9 @@ export function BuildMyAppView({
         </p>
       )}
 
-      <fieldset className={mode === 'compose' && availability.reason ? 'mt-6' : summary || formError ? 'mt-6' : ''}>
+      <fieldset
+        className={`min-w-0 ${mode === 'compose' && availability.reason ? 'mt-6' : summary || formError ? 'mt-6' : ''}`}
+      >
         <legend className="text-sm font-medium text-slate-950">Platforms</legend>
         <div className="mt-3 space-y-2" aria-live="polite">
           <PlatformRow
@@ -192,7 +198,7 @@ export function BuildMyAppView({
           className="mt-3 w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm leading-6 text-slate-950 outline-none placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-slate-400"
         />
         {accessNotes.length > 0 && (
-          <p className="mt-2 text-xs text-slate-400">
+          <p className="mt-2 text-xs text-slate-500">
             {noteSaving ? 'Saving...' : `${accessNotes.length}/${ACCESS_NOTES_MAX}`}
           </p>
         )}
@@ -203,10 +209,10 @@ export function BuildMyAppView({
           <button
             type="button"
             onClick={() => onPrimary(primary.kind)}
-            disabled={primary.disabled}
+            disabled={primary.disabled || rechecking}
             className={PRIMARY_BUTTON}
           >
-            {primary.label}
+            {rechecking ? 'Checking...' : primary.label}
           </button>
         </div>
       )}

@@ -10,6 +10,7 @@ interface ReadyStepProps {
   onBack: () => void;
   onConnectShopify: () => void;
   onCatalogUpdated: () => void;
+  onRefreshConnection: () => Promise<void> | void;
 }
 
 export function ReadyStep({
@@ -18,6 +19,7 @@ export function ReadyStep({
   onBack,
   onConnectShopify,
   onCatalogUpdated,
+  onRefreshConnection,
 }: ReadyStepProps) {
   return (
     <section className="rounded-2xl border border-slate-200/80 bg-white px-6 py-8 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-10 sm:py-10">
@@ -34,6 +36,7 @@ export function ReadyStep({
         initialSync={sync}
         onConnectShopify={onConnectShopify}
         onCatalogUpdated={onCatalogUpdated}
+        onRefreshConnection={onRefreshConnection}
       />
 
       <div className="mt-10 flex items-center justify-between border-t border-slate-100 pt-6">

@@ -1,4 +1,4 @@
-import { API_URL } from '@/lib/api/mutator/custom-instance';
+import { API_URL, customInstance } from '@/lib/api/mutator/custom-instance';
 import { UNAVAILABLE_SYNC, normalizeSyncStatus } from '@/lib/onboarding/normalizers';
 import type { SyncGate } from '@/lib/onboarding/types';
 import {
@@ -16,44 +16,54 @@ export type CreateBuildResult = { kind: 'created'; request: BuildRequest } | Cre
 export type ReadBuildResult =
   | { kind: 'ok'; request: BuildRequest }
   | { kind: 'missing' }
-  | { kind: 'error' };
+  | { kind: 'error'; message?: string };
 
 export type ListBuildResult =
   | { kind: 'ok'; requests: BuildRequest[] }
   | { kind: 'error'; message: string };
 
-function authHeaders(token: string, json = false): HeadersInit {
-  return {
-    Accept: 'application/json',
-    Authorization: `Bearer ${token}`,
-    ...(json ? { 'Content-Type': 'application/json' } : {}),
-  };
-}
-
-async function readJson(response: Response): Promise<unknown> {
-  const text = await response.text();
-  if (!text) return null;
-  try {
-    return JSON.parse(text) as unknown;
-  } catch {
-    return null;
-  }
-}
-
+/**
+ * Build calls go through the dashboard mutator so a 401 refreshes the access
+ * token and retries once. Callers still pass the token they just read; the
+ * mutator uses it for the first attempt and replaces it only after a refresh.
+ */
 async function backend(
   token: string,
   path: string,
   init: RequestInit
 ): Promise<{ ok: boolean; status: number; body: unknown }> {
-  const response = await fetch(`${API_URL}${path}`, {
-    ...init,
-    headers: {
-      ...authHeaders(token, Boolean(init.body)),
-      ...init.headers,
-    },
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  if (init.body != null) headers['Content-Type'] = 'application/json';
+
+  const result = await customInstance<{ data: unknown; status: number }>(`${API_URL}${path}`, {
+    method: init.method,
+    body: init.body,
+    token,
+    headers,
   });
-  const body = await readJson(response);
-  return { ok: response.ok, status: response.status, body };
+  const status = result.status;
+  return { ok: status >= 200 && status < 300, status, body: result.data ?? null };
+}
+
+/**
+ * Loads catalog sync and the build list together. A retry then refreshes the
+ * wizard-owned Shopify connection snapshot. The snapshot runs after those
+ * calls so a 401 refresh has already stored a new access token. A snapshot
+ * failure does not hide a successful list.
+ */
+export async function loadBuildScreen(
+  token: string,
+  options?: { refreshConnection?: () => Promise<void> | void }
+): Promise<{ sync: SyncGate; list: ListBuildResult }> {
+  const [sync, list] = await Promise.all([fetchCatalogSync(token), listBuildRequests(token)]);
+  if (options?.refreshConnection) {
+    try {
+      await options.refreshConnection();
+    } catch {
+      // The wizard snapshot stays as it was. Try again remains available.
+    }
+  }
+  return { sync, list };
 }
 
 export async function fetchCatalogSync(token: string): Promise<SyncGate> {
@@ -104,6 +114,9 @@ export async function getBuildRequest(token: string, id: string): Promise<ReadBu
   try {
     const result = await backend(token, `/build-requests/${id}`, { method: 'GET' });
     if (result.status === 404) return { kind: 'missing' };
+    if (result.status === 401) {
+      return { kind: 'error', message: 'Sign in again to see your build.' };
+    }
     if (!result.ok) return { kind: 'error' };
     const request = normalizeBuildRequest(result.body);
     return request ? { kind: 'ok', request } : { kind: 'error' };

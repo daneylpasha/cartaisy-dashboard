@@ -67,6 +67,16 @@ export function isBuildRequestId(value: string): boolean {
   return OBJECT_ID.test(value);
 }
 
+/** True when a poll would not change the merchant-visible request. */
+export function isSameBuildSnapshot(current: BuildRequest | null, next: BuildRequest): boolean {
+  if (!current || current.id !== next.id) return false;
+  return (
+    current.accessNotes === next.accessNotes &&
+    current.platforms.android.status === next.platforms.android.status &&
+    current.platforms.ios.status === next.platforms.ios.status
+  );
+}
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   return value as Record<string, unknown>;

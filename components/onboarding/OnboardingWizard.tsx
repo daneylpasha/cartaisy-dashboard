@@ -87,6 +87,15 @@ export function OnboardingWizard() {
     [router]
   );
 
+  const refreshShopifySnapshot = useCallback(async () => {
+    const token = tokenStorage.getToken();
+    if (!token) return;
+    const snapshot = await loadShopifySnapshot(token);
+    setConnection(snapshot.connection);
+    setSync(snapshot.sync);
+    setCatalog(snapshot.catalog);
+  }, []);
+
   useEffect(() => {
     if (status === 'loading') return;
 
@@ -337,6 +346,7 @@ export function OnboardingWizard() {
               onBack={() => go('preview')}
               onConnectShopify={() => go('connect')}
               onCatalogUpdated={() => setReloadKey((value) => value + 1)}
+              onRefreshConnection={refreshShopifySnapshot}
             />
           )}
         </motion.div>
