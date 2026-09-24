@@ -28,9 +28,9 @@ export function PreviewStep({
   const productLine = previewStepDetail(sync, catalog.products, pending);
 
   return (
-    <section className="rounded-2xl border border-slate-200/80 bg-white px-6 py-8 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-10 sm:py-10">
-      <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div>
+    <section className="rounded-2xl border border-slate-200/80 bg-white px-5 py-8 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-10 sm:py-10">
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start lg:gap-x-12">
+        <div className="min-w-0 lg:col-start-1">
           <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Step 3</p>
           <h1 className="font-heading mt-3 text-[1.75rem] font-semibold tracking-tight text-slate-950">
             Preview your home
@@ -53,13 +53,12 @@ export function PreviewStep({
               {pending ? 'Checking...' : 'Check again'}
             </button>
           ) : null}
-          <div className="mt-8 lg:hidden">
-            <SmartHomePreview draft={draft} catalog={catalog} sync={sync} pending={pending} />
-          </div>
-          <WizardFooter onBack={onBack} primaryLabel="Continue" onPrimary={onContinue} />
         </div>
-        <div className="hidden lg:block">
+        <div className="mt-8 lg:col-start-2 lg:row-span-2 lg:mt-0 lg:self-start">
           <SmartHomePreview draft={draft} catalog={catalog} sync={sync} pending={pending} />
+        </div>
+        <div className="lg:col-start-1">
+          <WizardFooter onBack={onBack} primaryLabel="Continue" onPrimary={onContinue} />
         </div>
       </div>
     </section>

@@ -83,6 +83,7 @@ export function OnboardingWizard() {
   const [secondaryValid, setSecondaryValid] = useState(true);
   const [splashFile, setSplashFile] = useState<File | null>(null);
   const [iconFile, setIconFile] = useState<File | null>(null);
+  const persistedLogoRef = useRef<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [returnNotice, setReturnNotice] = useState<ShopifyReturnCopy | null>(() =>
     shopifyReturnCopy(searchParams.get('shopify'), searchParams.get('reason') ?? searchParams.get('error'))
@@ -158,6 +159,7 @@ export function OnboardingWizard() {
       const fallbackName = (storeName || sessionName).trim();
       if (!branding) {
         setDraft(emptyBrandingDraft(fallbackName));
+        persistedLogoRef.current = null;
         setSavedName(fallbackName);
         setBrandingError('We could not load your brand. Try again before saving.');
       } else {
@@ -166,6 +168,7 @@ export function OnboardingWizard() {
           appName: (branding.appName || fallbackName).trim(),
         };
         setDraft(next);
+        persistedLogoRef.current = next.logoUrl;
         setSavedName(next.appName);
         setSavedPrimary(next.primaryColor);
         setSavedSecondary(next.secondaryColor);
@@ -291,15 +294,32 @@ export function OnboardingWizard() {
       setFieldError('Sign in again to upload a logo.');
       return;
     }
+    const previewUrl = URL.createObjectURL(file);
+    setDraft((current) => {
+      if (current.logoUrl?.startsWith('blob:')) URL.revokeObjectURL(current.logoUrl);
+      return { ...current, logoUrl: previewUrl };
+    });
     setLogoUploading(true);
     setFieldError(null);
     const result = await uploadLogo(storeId, token, file);
     setLogoUploading(false);
     if (!result.ok || !result.logoUrl) {
+      URL.revokeObjectURL(previewUrl);
+      setDraft((current) =>
+        current.logoUrl === previewUrl ? { ...current, logoUrl: persistedLogoRef.current } : current
+      );
       setFieldError(result.error ?? 'We could not upload the logo.');
       return;
     }
-    setDraft((current) => ({ ...current, logoUrl: safeImageUrl(result.logoUrl) }));
+    const persisted = safeImageUrl(result.logoUrl);
+    let applied = false;
+    setDraft((current) => {
+      if (current.logoUrl !== previewUrl) return current;
+      applied = true;
+      return { ...current, logoUrl: persisted };
+    });
+    if (applied) persistedLogoRef.current = persisted;
+    URL.revokeObjectURL(previewUrl);
   };
 
   const handleStart = async (shopDomain: string) => {
@@ -398,7 +418,7 @@ export function OnboardingWizard() {
       };
 
   return (
-    <WizardChrome step={step} wide={step === 'preview'}>
+    <WizardChrome step={step} wide={step === 'brand' || step === 'preview'}>
       <AnimatePresence mode="wait">
         <motion.div key={loading ? 'loading' : step} {...motionProps}>
           {loading ? (
@@ -432,6 +452,8 @@ export function OnboardingWizard() {
               draft={draft}
               connection={connection}
               catalog={catalog}
+              sync={sync}
+              pending={refreshing}
               warning={warning}
               loadError={brandingError}
               fieldError={fieldError}

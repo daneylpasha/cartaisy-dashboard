@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import { previewFootnote, previewShelf, readableTextOn, safeImageUrl } from '@/lib/onboarding/normalizers';
 import type { BrandingDraft, CatalogPreviewProduct, LockedCatalog, SyncGate } from '@/lib/onboarding/types';
 
@@ -11,152 +11,327 @@ interface SmartHomePreviewProps {
   pending?: boolean;
 }
 
-function priceColor(secondary: string): string {
-  const trimmed = secondary.trim();
-  if (!/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(trimmed)) return '#64748b';
-  return readableTextOn(trimmed) === '#ffffff' ? trimmed : '#64748b';
+const FALLBACK_PRIMARY = '#111111';
+
+function normalizeHex(hex: string): string | null {
+  const match = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.exec(hex.trim());
+  if (!match) return null;
+  const raw = match[1];
+  const full = raw.length === 3 ? raw.split('').map((char) => char + char).join('') : raw;
+  return `#${full.toLowerCase()}`;
 }
 
-function ProductTile({ product, amountColor }: { product: CatalogPreviewProduct; amountColor: string }) {
-  const [broken, setBroken] = useState(false);
-  const showImage = Boolean(product.imageUrl) && !broken;
+function withAlpha(hex: string, alpha: number): string {
+  const normalized = normalizeHex(hex);
+  if (!normalized) return `rgba(17,17,17,${alpha})`;
+  const raw = normalized.slice(1);
+  const r = Number.parseInt(raw.slice(0, 2), 16);
+  const g = Number.parseInt(raw.slice(2, 4), 16);
+  const b = Number.parseInt(raw.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
 
+function RemoteImage({
+  src,
+  className,
+  fallback = null,
+}: {
+  src: string;
+  className: string;
+  fallback?: ReactNode;
+}) {
+  const [broken, setBroken] = useState(false);
+  if (broken) return <>{fallback}</>;
+  return (
+    // Merchant hosts and session blob previews are outside the image allowlist.
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt="" className={className} onError={() => setBroken(true)} />
+  );
+}
+
+function BrandMarks({
+  iconUrl,
+  logoUrl,
+  initial,
+}: {
+  iconUrl: string | null;
+  logoUrl: string | null;
+  initial: string;
+}) {
+  const letter = (
+    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-white/20 text-sm font-semibold">
+      {initial}
+    </span>
+  );
+  if (iconUrl) {
+    return (
+      <RemoteImage
+        key={iconUrl}
+        src={iconUrl}
+        className="h-9 w-9 shrink-0 rounded-[10px] object-cover ring-1 ring-white/40"
+        fallback={letter}
+      />
+    );
+  }
+  if (logoUrl) {
+    return (
+      <RemoteImage
+        key={logoUrl}
+        src={logoUrl}
+        className="h-8 max-w-[5.5rem] shrink-0 rounded-md bg-white object-contain px-1.5"
+        fallback={letter}
+      />
+    );
+  }
+  return letter;
+}
+
+function PriceLabel({ label, secondary }: { label: string; secondary: string }) {
+  const onSecondary = readableTextOn(secondary);
+  if (onSecondary === '#ffffff') {
+    return (
+      <p className="mt-1 truncate text-[11px] font-medium tabular-nums" style={{ color: secondary }}>
+        {label}
+      </p>
+    );
+  }
+  return (
+    <p
+      className="mt-1 inline-block max-w-full truncate rounded-full px-1.5 py-0.5 text-[10px] font-medium tabular-nums"
+      style={{
+        backgroundColor: secondary,
+        color: onSecondary,
+        boxShadow: 'inset 0 0 0 1px rgba(15,23,42,0.16)',
+      }}
+    >
+      {label}
+    </p>
+  );
+}
+
+function ProductTile({ product, secondary }: { product: CatalogPreviewProduct; secondary: string }) {
   return (
     <li className="min-w-0">
       <div className="aspect-square overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200/80">
-        {showImage ? (
-          // Merchant image hosts are not in the Next image allowlist.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={product.imageUrl ?? ''}
-            alt=""
-            className="h-full w-full object-cover"
-            onError={() => setBroken(true)}
-          />
+        {product.imageUrl ? (
+          <RemoteImage key={product.imageUrl} src={product.imageUrl} className="h-full w-full object-cover" />
         ) : null}
       </div>
       <p className="mt-2 line-clamp-2 text-xs font-medium leading-4 text-slate-800">{product.title}</p>
-      {product.priceLabel ? (
-        <p className="mt-1 text-xs tabular-nums" style={{ color: amountColor }}>
-          {product.priceLabel}
-        </p>
-      ) : null}
+      {product.priceLabel ? <PriceLabel label={product.priceLabel} secondary={secondary} /> : null}
     </li>
+  );
+}
+
+function ShopperCover({
+  splashUrl,
+  primary,
+  onPrimary,
+  children,
+}: {
+  splashUrl: string | null;
+  primary: string;
+  onPrimary: '#111111' | '#ffffff';
+  children: ReactNode;
+}) {
+  const [splashBroken, setSplashBroken] = useState(false);
+  const showSplash = Boolean(splashUrl) && !splashBroken;
+  const scrim = showSplash
+    ? onPrimary === '#ffffff'
+      ? `linear-gradient(180deg, ${withAlpha(primary, 0.38)}, ${withAlpha(primary, 0.82)})`
+      : `linear-gradient(180deg, rgba(255,255,255,0.62), ${withAlpha(primary, 0.9)})`
+    : undefined;
+
+  return (
+    <div className={`relative shrink-0 ${showSplash ? 'min-h-[7.75rem]' : ''}`} style={{ color: onPrimary }}>
+      {showSplash && splashUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={splashUrl}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+          onError={() => setSplashBroken(true)}
+        />
+      ) : null}
+      <div
+        className="relative"
+        style={{
+          backgroundColor: showSplash ? undefined : primary,
+          backgroundImage: scrim,
+        }}
+      >
+        {children}
+      </div>
+    </div>
   );
 }
 
 export function SmartHomePreview({ draft, catalog, sync, pending = false }: SmartHomePreviewProps) {
   const appName = draft.appName.trim() || 'Your app';
   const initial = appName.charAt(0).toUpperCase();
-  const headerMark = safeImageUrl(draft.iconUrl) || safeImageUrl(draft.logoUrl);
+  const iconUrl = safeImageUrl(draft.iconUrl);
+  const logoUrl = safeImageUrl(draft.logoUrl);
   const splashUrl = safeImageUrl(draft.splashUrl);
-  const onPrimary = readableTextOn(draft.primaryColor);
+  const primary = normalizeHex(draft.primaryColor) ?? FALLBACK_PRIMARY;
+  const secondary = normalizeHex(draft.secondaryColor) ?? '#ffffff';
+  const onPrimary = readableTextOn(primary);
+  const onSecondary = readableTextOn(secondary);
   const chips = catalog.collections.slice(0, 3);
   const shelf = previewShelf(sync, catalog.products, pending);
-  const sectionTitle = catalog.collections[0] ?? (shelf.kind === 'products' ? 'Your products' : null);
-  const amountColor = priceColor(draft.secondaryColor);
+  const sectionTitle = catalog.collections[0] ?? (shelf.kind === 'products' ? 'New arrivals' : null);
   const footnote = previewFootnote(catalog, sync, pending);
+  const tabColor = readableTextOn(primary) === '#ffffff' ? primary : '#0f172a';
+  const pillStyle: CSSProperties = {
+    backgroundColor: secondary,
+    color: onSecondary,
+    boxShadow:
+      onSecondary === '#ffffff'
+        ? 'inset 0 0 0 1px rgba(255,255,255,0.28)'
+        : 'inset 0 0 0 1px rgba(15,23,42,0.16)',
+  };
 
   return (
-    <div className="mx-auto w-full max-w-[320px]">
-      <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_30px_60px_-36px_rgba(15,23,42,0.45)]">
-        <div className="flex h-7 items-end justify-center pb-1">
-          <span className="h-1 w-14 rounded-full bg-slate-200" aria-hidden />
-        </div>
-
+    <figure className="mx-auto w-full max-w-[17.5rem]">
+      <div className="rounded-[2.35rem] bg-[#16161a] p-2 shadow-[0_22px_44px_-28px_rgba(15,23,42,0.55)] ring-1 ring-black/10">
         <div
-          className="relative px-5 pb-5 pt-4"
-          style={
-            splashUrl
-              ? {
-                  backgroundImage: `linear-gradient(180deg, rgba(15,23,42,0.25), rgba(15,23,42,0.55)), url("${splashUrl}")`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  color: '#ffffff',
-                }
-              : { backgroundColor: draft.primaryColor, color: onPrimary }
-          }
+          data-shopper-screen
+          className="flex aspect-[9/19.5] flex-col overflow-hidden rounded-[1.85rem] bg-white"
         >
-          <div className="flex items-center gap-3">
-            {headerMark ? (
-              // Blob previews and merchant image hosts are not in the Next image allowlist.
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={headerMark} alt="" className="h-9 w-9 rounded-lg object-cover" />
-            ) : (
-              <span
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-sm font-semibold"
-                style={{
-                  backgroundColor: splashUrl ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.18)',
-                }}
-              >
-                {initial}
-              </span>
-            )}
-            <div className="min-w-0">
-              <p className="truncate text-[15px] font-semibold tracking-tight">{appName}</p>
-              <p className="text-xs opacity-80">Home</p>
-            </div>
-          </div>
-          <p className="mt-6 font-heading text-2xl font-semibold tracking-tight">New this week</p>
-          <p className="mt-1 max-w-[220px] text-sm leading-5 opacity-90">
-            A starting home for your store. Change the layout later.
-          </p>
-        </div>
-
-        <div className="space-y-4 px-4 py-4">
-          <div className="flex h-9 items-center rounded-full bg-slate-100 px-3 text-xs text-slate-500" aria-hidden>
-            Search
-          </div>
-          {chips.length > 0 ? (
-            <div className="flex gap-2 overflow-hidden" aria-hidden>
-              {chips.map((label, index) => (
-                <span
-                  key={`${label}-${index}`}
-                  className="shrink-0 rounded-full px-3 py-1 text-xs"
-                  style={
-                    index === 0
-                      ? { backgroundColor: draft.primaryColor, color: onPrimary }
-                      : { backgroundColor: '#f1f5f9', color: '#334155' }
-                  }
-                >
-                  {label}
+          <ShopperCover key={splashUrl ?? 'solid'} splashUrl={splashUrl} primary={primary} onPrimary={onPrimary}>
+            <div
+              className="relative flex h-7 items-center justify-between px-3.5 text-[11px] font-semibold leading-none"
+              style={{ backgroundColor: withAlpha(primary, 0.92) }}
+              aria-hidden
+            >
+              <span className="relative z-10">9:41</span>
+              <span className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-4 w-11 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black ring-1 ring-white/25" />
+              <span className="relative z-10 flex items-center gap-1">
+                <span className="flex items-end gap-px">
+                  <span className="h-1 w-0.5 rounded-sm bg-current opacity-60" />
+                  <span className="h-1.5 w-0.5 rounded-sm bg-current opacity-75" />
+                  <span className="h-2 w-0.5 rounded-sm bg-current" />
+                  <span className="h-2.5 w-0.5 rounded-sm bg-current" />
                 </span>
-              ))}
+                <span className="h-1.5 w-3.5 rounded-[2px] border border-current" />
+              </span>
             </div>
-          ) : null}
-          <div>
-            {sectionTitle ? <p className="text-sm font-medium text-slate-900">{sectionTitle}</p> : null}
-            {shelf.kind === 'products' ? (
-              <ul className="mt-3 grid grid-cols-2 gap-3">
-                {catalog.products.map((product, index) => (
-                  <ProductTile key={`${product.id}-${index}`} product={product} amountColor={amountColor} />
-                ))}
-              </ul>
-            ) : shelf.kind === 'loading' ? (
-              <div className="mt-3" aria-busy="true" aria-live="polite">
-                <p className="text-xs text-slate-500">{shelf.message}</p>
-                <div className="mt-3 grid grid-cols-2 gap-3">
-                  {['a', 'b', 'c', 'd'].map((slot) => (
-                    <div key={slot} aria-hidden>
-                      <div className="aspect-square animate-pulse rounded-xl bg-slate-100" />
-                      <div className="mt-2 h-2 w-16 animate-pulse rounded-full bg-slate-100" />
-                      <div className="mt-1.5 h-2 w-10 animate-pulse rounded-full bg-slate-100" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <p
-                className="mt-3 rounded-2xl bg-slate-50 px-4 py-8 text-center text-sm leading-6 text-slate-600"
-                role="status"
-              >
-                {shelf.message}
+            <div className="flex items-center gap-2 px-3.5 pb-3.5 pt-1">
+              <BrandMarks iconUrl={iconUrl} logoUrl={iconUrl ? null : logoUrl} initial={initial} />
+              <p className="min-w-0 flex-1 truncate font-heading text-[15px] font-semibold leading-5 tracking-tight">
+                {appName}
               </p>
-            )}
+              <span className="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold leading-none" style={pillStyle}>
+                Shop
+              </span>
+            </div>
+          </ShopperCover>
+
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-3.5 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {iconUrl && logoUrl ? (
+              <div className="mb-2.5 flex h-7 shrink-0 items-center">
+                <RemoteImage key={logoUrl} src={logoUrl} className="h-7 max-w-full object-contain object-left" />
+              </div>
+            ) : null}
+            <div className="flex h-8 shrink-0 items-center rounded-full bg-slate-100 px-3 text-[11px] text-slate-500" aria-hidden>
+              Search
+            </div>
+            {chips.length > 0 ? (
+              <div className="mt-3 flex gap-1.5 overflow-hidden" aria-hidden>
+                {chips.map((label, index) => (
+                  <span
+                    key={`${label}-${index}`}
+                    className="max-w-[8.5rem] shrink-0 truncate rounded-full px-2.5 py-1 text-[11px]"
+                    style={
+                      index === 0
+                        ? { backgroundColor: primary, color: onPrimary }
+                        : { backgroundColor: '#f1f5f9', color: '#334155' }
+                    }
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+            <div className={shelf.kind === 'empty' ? 'mt-3 flex flex-1 flex-col' : 'mt-3'}>
+              {sectionTitle ? <p className="truncate text-sm font-medium text-slate-900">{sectionTitle}</p> : null}
+              {shelf.kind === 'products' ? (
+                <ul className="mt-2.5 grid grid-cols-2 gap-2.5">
+                  {catalog.products.map((product, index) => (
+                    <ProductTile key={`${product.id}-${index}`} product={product} secondary={secondary} />
+                  ))}
+                </ul>
+              ) : shelf.kind === 'loading' ? (
+                <div className="mt-2.5" aria-busy="true" aria-live="polite">
+                  <p className="text-[11px] text-slate-500">{shelf.message}</p>
+                  <div className="mt-2.5 grid grid-cols-2 gap-2.5">
+                    {['a', 'b', 'c', 'd'].map((slot) => (
+                      <div key={slot} aria-hidden>
+                        <div className="aspect-square animate-pulse rounded-xl bg-slate-100" />
+                        <div className="mt-2 h-2 w-16 animate-pulse rounded-full bg-slate-100" />
+                        <div className="mt-1.5 h-2 w-10 animate-pulse rounded-full bg-slate-100" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p
+                  className="my-auto rounded-2xl bg-slate-50 px-3 py-6 text-center text-[13px] leading-5 text-slate-600"
+                  role="status"
+                >
+                  {shelf.message}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="shrink-0 border-t border-slate-200/80 bg-white px-2 pt-2" aria-hidden>
+            <div className="grid grid-cols-3 text-[10px] font-medium">
+              <span className="flex flex-col items-center gap-0.5" style={{ color: tabColor }}>
+                <HomeGlyph />
+                Home
+              </span>
+              <span className="flex flex-col items-center gap-0.5 text-slate-400">
+                <SearchGlyph />
+                Search
+              </span>
+              <span className="flex flex-col items-center gap-0.5 text-slate-400">
+                <BagGlyph />
+                Bag
+              </span>
+            </div>
+            <div className="flex justify-center pb-1.5 pt-2">
+              <span className="h-1 w-16 rounded-full bg-slate-900" />
+            </div>
           </div>
         </div>
       </div>
-      <p className="mt-4 text-center text-xs leading-5 text-slate-500">{footnote}</p>
-    </div>
+      <figcaption className="mt-4 text-center text-xs leading-5 text-slate-500">{footnote}</figcaption>
+    </figure>
+  );
+}
+
+function HomeGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-9.5Z" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function SearchGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <circle cx="11" cy="11" r="6" />
+      <path d="m20 20-3.5-3.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function BagGlyph() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+      <path d="M6 8h12l-1 12H7L6 8Z" strokeLinejoin="round" />
+      <path d="M9 8V7a3 3 0 0 1 6 0v1" strokeLinecap="round" />
+    </svg>
   );
 }
