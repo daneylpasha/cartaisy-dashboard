@@ -1,9 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSession } from '@/lib/auth';
 import { useShopifyStatus } from '@/hooks/useShopifyStatus';
+import { tokenStorage } from '@/lib/api/mutator/custom-instance';
+import { getOverviewProductCount } from '@/lib/api/shopifyConnection';
+import { fetchCatalogSync, syncCatalogAgain } from '@/lib/build/client';
+import { BUILD_STATUS_POLL_MS } from '@/lib/build/contract';
+import { UNAVAILABLE_SYNC } from '@/lib/onboarding/normalizers';
+import type { SyncGate } from '@/lib/onboarding/types';
+import { shopifyRecoveryView } from '@/lib/shopify/recovery';
 import * as shopifyService from '@/lib/services/shopify';
+import { ShopifyRecoveryStatus } from '@/components/shopify/ShopifyRecoveryStatus';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,94 +24,122 @@ import {
 } from '@/components/ui/dialog';
 import { Loader2 } from 'lucide-react';
 
-function formatQuietDate(value: string | null | undefined): string | null {
-  if (!value) {
-    return null;
-  }
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(date);
-}
-
-function Notice({ tone, children }: { tone: 'error' | 'success'; children: string }) {
-  const styles =
-    tone === 'error'
-      ? 'border-slate-200 bg-slate-50 text-slate-700'
-      : 'border-slate-200 bg-white text-slate-700';
-
-  return (
-    <p role="alert" className={`rounded-md border px-3 py-2 text-sm ${styles}`}>
-      {children}
-    </p>
-  );
-}
-
 export function ConnectShopify() {
   const { data: session } = useSession();
   const { status, isLoading, error, refetch } = useShopifyStatus();
   const [shop, setShop] = useState('');
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [sync, setSync] = useState<SyncGate>(UNAVAILABLE_SYNC);
+  const [syncReady, setSyncReady] = useState(false);
+  const [productCount, setProductCount] = useState<number | null>(null);
+  const [pending, setPending] = useState<'sync' | 'reconnect' | null>(null);
   const [actionError, setActionError] = useState('');
-  const [syncMessage, setSyncMessage] = useState('');
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
 
-  const connectedShop = status?.isConnected ? status.shop : null;
-  const connectedOn = formatQuietDate(status?.connectedAt);
-  const lastSynced = formatQuietDate(status?.lastSyncAt);
+  const connected = Boolean(status?.isConnected && status.shop);
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (!connected) {
+      setSync(UNAVAILABLE_SYNC);
+      setProductCount(null);
+      setSyncReady(true);
+      return;
+    }
+
+    let cancelled = false;
+    setSyncReady(false);
+
+    void (async () => {
+      const token = tokenStorage.getToken();
+      if (!token) {
+        if (!cancelled) setSyncReady(true);
+        return;
+      }
+      const [next, count] = await Promise.all([fetchCatalogSync(token), getOverviewProductCount()]);
+      if (cancelled) return;
+      setSync(next);
+      setProductCount(count);
+      setSyncReady(true);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [connected, isLoading, status?.shop]);
+
+  useEffect(() => {
+    if (!connected || pending || sync.state !== 'in_progress') return;
+    let cancelled = false;
+
+    const timer = window.setInterval(() => {
+      void (async () => {
+        const token = tokenStorage.getToken();
+        if (!token || cancelled) return;
+        const next = await fetchCatalogSync(token);
+        if (cancelled || next.state === 'unavailable' || next.state === 'in_progress') return;
+        setSync(next);
+        if (next.state === 'succeeded') {
+          setProductCount(await getOverviewProductCount());
+        }
+        await refetch();
+      })();
+    }, BUILD_STATUS_POLL_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [connected, pending, refetch, sync.state]);
+
+  const view = shopifyRecoveryView({
+    statusKnown: !isLoading && !error && status != null && (!connected || syncReady),
+    isConnected: connected,
+    sync,
+    productCount,
+    webhookError: status?.webhookRegistrationError ?? null,
+    lastSyncAt: status?.lastSyncAt ?? null,
+  });
 
   const beginConnect = async (shopValue: string) => {
     setActionError('');
-    setSyncMessage('');
-
     if (!session?.user) {
       setActionError('Sign in again to connect your store.');
       return;
     }
-
-    setIsConnecting(true);
+    setPending('reconnect');
     try {
       const result = await shopifyService.initiateOAuth(shopValue);
       window.location.href = result.authorizationUrl;
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "We couldn't connect your store. Try again.");
-      setIsConnecting(false);
+      setPending(null);
     }
-  };
-
-  const handleConnect = async (event: React.FormEvent) => {
-    event.preventDefault();
-    await beginConnect(shop);
-  };
-
-  const handleReconnect = async () => {
-    if (!connectedShop) {
-      setActionError('Enter your store address, like your-store.myshopify.com.');
-      return;
-    }
-    await beginConnect(connectedShop);
   };
 
   const handleSync = async () => {
     setActionError('');
-    setSyncMessage('');
-    setIsSyncing(true);
-    try {
-      await shopifyService.syncAgain();
-      setSyncMessage('Your store data is up to date.');
-      await refetch();
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : "We couldn't sync your store. Try again.");
-    } finally {
-      setIsSyncing(false);
+    const token = tokenStorage.getToken();
+    if (!token) {
+      setActionError('Sign in again to sync your store.');
+      return;
     }
+    setPending('sync');
+    setSync((current) => ({
+      ...current,
+      state: 'in_progress',
+      detail: null,
+      eligibleForBuild: false,
+    }));
+    const next = await syncCatalogAgain(token);
+    setSync(next.state === 'unavailable' ? { ...next, state: 'failed', detail: "We couldn't sync your store. Try again." } : next);
+    if (next.state === 'succeeded') {
+      setProductCount(await getOverviewProductCount());
+    }
+    if (next.eligibilityReason === 'shopify_not_connected' || next.state === 'succeeded') {
+      await refetch();
+    }
+    setPending(null);
   };
 
   const handleDisconnect = async () => {
@@ -112,7 +148,8 @@ export function ConnectShopify() {
     try {
       await shopifyService.disconnect();
       setShowDisconnectDialog(false);
-      setSyncMessage('');
+      setSync(UNAVAILABLE_SYNC);
+      setProductCount(null);
       await refetch();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "We couldn't disconnect your store. Try again.");
@@ -132,71 +169,34 @@ export function ConnectShopify() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {isLoading ? (
+          {isLoading || (connected && !syncReady) ? (
             <p className="flex items-center gap-2 text-sm text-slate-500">
               <Loader2 className="h-4 w-4 animate-spin" />
               Checking your store…
             </p>
-          ) : connectedShop ? (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="connected-shop" className="text-sm font-medium text-slate-700">
-                  Store address
-                </Label>
-                <Input
-                  id="connected-shop"
-                  value={connectedShop}
-                  readOnly
-                  aria-readonly="true"
-                  className="h-10 bg-slate-50 text-slate-800"
-                />
-                <p className="text-sm text-slate-500">
-                  <span className="mr-2 inline-block h-1.5 w-1.5 rounded-full bg-emerald-600 align-middle" />
-                  Connected{connectedOn ? ` on ${connectedOn}` : ''}
-                  {lastSynced ? ` · Last synced ${lastSynced}` : ''}
-                </p>
-              </div>
-
-              {(error || actionError) && <Notice tone="error">{error || actionError}</Notice>}
-              {syncMessage && <Notice tone="success">{syncMessage}</Notice>}
-
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button
-                  type="button"
-                  onClick={handleReconnect}
-                  disabled={isConnecting || isSyncing}
-                  className="sm:min-w-36"
-                >
-                  {isConnecting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Opening Shopify…
-                    </>
-                  ) : (
-                    'Reconnect'
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleSync}
-                  disabled={isConnecting || isSyncing}
-                  className="sm:min-w-36"
-                >
-                  {isSyncing ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Syncing…
-                    </>
-                  ) : (
-                    'Sync again'
-                  )}
-                </Button>
-              </div>
-              <p className="text-sm text-slate-500">
-                Reconnect opens Shopify again for this same store.
+          ) : error && !status ? (
+            <div className="space-y-3">
+              <p role="alert" className="text-sm leading-6 text-slate-600">
+                {error}
               </p>
-
+              <Button type="button" variant="outline" onClick={() => void refetch()}>
+                Check again
+              </Button>
+            </div>
+          ) : connected ? (
+            <div className="space-y-4">
+              <ShopifyRecoveryStatus
+                shopDomain={status?.shop ?? null}
+                view={view}
+                pending={pending === 'sync'}
+                onSyncAgain={() => void handleSync()}
+                onReconnect={() => void beginConnect(status?.shop ?? '')}
+              />
+              {actionError && (
+                <p role="alert" className="text-sm leading-6 text-slate-600">
+                  {actionError}
+                </p>
+              )}
               <button
                 type="button"
                 onClick={() => setShowDisconnectDialog(true)}
@@ -206,38 +206,45 @@ export function ConnectShopify() {
               </button>
             </div>
           ) : (
-            <form onSubmit={handleConnect} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="shop" className="text-sm font-medium text-slate-700">
-                  Store address
-                </Label>
-                <Input
-                  id="shop"
-                  type="text"
-                  placeholder="your-store.myshopify.com"
-                  value={shop}
-                  onChange={(event) => setShop(event.target.value)}
-                  disabled={isConnecting}
-                  autoComplete="off"
-                  className="h-10"
-                />
-                <p className="text-sm text-slate-500">
-                  Use the address from your Shopify admin. You can leave off .myshopify.com.
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (!shop.trim() || pending) return;
+                void beginConnect(shop);
+              }}
+              className="space-y-4"
+            >
+              <ShopifyRecoveryStatus
+                shopDomain={null}
+                view={view}
+                pending={pending === 'reconnect'}
+                reconnectDisabled={!shop.trim() || pending === 'reconnect'}
+                onReconnect={() => void beginConnect(shop)}
+              >
+                <div className="mt-4 space-y-2">
+                  <Label htmlFor="shop" className="text-sm font-medium text-slate-700">
+                    Store address
+                  </Label>
+                  <Input
+                    id="shop"
+                    type="text"
+                    placeholder="your-store.myshopify.com"
+                    value={shop}
+                    onChange={(event) => setShop(event.target.value)}
+                    disabled={pending === 'reconnect'}
+                    autoComplete="off"
+                    className="h-11"
+                  />
+                  <p className="text-sm leading-6 text-slate-500">
+                    Use the address from your Shopify admin. This opens Shopify so you can approve access.
+                  </p>
+                </div>
+              </ShopifyRecoveryStatus>
+              {(error || actionError) && (
+                <p role="alert" className="text-sm leading-6 text-slate-600">
+                  {error || actionError}
                 </p>
-              </div>
-
-              {(error || actionError) && <Notice tone="error">{error || actionError}</Notice>}
-
-              <Button type="submit" disabled={isConnecting || !shop.trim()} className="w-full sm:w-auto">
-                {isConnecting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Opening Shopify…
-                  </>
-                ) : (
-                  'Connect Shopify'
-                )}
-              </Button>
+              )}
             </form>
           )}
         </CardContent>
@@ -258,7 +265,7 @@ export function ConnectShopify() {
             >
               Cancel
             </Button>
-            <Button type="button" variant="outline" onClick={handleDisconnect} disabled={isDisconnecting}>
+            <Button type="button" variant="outline" onClick={() => void handleDisconnect()} disabled={isDisconnecting}>
               {isDisconnecting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />

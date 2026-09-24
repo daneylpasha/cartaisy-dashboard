@@ -41,6 +41,42 @@ assert.equal(connected.isConnected, true);
 assert.equal(connected.shopDomain, 'northline.myshopify.com');
 assert.equal(connected.shopId, 'gid://shopify/Shop/99');
 assert.equal('accessToken' in connected, false);
+assert.equal(connected.webhookRegistrationError, null);
+assert.equal(connected.lastSyncAt, null);
+
+const webhookConnected = normalizeConnectionStatus(
+  {
+    data: {
+      isConnected: true,
+      shop: 'northline.myshopify.com',
+      webhookRegistrationError: 'inventory_levels/update was not registered',
+      lastSyncAt: '2026-09-23T00:00:00.000Z',
+    },
+  },
+  true
+);
+assert.equal(webhookConnected.webhookRegistrationError, 'inventory_levels/update was not registered');
+assert.equal(webhookConnected.lastSyncAt, '2026-09-23T00:00:00.000Z');
+
+const leakedWebhook = normalizeConnectionStatus(
+  {
+    data: {
+      isConnected: true,
+      shop: 'northline.myshopify.com',
+      webhookRegistrationError: 'shpat_secret',
+    },
+  },
+  true
+);
+assert.equal(leakedWebhook.webhookRegistrationError, null);
+
+assert.equal(
+  normalizeConnectionStatus(
+    { data: { isConnected: false, webhookRegistrationError: 'should stay hidden', lastSyncAt: '2026-09-23T00:00:00.000Z' } },
+    true
+  ).webhookRegistrationError,
+  null
+);
 
 const disconnected = normalizeConnectionStatus(
   { data: { isConnected: false, shop: null } },
@@ -165,6 +201,7 @@ const idleDespiteTimestamps = normalizeSyncStatus(
 );
 assert.equal(idleDespiteTimestamps.state, 'not_started');
 assert.equal(idleDespiteTimestamps.eligibleForBuild, false);
+assert.equal(idleDespiteTimestamps.lastSucceededAt, '2026-09-01T00:00:00.000Z');
 
 const succeededButDisconnected = normalizeSyncStatus(
   {
@@ -197,6 +234,10 @@ const eligibleSync = {
 assert.equal(buildRequestAvailability(eligibleSync, connected).enabled, true);
 assert.equal(buildRequestAvailability(eligibleSync, disconnected).enabled, false);
 assert.equal(buildRequestAvailability(eligibleSync, disconnected).action, 'connect');
+assert.match(
+  buildRequestAvailability(eligibleSync, disconnected).reason ?? '',
+  /Reconnect before requesting a build/
+);
 assert.equal(
   buildRequestAvailability({
     state: 'succeeded',

@@ -248,7 +248,7 @@ export function primaryBuildAction(input: {
   }
   if (!input.availability.enabled) {
     if (input.availability.action === 'connect') {
-      return { kind: 'connect', label: 'Connect Shopify', disabled: false };
+      return { kind: 'connect', label: 'Reconnect Shopify', disabled: false };
     }
     if (input.availability.action === 'retry') {
       return { kind: 'retry', label: 'Try again', disabled: false };

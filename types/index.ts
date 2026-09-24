@@ -198,6 +198,7 @@ export interface ShopifyStatus {
   scope: string | null;
   status?: 'connected' | 'disconnected';
   lastSyncAt?: string | null;
+  webhookRegistrationError?: string | null;
 }
 
 export interface ShopifyCollection {

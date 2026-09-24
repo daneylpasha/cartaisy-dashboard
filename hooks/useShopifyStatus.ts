@@ -19,9 +19,9 @@ export function useShopifyStatus(): UseShopifyStatusReturn {
   const [error, setError] = useState<string | null>(null);
   const hasFetched = useRef(false);
 
-  const fetchStatus = useCallback(async () => {
+  const fetchStatus = useCallback(async (quiet = false) => {
     try {
-      setIsLoading(true);
+      if (!quiet) setIsLoading(true);
       setError(null);
       const data = await shopifyService.getConnectionStatus();
       setStatus(data);
@@ -29,7 +29,7 @@ export function useShopifyStatus(): UseShopifyStatusReturn {
       setError(err instanceof Error ? err.message : "We couldn't check your Shopify connection. Refresh and try again.");
       setStatus(null);
     } finally {
-      setIsLoading(false);
+      if (!quiet) setIsLoading(false);
     }
   }, []);
 
@@ -47,6 +47,6 @@ export function useShopifyStatus(): UseShopifyStatusReturn {
     status,
     isLoading,
     error,
-    refetch: fetchStatus,
+    refetch: () => fetchStatus(true),
   };
 }

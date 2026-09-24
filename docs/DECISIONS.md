@@ -76,7 +76,7 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Date: 2026-09-23.
 - Decision: The merchant Build my app screen submits a tracked request for Android, iOS, or both and shows live per-platform status. v1 does not start EAS, App Store Connect, or Play Console. Eligibility is `GET /api/v1/shopify/sync` `eligibleForBuild` plus a connected Shopify store. `shopify.lastSyncAt` is not success. `waiting_on_merchant` is shown as Waiting on Apple on iOS and Waiting on you on Android. The only checklist field is a short access note.
 - Reason: Dashboard #17 and backend `docs/cartaisy/BUILD_REQUEST_API.md` (issue #155 / PR #159). Android can be ready while iOS is still waiting on Apple.
-- Impact: The ready step calls `POST /api/v1/build-requests` and polls `GET /api/v1/build-requests/:id`. It does not call `PATCH /api/v1/admin/build-requests/:id/status`. Ineligible stores see Connect Shopify or Sync again instead of a successful submit. This is onboarding and a backend API contract; it does not change token storage.
+- Impact: The ready step calls `POST /api/v1/build-requests` and polls `GET /api/v1/build-requests/:id`. It does not call `PATCH /api/v1/admin/build-requests/:id/status`. Ineligible stores see Reconnect Shopify or Sync again instead of a successful submit. This is onboarding and a backend API contract; it does not change token storage.
 - Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/STATUS.md`, `docs/ARCHITECTURE.md`. GitHub issues: dashboard `#17`; backend `#154`, `#155`.
 - Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/STATUS.md`, `docs/ARCHITECTURE.md`. GitHub issues: dashboard `#15`, `#16`, `#17`; backend `#152`, `#153`.
 
@@ -127,6 +127,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Reason: Dashboard #24 originally said any super admin. Backend #170 / PR #168 closed that before this UI shipped, because store registration creates owners as `super_admin`.
 - Impact: Merchant Build my app screens are unchanged and still do not call the admin status route. The dashboard does not read `PLATFORM_OPS_EMAILS` and does not set `isPlatformOperator`. Profile responses do not include the flag, so the list call is the gate. Android `waiting_on_merchant` is labeled Waiting on merchant here; iOS stays Waiting on Apple. This is an authz boundary and a backend API contract. Human review is required.
 - Related docs: `docs/ARCHITECTURE.md`, `docs/STATUS.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`. GitHub issues: dashboard `#24`; backend `#164`, `#170`.
+
+### Sync again and Reconnect Shopify are one control
+
+- Date: 2026-09-24.
+- Decision: Connect, settings, and Build my app share one recovery control. Sync again calls `POST /api/v1/shopify/sync` when Shopify is connected and `eligibleForBuild` is false, and the control stays busy while status is `syncing`. Reconnect Shopify calls `POST /api/v1/shopify/oauth/connect` when the store is disconnected, and also when catalog sync already succeeded but `GET /api/v1/shopify/status` includes `webhookRegistrationError`. A healthy catalog may still offer Sync again as a quiet action. Build my app stays off until `eligibleForBuild` is true and Shopify is connected. The short failure is `errorSummary` or `webhookRegistrationError` after token-shaped text is dropped. The dashboard does not store a Shopify Admin token and does not ask the merchant to paste one. The settings page no longer shows the older `/stores/:id/admin/sync/status` card.
+- Reason: Dashboard #33 (same ask as #31). Two peer buttons, and a sync card that was not the build gate, hid the recovery path.
+- Impact: Shopify connect and the build gate. No new sync engine and no platform-ops queue work. Human review is required.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, backend `docs/cartaisy/SHOPIFY_API_POLICY.md`. GitHub issues: `#33`, `#31`.
 
 ### The onboarding phone is a white-label shopper home
 

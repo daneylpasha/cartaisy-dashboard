@@ -20,11 +20,13 @@ import {
 } from '@/lib/build/contract';
 import { buildRequestAvailability } from '@/lib/onboarding/normalizers';
 import type { ShopifyConnectionSnapshot, SyncGate } from '@/lib/onboarding/types';
+import { recoveryStatusLine, shopifyRecoveryView } from '@/lib/shopify/recovery';
 import { BuildMyAppView } from '@/components/onboarding/BuildMyAppView';
 
 interface BuildMyAppPanelProps {
   connection: ShopifyConnectionSnapshot;
   initialSync: SyncGate;
+  productCount: number | null;
   onConnectShopify: () => void;
   onCatalogUpdated: () => void;
   onRefreshConnection: () => Promise<void> | void;
@@ -33,6 +35,7 @@ interface BuildMyAppPanelProps {
 export function BuildMyAppPanel({
   connection,
   initialSync,
+  productCount,
   onConnectShopify,
   onCatalogUpdated,
   onRefreshConnection,
@@ -55,6 +58,14 @@ export function BuildMyAppPanel({
   const gate = buildRequestAvailability(sync, {
     isConnected: connection.isConnected,
     statusKnown: connection.statusKnown,
+  });
+  const recovery = shopifyRecoveryView({
+    statusKnown: connection.statusKnown,
+    isConnected: connection.isConnected,
+    sync,
+    productCount,
+    webhookError: connection.webhookRegistrationError,
+    lastSyncAt: connection.lastSyncAt,
   });
   const syncBusy = syncing || sync.state === 'in_progress';
   const availability = syncBusy
@@ -293,6 +304,8 @@ export function BuildMyAppPanel({
       syncBusy={syncBusy}
       noteSaving={noteSaving}
       formError={formError}
+      statusLine={recoveryStatusLine(recovery)}
+      webhookNote={recovery.webhookNote}
       onAndroidChange={setAndroid}
       onIosChange={setIos}
       onNotesChange={setNotes}

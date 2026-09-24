@@ -1,3 +1,4 @@
+import { shopifyRecoveryView } from '../shopify/recovery.ts';
 import {
   ONBOARDING_STEPS,
   type BuildEligibilityReason,
@@ -16,6 +17,8 @@ const EMPTY_CONNECTION: ShopifyConnectionSnapshot = {
   shopDomain: null,
   shopId: null,
   connectedAt: null,
+  lastSyncAt: null,
+  webhookRegistrationError: null,
 };
 
 export const EMPTY_CATALOG: LockedCatalog = {
@@ -127,7 +130,11 @@ export function normalizeConnectionStatus(payload: unknown, ok: boolean): Shopif
     isConnected,
     shopDomain,
     shopId: readShopId(data),
-    connectedAt: readString(data.connectedAt),
+    connectedAt: isConnected ? readString(data.connectedAt) : null,
+    lastSyncAt: isConnected ? readString(data.lastSyncAt) : null,
+    webhookRegistrationError: isConnected
+      ? safeSyncDetail(readString(data.webhookRegistrationError))
+      : null,
   };
 }
 
@@ -173,6 +180,8 @@ function normalizeDurableCatalogSync(data: Record<string, unknown>): SyncGate | 
     detail: state === 'failed' ? safeSyncDetail(readString(data.errorSummary)) : null,
     eligibleForBuild: eligible,
     eligibilityReason: reason,
+    finishedAt: readString(data.finishedAt),
+    lastSucceededAt: readString(data.lastSucceededAt),
   };
 }
 
@@ -608,7 +617,7 @@ export function buildRequestAvailability(
     return {
       enabled: false,
       action: 'connect',
-      reason: 'Connect Shopify before requesting a build.',
+      reason: 'Shopify is disconnected. Reconnect before requesting a build.',
     };
   }
 
@@ -690,63 +699,21 @@ export interface ConnectCatalogView {
  * `idle` is `not_started`. Product count is shown only after success.
  */
 export function connectCatalogView(sync: SyncGate, productCount: number | null): ConnectCatalogView {
-  if (sync.state === 'succeeded' && productCount !== null) {
-    return {
-      headline: 'Synced',
-      support: null,
-      count: productCount,
-      countNoun: productCount === 1 ? 'product' : 'products',
-      showSyncAgain: true,
-      busy: false,
-    };
-  }
-  if (sync.state === 'succeeded') {
-    return {
-      headline: 'Synced',
-      support: 'Product count is not available yet.',
-      count: null,
-      countNoun: null,
-      showSyncAgain: true,
-      busy: false,
-    };
-  }
-  if (sync.state === 'in_progress') {
-    return {
-      headline: 'Syncing your catalog…',
-      support: 'Not synced yet. You can continue to Brand.',
-      count: null,
-      countNoun: null,
-      showSyncAgain: false,
-      busy: true,
-    };
-  }
-  if (sync.state === 'failed') {
-    return {
-      headline: 'Sync failed',
-      support: sync.detail ?? 'The last sync did not succeed. Use Sync again.',
-      count: null,
-      countNoun: null,
-      showSyncAgain: true,
-      busy: false,
-    };
-  }
-  if (sync.state === 'unavailable') {
-    return {
-      headline: 'Could not check sync',
-      support: 'We could not confirm sync status. You can continue to Brand.',
-      count: null,
-      countNoun: null,
-      showSyncAgain: true,
-      busy: false,
-    };
-  }
+  const view = shopifyRecoveryView({
+    statusKnown: true,
+    isConnected: sync.eligibilityReason !== 'shopify_not_connected',
+    sync,
+    productCount,
+    webhookError: null,
+  });
+  const syncing = view.control?.kind === 'sync' && view.control.disabled;
   return {
-    headline: 'Not synced yet',
-    support: 'Catalog has not synced yet.',
-    count: null,
-    countNoun: null,
-    showSyncAgain: true,
-    busy: false,
+    headline: view.headline,
+    support: view.support,
+    count: view.productCount,
+    countNoun: view.countNoun,
+    showSyncAgain: syncing ? false : view.control?.kind === 'sync' || view.runAgain,
+    busy: syncing,
   };
 }
 

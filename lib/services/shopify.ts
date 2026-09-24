@@ -21,6 +21,7 @@ export async function getConnectionStatus(): Promise<ShopifyStatus> {
     scope: status.scope,
     status: status.status,
     lastSyncAt: status.lastSyncAt,
+    webhookRegistrationError: status.webhookRegistrationError,
   };
 }
 
