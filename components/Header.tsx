@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useSession } from '@/lib/auth';
-import { useAuth } from '@/lib/auth';
+import { usePathname } from 'next/navigation';
+import { useSession, useAuth } from '@/lib/auth';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -13,80 +13,145 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { LogOut, Settings, ShoppingBag } from 'lucide-react';
-import { useShopifyStatus } from '@/hooks/useShopifyStatus';
+import { LogOut, Menu, Settings } from 'lucide-react';
+import { useDashboardShopify } from '@/components/dashboard/ShopifyStatusProvider';
+import { pageTitle } from '@/lib/dashboard/pageTitle';
 
 interface HeaderProps {
-  title: string;
+  onOpenMenu: () => void;
 }
 
-export function Header({ title }: HeaderProps) {
+export function Header({ onOpenMenu }: HeaderProps) {
+  const pathname = usePathname();
+  const title = pageTitle(pathname);
   const { data: session } = useSession();
   const { logout } = useAuth();
-  const { status, isLoading } = useShopifyStatus();
-  const userInitials = session?.user?.email
-    ?.split('@')[0]
-    ?.split('')
-    ?.slice(0, 2)
-    ?.join('')
-    ?.toUpperCase() || 'US';
+  const { status, isLoading, error, refetch } = useDashboardShopify();
+
+  const name = session?.user?.name || session?.user?.email || 'Account';
+  const initials = initialsFrom(name);
+  const shop = status?.shop?.replace('.myshopify.com', '') || status?.shop;
 
   return (
-    <header className="hidden md:flex h-14 bg-white border-b border-slate-200 items-center justify-between px-6">
-      <h2 className="text-base font-semibold tracking-tight text-slate-900">{title}</h2>
+    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-slate-200 bg-white px-3 sm:gap-3 sm:px-6">
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onOpenMenu}
+        className="size-9 shrink-0 text-slate-700 md:hidden"
+        aria-label="Open navigation"
+      >
+        <Menu className="size-5" />
+      </Button>
 
-      <div className="flex items-center gap-3">
-        {/* Shopify Status Indicator */}
-        {!isLoading && (
-          <Link
-            href="/dashboard/settings"
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md hover:bg-slate-100 transition-colors"
-          >
-            {status?.isConnected ? (
-              <>
-                <div className="w-1.5 h-1.5 bg-green-600 rounded-full"></div>
-                <span className="text-xs text-slate-600">Shopify Connected</span>
-              </>
-            ) : (
-              <>
-                <ShoppingBag className="w-3.5 h-3.5 text-slate-400" />
-                <span className="text-xs text-slate-600">Connect Shopify</span>
-              </>
-            )}
-          </Link>
-        )}
+      <p className="min-w-0 flex-1 truncate text-[15px] font-semibold tracking-tight text-slate-950">{title}</p>
 
-        {/* User Dropdown */}
+      <div className="flex shrink-0 items-center gap-2">
+        <ConnectionStatus
+          isLoading={isLoading}
+          unknown={!isLoading && !status && !!error}
+          connected={status?.isConnected === true}
+          shop={shop ?? null}
+          onRetry={() => {
+            void refetch();
+          }}
+        />
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="p-0 h-auto">
-              <Avatar className="w-7 h-7">
-                <AvatarFallback className="bg-blue-600 text-white text-xs font-semibold">
-                  {userInitials}
-                </AvatarFallback>
+            <Button variant="ghost" className="size-9 rounded-full p-0" aria-label="Account menu">
+              <Avatar className="size-8">
+                <AvatarFallback className="bg-slate-950 text-xs font-semibold text-white">{initials}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44">
-            <DropdownMenuLabel className="text-xs font-medium truncate">{session?.user?.email || 'User'}</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel className="space-y-0.5">
+              <span className="block truncate text-sm font-medium text-slate-950">{name}</span>
+              {session?.user?.email && (
+                <span className="block truncate text-xs font-normal text-slate-500">{session.user.email}</span>
+              )}
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <Link href="/dashboard/settings" className="w-full">
-              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer text-xs">
-                <Settings className="w-3.5 h-3.5" />
-                <span>Settings</span>
-              </DropdownMenuItem>
-            </Link>
+            <DropdownMenuItem asChild className="text-sm">
+              <Link href="/dashboard/settings" className="flex items-center gap-2">
+                <Settings className="size-3.5" />
+                Settings
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => logout()}
-              className="flex items-center gap-2 text-red-600 cursor-pointer text-xs"
+              className="flex items-center gap-2 text-sm text-slate-700"
             >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Sign out</span>
+              <LogOut className="size-3.5" />
+              Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
     </header>
   );
+}
+
+function ConnectionStatus({
+  isLoading,
+  unknown,
+  connected,
+  shop,
+  onRetry,
+}: {
+  isLoading: boolean;
+  unknown: boolean;
+  connected: boolean;
+  shop: string | null;
+  onRetry: () => void;
+}) {
+  if (isLoading) {
+    return <span className="h-8 w-24 animate-pulse rounded-full bg-slate-100 motion-reduce:animate-none" aria-hidden />;
+  }
+
+  if (unknown) {
+    return (
+      <button
+        type="button"
+        onClick={onRetry}
+        className="inline-flex h-8 items-center rounded-full px-2 text-[13px] text-slate-500 transition-colors hover:text-slate-950"
+      >
+        Retry status
+      </button>
+    );
+  }
+
+  if (connected) {
+    return (
+      <Link
+        href="/dashboard/settings"
+        className="inline-flex h-8 max-w-[9.5rem] items-center gap-2 rounded-full bg-slate-50 px-2.5 text-[13px] text-slate-700 transition-colors hover:bg-slate-100 sm:max-w-[16rem] sm:px-3"
+      >
+        <span className="size-1.5 shrink-0 rounded-full bg-emerald-600" aria-hidden />
+        <span className="truncate">{shop || 'Shopify connected'}</span>
+      </Link>
+    );
+  }
+
+  return (
+    <Link
+      href="/dashboard/onboarding?step=connect"
+      className="inline-flex h-8 items-center rounded-full border border-slate-300 bg-white px-3 text-[13px] font-medium text-slate-950 transition-colors hover:bg-slate-50"
+    >
+      <span className="sm:hidden">Connect</span>
+      <span className="hidden sm:inline">Connect Shopify</span>
+    </Link>
+  );
+}
+
+function initialsFrom(name: string): string {
+  const parts = name
+    .split(/[\s@._-]+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  if (parts.length === 0) return 'C';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
 }

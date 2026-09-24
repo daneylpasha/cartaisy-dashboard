@@ -1,42 +1,46 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useSession, useAuth } from "@/lib/auth";
+import { useEffect, useState, type ReactNode } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useSession, useAuth } from '@/lib/auth';
 import {
-  ChevronLeft,
-  ChevronRight,
-  House,
-  Smartphone,
-  FolderOpen,
-  Settings,
-  Menu,
-  Users,
-  UserRound,
-  ClipboardList,
   BarChart3,
-  KeyRound,
   Bell,
-  ShoppingBag,
-  HelpCircle,
-  LogOut,
+  ChevronDown,
+  ChevronLeft,
+  ClipboardList,
   FileText,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { canManageTeam } from "@/lib/utils/permissions";
+  FolderOpen,
+  HelpCircle,
+  House,
+  KeyRound,
+  ListChecks,
+  LogOut,
+  Settings,
+  ShoppingBag,
+  Smartphone,
+  UserRound,
+  Users,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { canManageTeam } from '@/lib/utils/permissions';
+import { useDashboardShopify } from '@/components/dashboard/ShopifyStatusProvider';
 
-// Master admins who can access admin pages
 const MASTER_ADMINS = ['sufyanali@gmail.com', 'daniyal@cartaisy.com'];
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cartaisy-backend-production.up.railway.app/api/v1';
 
+type NavTier = 'primary' | 'later' | 'account';
+
 interface NavItem {
   href: string;
   label: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
+  tier: NavTier;
+  group: string;
   requiresRole?: 'super_admin' | 'admin';
   requiresMasterAdmin?: boolean;
 }
@@ -44,20 +48,34 @@ interface NavItem {
 interface SidebarContentProps {
   collapsed: boolean;
   onToggleCollapse?: () => void;
+  showSignOut?: boolean;
+  inSheet?: boolean;
+  onNavigate?: () => void;
 }
 
-function SidebarContent({ collapsed, onToggleCollapse, showSignOut = false }: SidebarContentProps & { showSignOut?: boolean }) {
-  const pathname = usePathname();
+function isItemActive(pathname: string, href: string): boolean {
+  if (href === '/dashboard') return pathname === '/dashboard';
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function SidebarContent({
+  collapsed,
+  onToggleCollapse,
+  showSignOut = false,
+  inSheet = false,
+  onNavigate,
+}: SidebarContentProps) {
   const { data: session } = useSession();
   const { logout, getToken } = useAuth();
+  const { status, isLoading } = useDashboardShopify();
   const [storeLogo, setStoreLogo] = useState<string | null>(null);
 
   const storeId = session?.user?.storeId;
-  const storeName = session?.user?.storeName || "Cartaisy";
-  const userName = session?.user?.name || "User";
+  const storeName = session?.user?.storeName || 'Your store';
+  const userName = session?.user?.name || session?.user?.email || 'Account';
   const storeInitial = storeName.charAt(0).toUpperCase();
+  const shopifyKnownDisconnected = !isLoading && status?.isConnected === false;
 
-  // Fetch store branding (logo) from API
   useEffect(() => {
     const fetchBranding = async () => {
       if (!storeId) return;
@@ -65,7 +83,7 @@ function SidebarContent({ collapsed, onToggleCollapse, showSignOut = false }: Si
         const token = getToken();
         const response = await fetch(`${API_URL}/admin/stores/${storeId}/branding`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
         if (response.ok) {
@@ -79,77 +97,108 @@ function SidebarContent({ collapsed, onToggleCollapse, showSignOut = false }: Si
       }
     };
     fetchBranding();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // getToken is stable enough for this mount fetch; including it retriggers on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId]);
 
   const baseNavItems: NavItem[] = [
-    { href: "/dashboard", label: "Home", icon: <House className="w-4 h-4" /> },
+    { href: '/dashboard', label: 'Home', icon: <House className="size-4" />, tier: 'primary', group: 'Primary' },
     {
-      href: "/dashboard/app-builder",
-      label: "App Builder",
-      icon: <Smartphone className="w-4 h-4" />,
+      href: '/dashboard/onboarding',
+      label: 'Set up app',
+      icon: <ListChecks className="size-4" />,
+      tier: 'primary',
+      group: 'Primary',
     },
     {
-      href: "/dashboard/analytics",
-      label: "Analytics",
-      icon: <BarChart3 className="w-4 h-4" />,
+      href: '/dashboard/app-builder',
+      label: 'App builder',
+      icon: <Smartphone className="size-4" />,
+      tier: 'later',
+      group: 'Store',
     },
     {
-      href: "/dashboard/customers",
-      label: "Customers",
-      icon: <UserRound className="w-4 h-4" />,
+      href: '/dashboard/orders',
+      label: 'Orders',
+      icon: <ShoppingBag className="size-4" />,
+      tier: 'later',
+      group: 'Store',
     },
     {
-      href: "/dashboard/orders",
-      label: "Orders",
-      icon: <ShoppingBag className="w-4 h-4" />,
+      href: '/dashboard/customers',
+      label: 'Customers',
+      icon: <UserRound className="size-4" />,
+      tier: 'later',
+      group: 'Store',
     },
     {
-      href: "/dashboard/help-requests",
-      label: "Help Requests",
-      icon: <HelpCircle className="w-4 h-4" />,
+      href: '/dashboard/collections',
+      label: 'Collections',
+      icon: <FolderOpen className="size-4" />,
+      tier: 'later',
+      group: 'Store',
     },
     {
-      href: "/dashboard/collections",
-      label: "Collections",
-      icon: <FolderOpen className="w-4 h-4" />,
+      href: '/dashboard/analytics',
+      label: 'Analytics',
+      icon: <BarChart3 className="size-4" />,
+      tier: 'later',
+      group: 'Insights',
     },
     {
-      href: "/dashboard/marketing/push-notifications",
-      label: "Push Notifications",
-      icon: <Bell className="w-4 h-4" />,
+      href: '/dashboard/activity',
+      label: 'Activity',
+      icon: <ClipboardList className="size-4" />,
+      tier: 'later',
+      group: 'Insights',
     },
     {
-      href: "/dashboard/blog",
-      label: "Blog",
-      icon: <FileText className="w-4 h-4" />,
+      href: '/dashboard/help-requests',
+      label: 'Help requests',
+      icon: <HelpCircle className="size-4" />,
+      tier: 'later',
+      group: 'Insights',
+    },
+    {
+      href: '/dashboard/marketing/push-notifications',
+      label: 'Push notifications',
+      icon: <Bell className="size-4" />,
+      tier: 'later',
+      group: 'Insights',
+    },
+    {
+      href: '/dashboard/blog',
+      label: 'Blog',
+      icon: <FileText className="size-4" />,
+      tier: 'account',
+      group: 'Account',
       requiresRole: 'super_admin',
     },
     {
-      href: "/dashboard/team",
-      label: "Team",
-      icon: <Users className="w-4 h-4" />,
+      href: '/dashboard/team',
+      label: 'Team',
+      icon: <Users className="size-4" />,
+      tier: 'account',
+      group: 'Account',
       requiresRole: 'super_admin',
     },
     {
-      href: "/dashboard/activity",
-      label: "Activity",
-      icon: <ClipboardList className="w-4 h-4" />,
+      href: '/dashboard/settings',
+      label: 'Settings',
+      icon: <Settings className="size-4" />,
+      tier: 'account',
+      group: 'Account',
     },
     {
-      href: "/dashboard/settings",
-      label: "Settings",
-      icon: <Settings className="w-4 h-4" />,
-    },
-    {
-      href: "/dashboard/admin/onboarding",
-      label: "Onboarding",
-      icon: <KeyRound className="w-4 h-4" />,
+      href: '/dashboard/admin/onboarding',
+      label: 'Invites',
+      icon: <KeyRound className="size-4" />,
+      tier: 'account',
+      group: 'Account',
       requiresMasterAdmin: true,
     },
   ];
 
-  // Filter items based on user role
   const navItems = baseNavItems.filter((item) => {
     if (item.requiresMasterAdmin) {
       return session?.user?.email && MASTER_ADMINS.includes(session.user.email);
@@ -160,99 +209,64 @@ function SidebarContent({ collapsed, onToggleCollapse, showSignOut = false }: Si
     return true;
   });
 
+  const groups = visibleGroups(navItems, shopifyKnownDisconnected);
+
   return (
-    <div className="h-full flex flex-col bg-white border-r border-slate-200">
-      {/* Store Header with User Avatar - matches main header h-14 */}
-      <div className="h-14 border-b border-slate-200 flex items-center px-3">
+    <div className="flex h-full flex-col bg-white">
+      <div
+        className={cn(
+          'flex h-14 shrink-0 items-center border-b border-slate-200',
+          collapsed ? 'justify-center px-2' : 'gap-2.5 px-3',
+          inSheet && 'pr-10'
+        )}
+      >
         {collapsed ? (
-          /* Collapsed state - just store logo/initial, click to expand */
-          <div className="flex items-center justify-center w-full">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onToggleCollapse}
-              className="p-0 h-8 w-8 rounded-full hover:bg-slate-100"
-            >
-              {storeLogo ? (
-                <img src={storeLogo} alt={storeName} className="w-7 h-7 rounded-full object-cover" />
-              ) : (
-                <div className="w-7 h-7 rounded-full bg-slate-900 flex items-center justify-center">
-                  <span className="text-xs font-semibold text-white">{storeInitial}</span>
-                </div>
-              )}
-            </Button>
-          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onToggleCollapse}
+            className="size-8 rounded-lg p-0 hover:bg-slate-100"
+            aria-label="Expand sidebar"
+          >
+            <StoreMark logo={storeLogo} initial={storeInitial} />
+          </Button>
         ) : (
-          /* Expanded state - store logo/initial, info, collapse button */
-          <div className="flex items-center w-full gap-2.5">
-            {storeLogo ? (
-              <img src={storeLogo} alt={storeName} className="w-7 h-7 rounded-full object-cover shrink-0" />
-            ) : (
-              <div className="w-7 h-7 rounded-full bg-slate-900 flex items-center justify-center shrink-0">
-                <span className="text-xs font-semibold text-white">{storeInitial}</span>
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <h2 className="text-xs font-semibold text-slate-900 truncate">{storeName}</h2>
-              <p className="text-xs text-slate-500 truncate">{userName}</p>
+          <>
+            <StoreMark logo={storeLogo} initial={storeInitial} />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-semibold text-slate-950">{storeName}</p>
+              <p className="truncate text-xs text-slate-500">{userName}</p>
             </div>
             {onToggleCollapse && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onToggleCollapse}
-                className="p-1 h-7 w-7 text-slate-500 hover:text-slate-900 hover:bg-slate-100 shrink-0"
+                className="size-7 shrink-0 p-0 text-slate-500 hover:bg-slate-100 hover:text-slate-950"
+                aria-label="Collapse sidebar"
               >
-                <ChevronLeft className="w-3.5 h-3.5" />
+                <ChevronLeft className="size-3.5" />
               </Button>
             )}
-          </div>
+          </>
         )}
       </div>
 
-      {/* Navigation */}
-      <nav className={cn("flex-1 space-y-0.5", collapsed ? "p-2" : "p-2")}>
-        {navItems.map((item) => {
-          const isActive =
-            pathname === item.href || pathname.startsWith(item.href + "/");
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center rounded-md transition-colors",
-                collapsed
-                  ? "justify-center p-2.5"
-                  : "gap-2.5 px-2.5 py-2",
-                isActive
-                  ? "bg-slate-100 text-slate-900 font-medium"
-                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-              )}
-              title={collapsed ? item.label : undefined}
-            >
-              <span className={cn(isActive ? "text-slate-900" : "text-slate-500")}>
-                {item.icon}
-              </span>
-              {!collapsed && (
-                <span className="text-xs">{item.label}</span>
-              )}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 space-y-4 overflow-y-auto px-2 py-3" aria-label="Dashboard">
+        {groups.map((group) => (
+          <NavGroup key={group.id} group={group} collapsed={collapsed} onNavigate={onNavigate} />
+        ))}
       </nav>
 
-      {/* Sign Out - Only shown on mobile */}
       {showSignOut && (
-        <div className="p-2 border-t border-slate-200">
+        <div className="border-t border-slate-200 p-2">
           <button
+            type="button"
             onClick={() => logout()}
-            className={cn(
-              "flex items-center rounded-md transition-colors w-full text-red-600 hover:bg-red-50",
-              collapsed ? "justify-center p-2.5" : "gap-2.5 px-2.5 py-2"
-            )}
+            className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-950"
           >
-            <LogOut className="w-4 h-4" />
-            {!collapsed && <span className="text-xs">Sign out</span>}
+            <LogOut className="size-4" />
+            <span>Sign out</span>
           </button>
         </div>
       )}
@@ -260,43 +274,145 @@ function SidebarContent({ collapsed, onToggleCollapse, showSignOut = false }: Si
   );
 }
 
-export function Sidebar() {
+function NavGroup({
+  group,
+  collapsed,
+  onNavigate,
+}: {
+  group: { id: string; label: string | null; items: NavItem[]; muted: boolean };
+  collapsed: boolean;
+  onNavigate?: () => void;
+}) {
+  const pathname = usePathname();
+  const containsActive = group.items.some((item) => isItemActive(pathname, item.href));
+  const [opened, setOpened] = useState(containsActive);
+  const expanded = !group.muted || collapsed || opened || containsActive;
+
+  return (
+    <div>
+      {group.label && !collapsed &&
+        (group.muted ? (
+          <button
+            type="button"
+            aria-expanded={expanded}
+            onClick={() => setOpened((value) => !value)}
+            className="flex min-h-11 w-full items-center justify-between rounded-md px-2.5 text-left text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+          >
+            {group.label}
+            <ChevronDown className={cn('size-3.5 shrink-0 transition-transform', expanded ? '' : '-rotate-90')} />
+          </button>
+        ) : (
+          <p className="px-2.5 pb-1 text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">
+            {group.label}
+          </p>
+        ))}
+      {expanded && (
+        <ul className="space-y-0.5">
+          {group.items.map((item) => {
+            const isActive = isItemActive(pathname, item.href);
+            return (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  onClick={onNavigate}
+                  title={collapsed ? item.label : group.muted ? 'Available after Shopify is connected' : undefined}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={cn(
+                    'flex items-center rounded-md text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400',
+                    collapsed ? 'justify-center p-2.5' : 'gap-2.5 px-2.5 py-2',
+                    isActive
+                      ? 'bg-slate-100 font-medium text-slate-950'
+                      : group.muted
+                        ? 'text-slate-500 hover:bg-slate-50 hover:text-slate-950'
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'shrink-0',
+                      isActive ? 'text-slate-950' : group.muted ? 'text-slate-400' : 'text-slate-500'
+                    )}
+                  >
+                    {item.icon}
+                  </span>
+                  {!collapsed && <span className="truncate">{item.label}</span>}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function visibleGroups(items: NavItem[], muteLater: boolean) {
+  const grouped: { id: string; label: string | null; items: NavItem[]; muted: boolean }[] = [];
+  const push = (id: string, label: string | null, item: NavItem, muted: boolean) => {
+    const existing = grouped.find((group) => group.id === id);
+    if (existing) existing.items.push(item);
+    else grouped.push({ id, label, items: [item], muted });
+  };
+
+  for (const item of items) {
+    if (item.tier === 'later' && muteLater) {
+      push('later', 'After you connect', item, true);
+      continue;
+    }
+    if (item.tier === 'primary') {
+      push('primary', null, item, false);
+      continue;
+    }
+    push(item.group, item.group, item, false);
+  }
+
+  return grouped;
+}
+
+function StoreMark({ logo, initial }: { logo: string | null; initial: string }) {
+  if (logo) {
+    // Store logos are merchant-hosted URLs, not files in this app.
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={logo} alt="" className="size-8 shrink-0 rounded-lg object-cover" />;
+  }
+  return (
+    <span
+      aria-hidden
+      className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-slate-950 text-xs font-semibold text-white"
+    >
+      {initial}
+    </span>
+  );
+}
+
+interface SidebarProps {
+  mobileOpen: boolean;
+  onMobileOpenChange: (open: boolean) => void;
+}
+
+export function Sidebar({ mobileOpen, onMobileOpenChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <>
-      {/* Desktop Sidebar */}
       <aside
         className={cn(
-          "hidden md:flex flex-col h-screen bg-white border-r border-slate-200 transition-all duration-300",
-          collapsed ? "w-20" : "w-64"
+          'hidden h-screen shrink-0 flex-col border-r border-slate-200 bg-white transition-[width] duration-200 md:flex',
+          collapsed ? 'w-[72px]' : 'w-60'
         )}
       >
-        <SidebarContent
-          collapsed={collapsed}
-          onToggleCollapse={() => setCollapsed(!collapsed)}
-        />
+        <SidebarContent collapsed={collapsed} onToggleCollapse={() => setCollapsed((value) => !value)} />
       </aside>
 
-      {/* Mobile Menu Button */}
-      <div className="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between z-40">
-        <div />
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setMobileOpen(true)}
-          className="text-slate-700"
-        >
-          <Menu className="w-5 h-5" />
-        </Button>
-      </div>
-
-      {/* Mobile Sidebar Sheet */}
-      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="p-0 w-64 bg-white">
-          <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-          <SidebarContent collapsed={false} showSignOut={true} />
+      <Sheet open={mobileOpen} onOpenChange={onMobileOpenChange}>
+        <SheetContent side="left" className="w-64 gap-0 bg-white p-0">
+          <SheetTitle className="sr-only">Navigation</SheetTitle>
+          <SidebarContent
+            collapsed={false}
+            showSignOut
+            inSheet
+            onNavigate={() => onMobileOpenChange(false)}
+          />
         </SheetContent>
       </Sheet>
     </>
