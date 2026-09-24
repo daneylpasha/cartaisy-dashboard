@@ -120,6 +120,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Counts on the connect and brand steps are unchanged. The extra product read uses the session store id because the merchant access token has a user id and not a store id. No Shopify Admin token is sent. This is onboarding and a catalog read, so it needs human review.
 - Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/STATUS.md`, `docs/ARCHITECTURE.md`.
 
+### The build queue is platform ops, not store super_admin
+
+- Date: 2026-09-24.
+- Decision: `/dashboard/admin/build-requests` lists Build my app requests across stores and updates Android or iOS status. The sidebar shows the link only when `GET /api/v1/admin/build-requests` returns 200. A 403 replaces the queue with an empty state and does not render notes or store identity. Store-owner `super_admin` is not enough. The backend allows the call only when `User.isPlatformOperator` is true or the account's verified email is in `PLATFORM_OPS_EMAILS`.
+- Reason: Dashboard #24 originally said any super admin. Backend #170 / PR #168 closed that before this UI shipped, because store registration creates owners as `super_admin`.
+- Impact: Merchant Build my app screens are unchanged and still do not call the admin status route. The dashboard does not read `PLATFORM_OPS_EMAILS` and does not set `isPlatformOperator`. Profile responses do not include the flag, so the list call is the gate. Android `waiting_on_merchant` is labeled Waiting on merchant here; iOS stays Waiting on Apple. This is an authz boundary and a backend API contract. Human review is required.
+- Related docs: `docs/ARCHITECTURE.md`, `docs/STATUS.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`. GitHub issues: dashboard `#24`; backend `#164`, `#170`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

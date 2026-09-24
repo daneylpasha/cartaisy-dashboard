@@ -15,6 +15,7 @@ import {
   HelpCircle,
   House,
   KeyRound,
+  Layers,
   ListChecks,
   LogOut,
   Settings,
@@ -28,6 +29,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { canManageTeam } from '@/lib/utils/permissions';
 import { useDashboardShopify } from '@/components/dashboard/ShopifyStatusProvider';
+import { listAdminBuildRequests } from '@/lib/build/adminClient';
 
 const MASTER_ADMINS = ['sufyanali@gmail.com', 'daniyal@cartaisy.com'];
 
@@ -43,10 +45,12 @@ interface NavItem {
   group: string;
   requiresRole?: 'super_admin' | 'admin';
   requiresMasterAdmin?: boolean;
+  requiresPlatformOps?: boolean;
 }
 
 interface SidebarContentProps {
   collapsed: boolean;
+  platformOps: boolean;
   onToggleCollapse?: () => void;
   showSignOut?: boolean;
   inSheet?: boolean;
@@ -60,6 +64,7 @@ function isItemActive(pathname: string, href: string): boolean {
 
 function SidebarContent({
   collapsed,
+  platformOps,
   onToggleCollapse,
   showSignOut = false,
   inSheet = false,
@@ -190,6 +195,14 @@ function SidebarContent({
       group: 'Account',
     },
     {
+      href: '/dashboard/admin/build-requests',
+      label: 'Build requests',
+      icon: <Layers className="size-4" />,
+      tier: 'account',
+      group: 'Account',
+      requiresPlatformOps: true,
+    },
+    {
       href: '/dashboard/admin/onboarding',
       label: 'Invites',
       icon: <KeyRound className="size-4" />,
@@ -200,6 +213,7 @@ function SidebarContent({
   ];
 
   const navItems = baseNavItems.filter((item) => {
+    if (item.requiresPlatformOps) return platformOps;
     if (item.requiresMasterAdmin) {
       return session?.user?.email && MASTER_ADMINS.includes(session.user.email);
     }
@@ -390,8 +404,31 @@ interface SidebarProps {
   onMobileOpenChange: (open: boolean) => void;
 }
 
+function usePlatformOpsNav(): boolean {
+  const { getToken } = useAuth();
+  const [allowed, setAllowed] = useState(false);
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      setAllowed(false);
+      return;
+    }
+    let cancelled = false;
+    listAdminBuildRequests(token, { limit: 1 }).then((result) => {
+      if (!cancelled) setAllowed(result.kind === 'ok');
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [getToken]);
+
+  return allowed;
+}
+
 export function Sidebar({ mobileOpen, onMobileOpenChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const platformOps = usePlatformOpsNav();
 
   return (
     <>
@@ -401,7 +438,11 @@ export function Sidebar({ mobileOpen, onMobileOpenChange }: SidebarProps) {
           collapsed ? 'w-[72px]' : 'w-60'
         )}
       >
-        <SidebarContent collapsed={collapsed} onToggleCollapse={() => setCollapsed((value) => !value)} />
+        <SidebarContent
+          collapsed={collapsed}
+          platformOps={platformOps}
+          onToggleCollapse={() => setCollapsed((value) => !value)}
+        />
       </aside>
 
       <Sheet open={mobileOpen} onOpenChange={onMobileOpenChange}>
@@ -409,6 +450,7 @@ export function Sidebar({ mobileOpen, onMobileOpenChange }: SidebarProps) {
           <SheetTitle className="sr-only">Navigation</SheetTitle>
           <SidebarContent
             collapsed={false}
+            platformOps={platformOps}
             showSignOut
             inSheet
             onNavigate={() => onMobileOpenChange(false)}
