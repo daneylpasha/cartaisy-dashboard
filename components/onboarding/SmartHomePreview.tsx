@@ -49,7 +49,7 @@ function RemoteImage({
   );
 }
 
-function HeaderMark({
+function BrandMarks({
   iconUrl,
   logoUrl,
   initial,
@@ -63,20 +63,27 @@ function HeaderMark({
       {initial}
     </span>
   );
-  const mark = iconUrl || logoUrl;
-  if (!mark) return letter;
-  return (
-    <RemoteImage
-      key={mark}
-      src={mark}
-      className={
-        iconUrl
-          ? 'h-9 w-9 shrink-0 rounded-[10px] object-cover ring-1 ring-white/35'
-          : 'h-9 w-9 shrink-0 rounded-[10px] bg-white object-contain p-1'
-      }
-      fallback={letter}
-    />
-  );
+  if (iconUrl) {
+    return (
+      <RemoteImage
+        key={iconUrl}
+        src={iconUrl}
+        className="h-9 w-9 shrink-0 rounded-[10px] object-cover ring-1 ring-white/40"
+        fallback={letter}
+      />
+    );
+  }
+  if (logoUrl) {
+    return (
+      <RemoteImage
+        key={logoUrl}
+        src={logoUrl}
+        className="h-8 max-w-[5.5rem] shrink-0 rounded-md bg-white object-contain px-1.5"
+        fallback={letter}
+      />
+    );
+  }
+  return letter;
 }
 
 function PriceLabel({ label, secondary }: { label: string; secondary: string }) {
@@ -191,40 +198,28 @@ export function SmartHomePreview({ draft, catalog, sync, pending = false }: Smar
           className="flex aspect-[9/19.5] flex-col overflow-hidden rounded-[1.85rem] bg-white"
         >
           <ShopperCover key={splashUrl ?? 'solid'} splashUrl={splashUrl} primary={primary} onPrimary={onPrimary}>
-            <div className="relative h-8" aria-hidden>
-              <div className="flex h-full items-center justify-between px-4 text-[10px] font-semibold leading-none">
-                <span>9:41</span>
-                <span className="flex items-center gap-1">
-                  <span className="flex items-end gap-px">
-                    <span className="h-1 w-0.5 rounded-sm bg-current opacity-50" />
-                    <span className="h-1.5 w-0.5 rounded-sm bg-current opacity-70" />
-                    <span className="h-2 w-0.5 rounded-sm bg-current" />
-                    <span className="h-2.5 w-0.5 rounded-sm bg-current" />
-                  </span>
-                  <span className="h-1.5 w-3.5 rounded-[2px] border border-current" />
+            <div
+              className="relative flex h-7 items-center justify-between px-3.5 text-[11px] font-semibold leading-none"
+              style={{ backgroundColor: withAlpha(primary, 0.92) }}
+              aria-hidden
+            >
+              <span className="relative z-10">9:41</span>
+              <span className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-4 w-11 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black ring-1 ring-white/25" />
+              <span className="relative z-10 flex items-center gap-1">
+                <span className="flex items-end gap-px">
+                  <span className="h-1 w-0.5 rounded-sm bg-current opacity-60" />
+                  <span className="h-1.5 w-0.5 rounded-sm bg-current opacity-75" />
+                  <span className="h-2 w-0.5 rounded-sm bg-current" />
+                  <span className="h-2.5 w-0.5 rounded-sm bg-current" />
                 </span>
-              </div>
-              <span className="absolute left-1/2 top-1.5 h-[18px] w-14 -translate-x-1/2 rounded-full bg-black/85 ring-1 ring-white/25" />
+                <span className="h-1.5 w-3.5 rounded-[2px] border border-current" />
+              </span>
             </div>
-            <div className="flex items-center gap-2.5 px-3.5 pb-4">
-              <HeaderMark
-                key={`${iconUrl ?? ''}|${logoUrl ?? ''}`}
-                iconUrl={iconUrl}
-                logoUrl={logoUrl}
-                initial={initial}
-              />
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-heading text-[15px] font-semibold leading-5 tracking-tight">{appName}</p>
-                {iconUrl && logoUrl ? (
-                  <RemoteImage
-                    key={logoUrl}
-                    src={logoUrl}
-                    className="mt-1 h-4 max-w-[6.5rem] object-contain object-left"
-                  />
-                ) : (
-                  <p className="text-[10px] leading-4 opacity-75">Home</p>
-                )}
-              </div>
+            <div className="flex items-center gap-2 px-3.5 pb-3.5 pt-1">
+              <BrandMarks iconUrl={iconUrl} logoUrl={iconUrl ? null : logoUrl} initial={initial} />
+              <p className="min-w-0 flex-1 truncate font-heading text-[15px] font-semibold leading-5 tracking-tight">
+                {appName}
+              </p>
               <span className="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold leading-none" style={pillStyle}>
                 Shop
               </span>
@@ -232,6 +227,11 @@ export function SmartHomePreview({ draft, catalog, sync, pending = false }: Smar
           </ShopperCover>
 
           <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-3.5 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {iconUrl && logoUrl ? (
+              <div className="mb-2.5 flex h-7 shrink-0 items-center">
+                <RemoteImage key={logoUrl} src={logoUrl} className="h-7 max-w-full object-contain object-left" />
+              </div>
+            ) : null}
             <div className="flex h-8 shrink-0 items-center rounded-full bg-slate-100 px-3 text-[11px] text-slate-500" aria-hidden>
               Search
             </div>
