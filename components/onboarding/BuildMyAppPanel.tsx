@@ -6,13 +6,14 @@ import {
   createBuildRequest,
   fetchCatalogSync,
   getBuildRequest,
-  listBuildRequests,
+  loadBuildScreen,
   syncCatalogAgain,
   updateAccessNotes,
 } from '@/lib/build/client';
 import {
   BUILD_STATUS_POLL_MS,
   buildCreatePayload,
+  isSameBuildSnapshot,
   shouldPollBuildRequest,
   type BuildRequest,
   type PrimaryBuildAction,
@@ -26,6 +27,7 @@ interface BuildMyAppPanelProps {
   initialSync: SyncGate;
   onConnectShopify: () => void;
   onCatalogUpdated: () => void;
+  onRefreshConnection: () => Promise<void> | void;
 }
 
 export function BuildMyAppPanel({
@@ -33,6 +35,7 @@ export function BuildMyAppPanel({
   initialSync,
   onConnectShopify,
   onCatalogUpdated,
+  onRefreshConnection,
 }: BuildMyAppPanelProps) {
   const [sync, setSync] = useState(initialSync);
   const [phase, setPhase] = useState<'loading' | 'error' | 'ready'>('loading');
@@ -44,6 +47,7 @@ export function BuildMyAppPanel({
   const [ios, setIos] = useState(true);
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [rechecking, setRechecking] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [noteSaving, setNoteSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -64,44 +68,55 @@ export function BuildMyAppPanel({
     let cancelled = false;
 
     async function load() {
-      const token = tokenStorage.getToken();
-      if (!token) {
+      try {
+        const token = tokenStorage.getToken();
+        if (!token) {
+          if (!cancelled) {
+            setPhase('error');
+            setLoadError('Sign in again to request a build.');
+          }
+          return;
+        }
+
+        const screen = await loadBuildScreen(token, {
+          refreshConnection: loadKey > 0 ? () => onRefreshConnection() : undefined,
+        });
+        if (cancelled) return;
+
+        setSync((current) =>
+          screen.sync.state === 'unavailable' && current.state !== 'unavailable' ? current : screen.sync
+        );
+
+        if (screen.list.kind === 'error') {
+          setPhase('error');
+          setLoadError(screen.list.message);
+          return;
+        }
+
+        const newest = screen.list.requests[0] ?? null;
+        setRequest(newest);
+        if (newest) {
+          setNotes(newest.accessNotes ?? '');
+          setAndroid(newest.platforms.android.status !== 'not_requested');
+          setIos(newest.platforms.ios.status !== 'not_requested');
+          setComposing(false);
+        }
+        setPhase('ready');
+      } catch {
         if (!cancelled) {
           setPhase('error');
-          setLoadError('Sign in again to request a build.');
+          setLoadError('We could not load your build. Try again.');
         }
-        return;
+      } finally {
+        if (!cancelled) setRechecking(false);
       }
-
-      const [nextSync, list] = await Promise.all([fetchCatalogSync(token), listBuildRequests(token)]);
-      if (cancelled) return;
-
-      setSync((current) =>
-        nextSync.state === 'unavailable' && current.state !== 'unavailable' ? current : nextSync
-      );
-
-      if (list.kind === 'error') {
-        setPhase('error');
-        setLoadError(list.message);
-        return;
-      }
-
-      const newest = list.requests[0] ?? null;
-      setRequest(newest);
-      if (newest) {
-        setNotes(newest.accessNotes ?? '');
-        setAndroid(newest.platforms.android.status !== 'not_requested');
-        setIos(newest.platforms.ios.status !== 'not_requested');
-        setComposing(false);
-      }
-      setPhase('ready');
     }
 
     void load();
     return () => {
       cancelled = true;
     };
-  }, [loadKey]);
+  }, [loadKey, onRefreshConnection]);
 
   useEffect(() => {
     if (!polling || !requestId) return;
@@ -115,7 +130,7 @@ export function BuildMyAppPanel({
         const result = await getBuildRequest(token, requestId);
         if (cancelled) return;
         if (result.kind === 'ok') {
-          setRequest(result.request);
+          setRequest((current) => (isSameBuildSnapshot(current, result.request) ? current : result.request));
           if (shouldPollBuildRequest(result.request)) schedule();
           return;
         }
@@ -123,6 +138,10 @@ export function BuildMyAppPanel({
           setRequest(null);
           setComposing(false);
           setFormError('We could not find that build. You can request it again.');
+          return;
+        }
+        if (result.message) {
+          setFormError(result.message);
           return;
         }
         schedule();
@@ -165,7 +184,8 @@ export function BuildMyAppPanel({
 
   const retry = () => {
     setFormError(null);
-    setPhase('loading');
+    if (phase === 'ready') setRechecking(true);
+    else setPhase('loading');
     setLoadKey((value) => value + 1);
   };
 
@@ -269,6 +289,7 @@ export function BuildMyAppPanel({
       ios={ios}
       accessNotes={notes}
       submitting={submitting}
+      rechecking={rechecking}
       syncBusy={syncBusy}
       noteSaving={noteSaving}
       formError={formError}

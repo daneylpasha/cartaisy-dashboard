@@ -9,6 +9,7 @@ import {
   normalizeBuildRequestList,
   outcomeCopy,
   platformStatusLabel,
+  isSameBuildSnapshot,
   primaryBuildAction,
   shouldPollBuildRequest,
   type BuildRequest,
@@ -48,6 +49,9 @@ assert.equal(platformStatusLabel('android', 'not_requested'), 'Not requested');
 assert.equal(platformStatusLabel('ios', 'unknown'), 'Updating');
 
 const moving = request({ android: 'ready', ios: 'waiting_on_merchant' });
+assert.equal(isSameBuildSnapshot(moving, { ...moving }), true);
+assert.equal(isSameBuildSnapshot(null, moving), false);
+assert.equal(isSameBuildSnapshot(moving, request({ android: 'ready', ios: 'ready' })), false);
 assert.equal(shouldPollBuildRequest(moving), true);
 assert.equal(isSettledBuildRequest(moving), false);
 

@@ -120,6 +120,7 @@ const waiting = html({
 });
 assert.ok(waiting.includes('Waiting on you'));
 assert.ok(waiting.includes('Waiting on Apple'));
+assert.equal((waiting.match(/checked=""/g) ?? []).length, 2);
 assert.equal(waiting.includes('>Build my app<'), false);
 assert.ok(waiting.includes('Apple developer invite sent.'));
 assertCalm(waiting);
@@ -141,6 +142,19 @@ assert.ok(settled.includes('One app is ready. The other did not finish.'));
 assert.ok(settled.includes('Request another build'));
 assert.ok(settled.includes('Failed'));
 assertCalm(settled);
+
+const recheck = html({
+  availability: {
+    enabled: false,
+    action: 'retry',
+    reason: 'We could not confirm your catalog sync. Try again.',
+  },
+  rechecking: true,
+});
+assert.equal(isDisabled(buttonTag(recheck, 'Checking...')), true);
+assert.equal(recheck.includes('>Try again<'), false);
+assert.ok(recheck.includes('We could not confirm your catalog sync. Try again.'));
+assertCalm(recheck);
 
 const noteLimit = html({ accessNotes: 'Hello' });
 assert.ok(noteLimit.includes('maxLength="280"') || noteLimit.includes('maxlength="280"'));
