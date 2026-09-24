@@ -1,24 +1,61 @@
 'use client';
 
-import { readableTextOn, safeImageUrl } from '@/lib/onboarding/normalizers';
-import type { BrandingDraft, LockedCatalog } from '@/lib/onboarding/types';
+import { useState } from 'react';
+import { previewFootnote, previewShelf, readableTextOn, safeImageUrl } from '@/lib/onboarding/normalizers';
+import type { BrandingDraft, CatalogPreviewProduct, LockedCatalog, SyncGate } from '@/lib/onboarding/types';
 
 interface SmartHomePreviewProps {
   draft: BrandingDraft;
   catalog: LockedCatalog;
+  sync: SyncGate;
+  pending?: boolean;
 }
 
-const SAMPLE_PRODUCTS = ['1', '2', '3', '4'] as const;
+function priceColor(secondary: string): string {
+  const trimmed = secondary.trim();
+  if (!/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(trimmed)) return '#64748b';
+  return readableTextOn(trimmed) === '#ffffff' ? trimmed : '#64748b';
+}
 
-export function SmartHomePreview({ draft, catalog }: SmartHomePreviewProps) {
+function ProductTile({ product, amountColor }: { product: CatalogPreviewProduct; amountColor: string }) {
+  const [broken, setBroken] = useState(false);
+  const showImage = Boolean(product.imageUrl) && !broken;
+
+  return (
+    <li className="min-w-0">
+      <div className="aspect-square overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200/80">
+        {showImage ? (
+          // Merchant image hosts are not in the Next image allowlist.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={product.imageUrl ?? ''}
+            alt=""
+            className="h-full w-full object-cover"
+            onError={() => setBroken(true)}
+          />
+        ) : null}
+      </div>
+      <p className="mt-2 line-clamp-2 text-xs font-medium leading-4 text-slate-800">{product.title}</p>
+      {product.priceLabel ? (
+        <p className="mt-1 text-xs tabular-nums" style={{ color: amountColor }}>
+          {product.priceLabel}
+        </p>
+      ) : null}
+    </li>
+  );
+}
+
+export function SmartHomePreview({ draft, catalog, sync, pending = false }: SmartHomePreviewProps) {
   const appName = draft.appName.trim() || 'Your app';
   const initial = appName.charAt(0).toUpperCase();
   const headerMark = safeImageUrl(draft.iconUrl) || safeImageUrl(draft.logoUrl);
   const splashUrl = safeImageUrl(draft.splashUrl);
   const onPrimary = readableTextOn(draft.primaryColor);
   const chips = catalog.collections.slice(0, 3);
-  const categories = chips.length > 0 ? chips : ['All', 'Featured', 'New'];
-  const sectionTitle = catalog.collections[0] ?? 'Featured';
+  const shelf = previewShelf(sync, catalog.products, pending);
+  const sectionTitle = catalog.collections[0] ?? (shelf.kind === 'products' ? 'Your products' : null);
+  const amountColor = priceColor(draft.secondaryColor);
+  const footnote = previewFootnote(catalog, sync, pending);
 
   return (
     <div className="mx-auto w-full max-w-[320px]">
@@ -44,11 +81,7 @@ export function SmartHomePreview({ draft, catalog }: SmartHomePreviewProps) {
             {headerMark ? (
               // Blob previews and merchant image hosts are not in the Next image allowlist.
               // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={headerMark}
-                alt=""
-                className="h-9 w-9 rounded-lg object-cover"
-              />
+              <img src={headerMark} alt="" className="h-9 w-9 rounded-lg object-cover" />
             ) : (
               <span
                 className="flex h-9 w-9 items-center justify-center rounded-lg text-sm font-semibold"
@@ -74,41 +107,56 @@ export function SmartHomePreview({ draft, catalog }: SmartHomePreviewProps) {
           <div className="flex h-9 items-center rounded-full bg-slate-100 px-3 text-xs text-slate-500" aria-hidden>
             Search
           </div>
-          <div className="flex gap-2 overflow-hidden" aria-hidden>
-            {categories.map((label, index) => (
-              <span
-                key={label}
-                className="shrink-0 rounded-full px-3 py-1 text-xs"
-                style={
-                  index === 0
-                    ? { backgroundColor: draft.primaryColor, color: onPrimary }
-                    : { backgroundColor: '#f1f5f9', color: '#334155' }
-                }
-              >
-                {label}
-              </span>
-            ))}
-          </div>
-          <div>
-            <p className="text-sm font-medium text-slate-900">{sectionTitle}</p>
-            <div className="mt-3 grid grid-cols-2 gap-3">
-              {SAMPLE_PRODUCTS.map((item) => (
-                <div key={item}>
-                  <div
-                    className="aspect-square rounded-xl"
-                    style={{ backgroundColor: item === '1' && draft.secondaryColor ? draft.secondaryColor : '#f1f5f9' }}
-                  />
-                  <p className="mt-2 text-xs font-medium text-slate-800">Product</p>
-                  <div className="mt-1 h-2 w-10 rounded-full bg-slate-200" aria-hidden />
-                </div>
+          {chips.length > 0 ? (
+            <div className="flex gap-2 overflow-hidden" aria-hidden>
+              {chips.map((label, index) => (
+                <span
+                  key={`${label}-${index}`}
+                  className="shrink-0 rounded-full px-3 py-1 text-xs"
+                  style={
+                    index === 0
+                      ? { backgroundColor: draft.primaryColor, color: onPrimary }
+                      : { backgroundColor: '#f1f5f9', color: '#334155' }
+                  }
+                >
+                  {label}
+                </span>
               ))}
             </div>
+          ) : null}
+          <div>
+            {sectionTitle ? <p className="text-sm font-medium text-slate-900">{sectionTitle}</p> : null}
+            {shelf.kind === 'products' ? (
+              <ul className="mt-3 grid grid-cols-2 gap-3">
+                {catalog.products.map((product, index) => (
+                  <ProductTile key={`${product.id}-${index}`} product={product} amountColor={amountColor} />
+                ))}
+              </ul>
+            ) : shelf.kind === 'loading' ? (
+              <div className="mt-3" aria-busy="true" aria-live="polite">
+                <p className="text-xs text-slate-500">{shelf.message}</p>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  {['a', 'b', 'c', 'd'].map((slot) => (
+                    <div key={slot} aria-hidden>
+                      <div className="aspect-square animate-pulse rounded-xl bg-slate-100" />
+                      <div className="mt-2 h-2 w-16 animate-pulse rounded-full bg-slate-100" />
+                      <div className="mt-1.5 h-2 w-10 animate-pulse rounded-full bg-slate-100" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p
+                className="mt-3 rounded-2xl bg-slate-50 px-4 py-8 text-center text-sm leading-6 text-slate-600"
+                role="status"
+              >
+                {shelf.message}
+              </p>
+            )}
           </div>
         </div>
       </div>
-      <p className="mt-4 text-center text-xs leading-5 text-slate-500">
-        Sample layout. Real products appear after sync. Collection names shown here cannot be edited.
-      </p>
+      <p className="mt-4 text-center text-xs leading-5 text-slate-500">{footnote}</p>
     </div>
   );
 }

@@ -112,6 +112,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: No Shopify access token is written, and build eligibility is unchanged. Branding can continue with the existing sync warning. This is onboarding and a Shopify API call, so it needs human review.
 - Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/STATUS.md`, `docs/ARCHITECTURE.md`, backend `docs/cartaisy/SHOPIFY_API_POLICY.md`.
 
+### Preview shows synced products, not a sample catalog
+
+- Date: 2026-09-24.
+- Decision: The onboarding preview phone draws up to four real products after `GET /api/v1/shopify/sync` reports `succeeded`. The list is taken from the overview payload when that payload includes products. Otherwise the wizard calls `GET /api/v1/products?limit=4&sortBy=newest` with the signed-in store id (`X-Store-ID`). Tiles show title, image URL, and price when those fields exist. If sync has not succeeded, or the list is empty, the phone shows short copy. It does not draw placeholder product tiles, and it does not put a Cartaisy wordmark in the phone.
+- Reason: Dashboard #27. Merchants were judging a home of grey boxes labeled Product, so a synced store did not look like their app.
+- Impact: Counts on the connect and brand steps are unchanged. The extra product read uses the session store id because the merchant access token has a user id and not a store id. No Shopify Admin token is sent. This is onboarding and a catalog read, so it needs human review.
+- Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/STATUS.md`, `docs/ARCHITECTURE.md`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

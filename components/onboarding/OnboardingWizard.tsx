@@ -122,11 +122,11 @@ export function OnboardingWizard() {
   const refreshShopifySnapshot = useCallback(async () => {
     const token = tokenStorage.getToken();
     if (!token) return;
-    const snapshot = await loadShopifySnapshot(token);
+    const snapshot = await loadShopifySnapshot(token, storeId);
     setConnection(snapshot.connection);
     setSync(snapshot.sync);
     setCatalog(snapshot.catalog);
-  }, []);
+  }, [storeId]);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -145,7 +145,7 @@ export function OnboardingWizard() {
       }
 
       const [snapshot, branding, storeName] = await Promise.all([
-        loadShopifySnapshot(token),
+        loadShopifySnapshot(token, storeId),
         fetchBranding(storeId, token),
         fetchStoreName(),
       ]);
@@ -454,8 +454,11 @@ export function OnboardingWizard() {
             <PreviewStep
               draft={draft}
               catalog={catalog}
+              sync={sync}
+              pending={refreshing}
               onBack={() => go('brand')}
               onContinue={() => go('ready')}
+              onRetry={() => setReloadKey((value) => value + 1)}
             />
           ) : (
             <ReadyStep
