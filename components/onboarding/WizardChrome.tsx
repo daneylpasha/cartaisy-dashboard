@@ -85,6 +85,7 @@ interface WizardFooterProps {
   onPrimary: () => void;
   primaryDisabled?: boolean;
   pending?: boolean;
+  pendingLabel?: string;
   quietAction?: { label: string; onClick: () => void };
 }
 
@@ -94,6 +95,7 @@ export function WizardFooter({
   onPrimary,
   primaryDisabled = false,
   pending = false,
+  pendingLabel = 'Saving...',
   quietAction,
 }: WizardFooterProps) {
   return (
@@ -125,7 +127,7 @@ export function WizardFooter({
         disabled={primaryDisabled || pending}
         className="inline-flex h-11 items-center justify-center rounded-lg bg-slate-950 px-5 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
       >
-        {pending ? 'Saving...' : primaryLabel}
+        {pending ? pendingLabel : primaryLabel}
       </button>
     </div>
   );

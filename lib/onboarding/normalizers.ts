@@ -394,19 +394,128 @@ export function formatLockedCount(count: number | null, singular: string, plural
 
 export type ConnectPrimaryAction =
   | { kind: 'start'; label: 'Connect Shopify' }
-  | { kind: 'continue'; label: 'Continue' };
+  | { kind: 'continue'; label: 'Continue' | 'Continue to Brand' };
 
 /**
- * Live redirect stays off until dashboard #15 / backend #153 return the
- * merchant to this wizard after Shopify approval. Until then the primary
- * action is Continue, with a sync warning.
+ * A connected store's primary action opens Brand. Connect Shopify is only
+ * the primary action when live redirect is on and the store is not connected.
  */
 export function connectPrimaryAction(input: {
   liveRedirectEnabled: boolean;
   isConnected: boolean;
 }): ConnectPrimaryAction {
-  if (input.liveRedirectEnabled && !input.isConnected) {
+  if (input.isConnected) {
+    return { kind: 'continue', label: 'Continue to Brand' };
+  }
+  if (input.liveRedirectEnabled) {
     return { kind: 'start', label: 'Connect Shopify' };
   }
   return { kind: 'continue', label: 'Continue' };
+}
+
+/** Auto-start Sync again once after OAuth return when nothing is running. */
+export function shouldAutoStartCatalogSync(state: SyncGateState): boolean {
+  return state === 'not_started' || state === 'failed';
+}
+
+export interface ConnectCatalogView {
+  headline: string;
+  support: string | null;
+  /** Set only after a succeeded sync when the overview returned a count. */
+  count: number | null;
+  countNoun: string | null;
+  showSyncAgain: boolean;
+  busy: boolean;
+}
+
+/**
+ * Merchant copy for the connect step catalog panel.
+ * `idle` is `not_started`. Product count is shown only after success.
+ */
+export function connectCatalogView(sync: SyncGate, productCount: number | null): ConnectCatalogView {
+  if (sync.state === 'succeeded' && productCount !== null) {
+    return {
+      headline: 'Synced',
+      support: null,
+      count: productCount,
+      countNoun: productCount === 1 ? 'product' : 'products',
+      showSyncAgain: true,
+      busy: false,
+    };
+  }
+  if (sync.state === 'succeeded') {
+    return {
+      headline: 'Synced',
+      support: 'Product count is not available yet.',
+      count: null,
+      countNoun: null,
+      showSyncAgain: true,
+      busy: false,
+    };
+  }
+  if (sync.state === 'in_progress') {
+    return {
+      headline: 'Syncing your catalog…',
+      support: 'Not synced yet. You can continue to Brand.',
+      count: null,
+      countNoun: null,
+      showSyncAgain: false,
+      busy: true,
+    };
+  }
+  if (sync.state === 'failed') {
+    return {
+      headline: 'Sync failed',
+      support: sync.detail ?? 'The last sync did not succeed. Use Sync again.',
+      count: null,
+      countNoun: null,
+      showSyncAgain: true,
+      busy: false,
+    };
+  }
+  if (sync.state === 'unavailable') {
+    return {
+      headline: 'Could not check sync',
+      support: 'We could not confirm sync status. You can continue to Brand.',
+      count: null,
+      countNoun: null,
+      showSyncAgain: true,
+      busy: false,
+    };
+  }
+  return {
+    headline: 'Not synced yet',
+    support: 'Catalog has not synced yet.',
+    count: null,
+    countNoun: null,
+    showSyncAgain: true,
+    busy: false,
+  };
+}
+
+/**
+ * Drops the OAuth return query after the wizard has read it.
+ * `shop` is removed only together with `shopify`, so an unrelated query stays.
+ */
+export function consumeShopifyReturnQuery(search: string): { query: string; changed: boolean } {
+  const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
+  const outcome = params.get('shopify');
+  if (outcome !== 'connected' && outcome !== 'error') {
+    return { query: params.toString(), changed: false };
+  }
+  params.delete('shopify');
+  params.delete('reason');
+  params.delete('shop');
+  params.delete('error');
+  if (!params.get('step')) params.set('step', 'connect');
+  return { query: params.toString(), changed: true };
+}
+
+/** Shop domain from the OAuth return, safe to prefill. Anything else is dropped. */
+export function safeReturnedShop(value: string | null): string | null {
+  if (!value) return null;
+  const trimmed = value.trim().toLowerCase();
+  if (!trimmed || trimmed.length > 100) return null;
+  if (!/^[a-z0-9][a-z0-9.-]*$/.test(trimmed)) return null;
+  return trimmed;
 }

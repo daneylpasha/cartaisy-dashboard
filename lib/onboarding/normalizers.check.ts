@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
+import { copyForReason } from '../shopify/merchantCopy.ts';
 import {
   buildRequestAvailability,
+  connectCatalogView,
   connectPrimaryAction,
+  consumeShopifyReturnQuery,
   normalizeCatalog,
   normalizeCollectionNames,
   normalizeConnectionStatus,
@@ -10,6 +13,8 @@ import {
   onboardingSyncWarning,
   readAuthorizationUrl,
   readableTextOn,
+  safeReturnedShop,
+  shouldAutoStartCatalogSync,
 } from './normalizers.ts';
 
 const connected = normalizeConnectionStatus(
@@ -245,8 +250,106 @@ assert.deepEqual(connectPrimaryAction({ liveRedirectEnabled: true, isConnected: 
 });
 assert.deepEqual(connectPrimaryAction({ liveRedirectEnabled: true, isConnected: true }), {
   kind: 'continue',
-  label: 'Continue',
+  label: 'Continue to Brand',
 });
+assert.deepEqual(connectPrimaryAction({ liveRedirectEnabled: false, isConnected: true }), {
+  kind: 'continue',
+  label: 'Continue to Brand',
+});
+
+assert.equal(shouldAutoStartCatalogSync('not_started'), true);
+assert.equal(shouldAutoStartCatalogSync('failed'), true);
+assert.equal(shouldAutoStartCatalogSync('in_progress'), false);
+assert.equal(shouldAutoStartCatalogSync('succeeded'), false);
+assert.equal(shouldAutoStartCatalogSync('unavailable'), false);
+
+const idleView = connectCatalogView(
+  { state: 'not_started', detail: null, eligibleForBuild: false, eligibilityReason: null },
+  null
+);
+assert.equal(idleView.headline, 'Not synced yet');
+assert.equal(idleView.count, null);
+assert.equal(idleView.showSyncAgain, true);
+
+const syncingView = connectCatalogView(
+  { state: 'in_progress', detail: null, eligibleForBuild: false, eligibilityReason: null },
+  12
+);
+assert.equal(syncingView.busy, true);
+assert.equal(syncingView.count, null);
+assert.equal(syncingView.showSyncAgain, false);
+assert.match(syncingView.support ?? '', /Not synced yet/);
+
+const syncedView = connectCatalogView(
+  { state: 'succeeded', detail: null, eligibleForBuild: true, eligibilityReason: null },
+  128
+);
+assert.equal(syncedView.count, 128);
+assert.equal(syncedView.countNoun, 'products');
+assert.equal(syncedView.headline, 'Synced');
+
+const oneProduct = connectCatalogView(
+  { state: 'succeeded', detail: null, eligibleForBuild: true, eligibilityReason: null },
+  1
+);
+assert.equal(oneProduct.countNoun, 'product');
+
+const syncedWithoutCount = connectCatalogView(
+  { state: 'succeeded', detail: null, eligibleForBuild: true, eligibilityReason: null },
+  null
+);
+assert.equal(syncedWithoutCount.count, null);
+assert.match(syncedWithoutCount.support ?? '', /not available yet/i);
+
+const failedView = connectCatalogView(
+  {
+    state: 'failed',
+    detail: 'Catalog sync failed. Use Sync again.',
+    eligibleForBuild: false,
+    eligibilityReason: 'catalog_sync_not_succeeded',
+  },
+  null
+);
+assert.equal(failedView.headline, 'Sync failed');
+assert.equal(failedView.support, 'Catalog sync failed. Use Sync again.');
+assert.equal(failedView.showSyncAgain, true);
+
+assert.deepEqual(
+  consumeShopifyReturnQuery('step=connect&shopify=connected&shop=northline.myshopify.com'),
+  { query: 'step=connect', changed: true }
+);
+assert.deepEqual(consumeShopifyReturnQuery('shopify=error&reason=invalid_state&error=legacy'), {
+  query: 'step=connect',
+  changed: true,
+});
+assert.deepEqual(consumeShopifyReturnQuery('step=brand&shop=northline.myshopify.com'), {
+  query: 'step=brand&shop=northline.myshopify.com',
+  changed: false,
+});
+
+assert.equal(safeReturnedShop('Northline.myshopify.com'), 'northline.myshopify.com');
+assert.equal(safeReturnedShop('https://northline.myshopify.com'), null);
+assert.equal(safeReturnedShop('shop<script>'), null);
+
+const backendReasons = [
+  'missing_parameters',
+  'invalid_hmac',
+  'invalid_state',
+  'token_exchange_failed',
+  'oauth_not_configured',
+  'invalid_shop',
+  'shop_taken',
+  'shop_switch_required',
+  'store_not_found',
+  'store_required',
+  'credential_save_failed',
+  'oauth_failed',
+  'revoke_failed',
+];
+const unknownReason = copyForReason('not_a_backend_reason');
+for (const code of backendReasons) {
+  assert.notEqual(copyForReason(code), unknownReason, code);
+}
 
 assert.equal(readableTextOn('#ffffff'), '#111111');
 assert.equal(readableTextOn('#111111'), '#ffffff');

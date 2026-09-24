@@ -104,6 +104,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Auth and the User model change. Password signup is unchanged. Backend `/auth/google` is a parallel contract (`idToken` in, login response out) and must be able to see the user this dashboard just created. Human review is required.
 - Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `.env.example`.
 
+### After Shopify connect, the wizard shows sync and then Brand
+
+- Date: 2026-09-24.
+- Decision: A return to `/dashboard/onboarding` with `shopify=connected` shows the existing success copy, durable catalog sync (`GET /api/v1/shopify/sync`), and the product count from the overview snapshot already loaded for the wizard. If that status is idle or failed, the connect step calls `POST /api/v1/shopify/sync` once. HTTP 409 (`CATALOG_SYNC_IN_PROGRESS`) does not start a second sync; the step polls GET until the run is succeeded or failed. Continue to Brand stays available the whole time. `shopify=error` keeps using `shopifyReturnCopy` / `copyForReason`. After the copy is read, `shopify`, `reason`, `shop`, and a legacy `error` param are removed from the URL.
+- Reason: Dashboard #25. The return previously rendered only error copy, so a successful connect looked unchanged and the catalog stayed idle until a later step.
+- Impact: No Shopify access token is written, and build eligibility is unchanged. Branding can continue with the existing sync warning. This is onboarding and a Shopify API call, so it needs human review.
+- Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/STATUS.md`, `docs/ARCHITECTURE.md`, backend `docs/cartaisy/SHOPIFY_API_POLICY.md`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.
