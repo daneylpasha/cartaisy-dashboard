@@ -2,6 +2,11 @@ import { getServerSession, authConfig } from '@/lib/auth/server';
 
 import { NextRequest, NextResponse } from 'next/server';
 import * as storeService from '@/lib/services/store';
+import {
+  BrandAssetInputError,
+  getStoreBrandAssets,
+  saveStoreBrandAssets,
+} from '@/lib/services/storeBrandAssets';
 import { canManageSettings } from '@/lib/utils/permissions';
 
 export async function GET(request: NextRequest) {
@@ -12,11 +17,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const store = await storeService.getStore(session.user.storeId);
+    const [store, brandAssets] = await Promise.all([
+      storeService.getStore(session.user.storeId),
+      getStoreBrandAssets(session.user.storeId),
+    ]);
 
     return NextResponse.json({
       success: true,
-      data: store,
+      data: { ...store, brandAssets },
     });
   } catch (error) {
     console.error('Store GET error:', error);
@@ -43,13 +51,45 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const input = await request.json();
+    const input = (await request.json()) as unknown;
+    const record =
+      input && typeof input === 'object' && !Array.isArray(input)
+        ? (input as Record<string, unknown>)
+        : null;
+    if (!record) {
+      return NextResponse.json({ error: 'No valid fields provided for update' }, { status: 400 });
+    }
 
-    const store = await storeService.updateStore(session.user.storeId, input);
+    let brandAssets = await getStoreBrandAssets(session.user.storeId);
+    if ('brandAssets' in record) {
+      try {
+        brandAssets = await saveStoreBrandAssets(session.user.storeId, record.brandAssets);
+      } catch (error) {
+        if (error instanceof BrandAssetInputError) {
+          return NextResponse.json({ error: error.message }, { status: 400 });
+        }
+        throw error;
+      }
+    }
+
+    const storeInput: { name?: string; settings?: { timezone?: string; currency?: string } } = {};
+    if (typeof record.name === 'string') storeInput.name = record.name;
+    if (record.settings && typeof record.settings === 'object' && !Array.isArray(record.settings)) {
+      const settings = record.settings as Record<string, unknown>;
+      storeInput.settings = {
+        ...(typeof settings.timezone === 'string' ? { timezone: settings.timezone } : {}),
+        ...(typeof settings.currency === 'string' ? { currency: settings.currency } : {}),
+      };
+    }
+
+    const store =
+      storeInput.name !== undefined || storeInput.settings
+        ? await storeService.updateStore(session.user.storeId, storeInput)
+        : await storeService.getStore(session.user.storeId);
 
     return NextResponse.json({
       success: true,
-      data: store,
+      data: { ...store, brandAssets },
       message: 'Store updated successfully',
     });
   } catch (error) {

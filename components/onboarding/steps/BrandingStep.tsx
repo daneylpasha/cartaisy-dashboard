@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { ImagePlus, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,6 +25,8 @@ interface BrandingStepProps {
   fieldError: string | null;
   saving: boolean;
   logoUploading: boolean;
+  iconUploading: boolean;
+  splashUploading: boolean;
   primaryValid: boolean;
   secondaryValid: boolean;
   onDraftChange: (draft: BrandingDraft) => void;
@@ -50,6 +52,8 @@ export function BrandingStep({
   fieldError,
   saving,
   logoUploading,
+  iconUploading,
+  splashUploading,
   primaryValid,
   secondaryValid,
   onDraftChange,
@@ -64,7 +68,8 @@ export function BrandingStep({
   onRetry,
 }: BrandingStepProps) {
   const nameReady = draft.appName.trim().length >= 2;
-  const blocked = Boolean(loadError) || !nameReady || !primaryValid || !secondaryValid || logoUploading;
+  const blocked =
+    Boolean(loadError) || !nameReady || !primaryValid || !secondaryValid || logoUploading || iconUploading || splashUploading;
 
   return (
     <section className="rounded-2xl border border-slate-200/80 bg-white px-5 py-8 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-10 sm:py-10">
@@ -122,7 +127,7 @@ export function BrandingStep({
                 </p>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid grid-cols-3 gap-3 sm:gap-4">
                 <ImageField
                   id="brand-logo"
                   label="Logo"
@@ -144,7 +149,9 @@ export function BrandingStep({
                   id="brand-icon"
                   label="App icon"
                   imageUrl={draft.iconUrl}
-                  hint={draft.iconPersisted ? 'Home screen icon' : 'Shown in this preview only'}
+                  hint={iconUploading ? 'Uploading...' : 'Home screen icon'}
+                  shape="icon"
+                  busy={iconUploading}
                   onFile={(file) => {
                     const check = validateBrandImage(file);
                     if (!check.ok) {
@@ -159,7 +166,8 @@ export function BrandingStep({
                   id="brand-splash"
                   label="Splash"
                   imageUrl={draft.splashUrl}
-                  hint={draft.splashPersisted ? 'Opening screen' : 'Shown in this preview only'}
+                  hint={splashUploading ? 'Uploading...' : 'Opening screen'}
+                  busy={splashUploading}
                   onFile={(file) => {
                     const check = validateBrandImage(file);
                     if (!check.ok) {
@@ -218,6 +226,7 @@ function ImageField({
   imageUrl,
   hint,
   fit = 'cover',
+  shape = 'fill',
   busy = false,
   onFile,
 }: {
@@ -226,34 +235,45 @@ function ImageField({
   imageUrl: string | null;
   hint: string;
   fit?: 'cover' | 'contain';
+  shape?: 'fill' | 'icon';
   busy?: boolean;
   onFile: (file: File) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const safeUrl = safeImageUrl(imageUrl);
+  const [brokenFor, setBrokenFor] = useState<string | null>(null);
+  const broken = Boolean(safeUrl) && brokenFor === safeUrl;
+  const showImage = Boolean(safeUrl) && !broken;
 
   return (
-    <div>
+    <div className="min-w-0">
       <Label htmlFor={id}>{label}</Label>
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        aria-label={`Add ${label}`}
+        aria-label={showImage ? `Replace ${label}` : `Add ${label}`}
         aria-busy={busy}
-        className="relative mt-2 flex h-28 w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-slate-300 bg-slate-50 transition-colors hover:border-slate-400 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+        className="relative mt-2 flex h-24 w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-slate-300 bg-slate-50 transition-colors hover:border-slate-400 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 sm:h-28"
       >
-        {safeUrl ? (
+        {showImage && safeUrl ? (
           // Blob previews and merchant image hosts are not in the Next image allowlist.
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={safeUrl}
             alt=""
-            className={fit === 'contain' ? 'h-full w-full object-contain p-2' : 'h-full w-full object-cover'}
+            onError={() => setBrokenFor(safeUrl)}
+            className={
+              shape === 'icon'
+                ? 'h-16 w-16 rounded-[22%] object-cover ring-1 ring-black/10'
+                : fit === 'contain'
+                  ? 'h-full w-full object-contain p-2'
+                  : 'h-full w-full object-cover'
+            }
           />
         ) : (
-          <span className="flex flex-col items-center gap-1 text-slate-500">
+          <span className="flex flex-col items-center gap-1 px-2 text-center text-slate-500">
             <ImagePlus className="h-4 w-4" aria-hidden />
-            <span className="text-xs">Add image</span>
+            <span className="text-[11px] leading-4">{broken ? 'Add again' : 'Add image'}</span>
           </span>
         )}
         {busy ? (
@@ -275,7 +295,9 @@ function ImageField({
           event.target.value = '';
         }}
       />
-      <p className="mt-2 text-xs leading-5 text-slate-500">{hint}</p>
+      <p className="mt-2 text-[11px] leading-4 text-slate-500 sm:text-xs sm:leading-5">
+        {broken ? 'Add a new image.' : hint}
+      </p>
     </div>
   );
 }

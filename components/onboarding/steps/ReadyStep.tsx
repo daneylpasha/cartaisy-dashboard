@@ -1,10 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { BrandHandoff } from '@/components/onboarding/BrandHandoff';
 import { BuildMyAppPanel } from '@/components/onboarding/BuildMyAppPanel';
-import type { ShopifyConnectionSnapshot, SyncGate } from '@/lib/onboarding/types';
+import type { BrandingDraft, ShopifyConnectionSnapshot, SyncGate } from '@/lib/onboarding/types';
 
 interface ReadyStepProps {
+  draft: BrandingDraft;
   connection: ShopifyConnectionSnapshot;
   sync: SyncGate;
   productCount: number | null;
@@ -15,6 +17,7 @@ interface ReadyStepProps {
 }
 
 export function ReadyStep({
+  draft,
   connection,
   sync,
   productCount,
@@ -32,6 +35,8 @@ export function ReadyStep({
       <p className="mt-3 max-w-lg text-[15px] leading-7 text-slate-600">
         Choose Android, iOS, or both. We will show each one here as it moves forward.
       </p>
+
+      <BrandHandoff draft={draft} />
 
       <BuildMyAppPanel
         connection={connection}

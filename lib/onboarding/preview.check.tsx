@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { BrandHandoff } from '@/components/onboarding/BrandHandoff';
 import { SmartHomePreview } from '@/components/onboarding/SmartHomePreview';
 import type { BrandingDraft, LockedCatalog, SyncGate } from '@/lib/onboarding/types';
 
@@ -19,6 +20,10 @@ const previewStepSource = source('../../components/onboarding/steps/PreviewStep.
 const wizardSource = source('../../components/onboarding/OnboardingWizard.tsx');
 
 assert.doesNotMatch(previewSource, /cartaisy/i);
+assert.doesNotMatch(brandSource, /preview only/i);
+assert.doesNotMatch(brandSource, /api key|access token|accessToken/i);
+assert.match(wizardSource, /uploadBrandAsset/);
+assert.doesNotMatch(wizardSource, /uploadOptionalBrandAsset/);
 assert.doesNotMatch(previewSource, /from-purple|to-pink|purple-6/);
 assert.match(brandSource, /<SmartHomePreview[\s\S]*draft=\{draft\}/);
 assert.match(previewStepSource, /<SmartHomePreview[\s\S]*draft=\{draft\}/);
@@ -124,5 +129,19 @@ assert.match(loading, /Loading your products/);
 assert.match(loading, /Northwind/);
 assert.doesNotMatch(loading, /Linen overshirt/);
 assert.doesNotMatch(loading, /cartaisy/i);
+
+const handoff = renderToStaticMarkup(createElement(BrandHandoff, { draft }));
+assert.match(handoff, /Northwind/);
+assert.match(handoff, /https:\/\/cdn\.example\/icon\.png/);
+assert.doesNotMatch(handoff, /splash\.png/);
+assert.doesNotMatch(handoff, /cartaisy/i);
+assert.doesNotMatch(handoff, /api key|access token/i);
+
+const missingIcon = renderToStaticMarkup(
+  createElement(BrandHandoff, { draft: { ...draft, appName: 'Harbor', iconUrl: null } })
+);
+assert.match(missingIcon, /Harbor/);
+assert.match(missingIcon, />H</);
+assert.doesNotMatch(missingIcon, /cdn\.example\/icon/);
 
 console.log('preview check ok');

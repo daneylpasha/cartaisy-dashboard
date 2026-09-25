@@ -85,9 +85,9 @@ export interface BrandingDraft {
   secondaryColor: string;
   splashUrl: string | null;
   iconUrl: string | null;
-  /** False when the merchant picked a splash the branding API cannot store yet. */
+  /** False while a chosen splash is still a local preview. */
   splashPersisted: boolean;
-  /** False when the merchant picked an icon the branding API cannot store yet. */
+  /** False while a chosen icon is still a local preview. */
   iconPersisted: boolean;
 }
 
