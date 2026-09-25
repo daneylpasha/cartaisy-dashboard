@@ -2,7 +2,10 @@ import { API_URL } from '@/lib/api/mutator/custom-instance';
 import {
   displayBrandImageUrl,
   EMPTY_STORED_BRAND_ASSETS,
+  IMAGE_LIMIT_MESSAGE,
   persistedBrandImageUrl,
+  readSignedUploadSignature,
+  registerPayloadFromCloudinary,
   type StoredBrandAssets,
 } from '@/lib/onboarding/brandAssets';
 import type { BrandingDraft } from '@/lib/onboarding/types';
@@ -225,8 +228,9 @@ function readAssetUrl(kind: OptionalBrandAsset, data: Record<string, unknown> | 
 
 /**
  * Prefer the branding upload route, the same style as the logo.
- * A missing route (404/405/501) falls through to the existing signed
- * store-image upload. The caller stores that https URL with the brand.
+ * A missing route (404/405/501) falls through to the signed store-image
+ * upload, which checks `canUpload` and registers the file before the URL
+ * is kept. The caller stores that https URL with the brand.
  */
 export async function uploadBrandAsset(
   storeId: string,
@@ -265,27 +269,36 @@ export async function uploadBrandAsset(
     return { ok: true, url, storedByBrandingApi: true, error: null };
   }
 
-  const signed = await uploadSignedStoreImage(storeId, token, file);
-  if (!signed) return { ok: false, url: null, storedByBrandingApi: false, error: fallback };
-  return { ok: true, url: signed, storedByBrandingApi: false, error: null };
+  const signed = await uploadSignedStoreImage(storeId, token, file, fallback);
+  if (!signed.ok) return { ok: false, url: null, storedByBrandingApi: false, error: signed.error };
+  return { ok: true, url: signed.url, storedByBrandingApi: false, error: null };
 }
 
-async function uploadSignedStoreImage(storeId: string, token: string, file: File): Promise<string | null> {
+/**
+ * Same lifecycle as `ImageUploader`: refuse when `canUpload` is false,
+ * upload with the signed fields, then `POST .../images/register`.
+ * The https URL is returned only after registration succeeds.
+ */
+async function uploadSignedStoreImage(
+  storeId: string,
+  token: string,
+  file: File,
+  fallback: string
+): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
   try {
     const response = await fetch(`${API_URL}/notifications/stores/${storeId}/images/signature`, {
       headers: authHeaders(token),
     });
     const body = await readJson(response);
     const data = brandingRecord(body);
-    if (!response.ok || !data) return null;
+    if (!response.ok) return { ok: false, error: fallback };
 
-    const signature = readString(data.signature);
-    const cloudName = readString(data.cloudName);
-    const apiKey = readString(data.apiKey);
-    const folder = readString(data.folder);
-    const timestamp = typeof data.timestamp === 'number' ? data.timestamp : Number(data.timestamp);
-    if (!signature || !cloudName || !apiKey || !folder || !Number.isFinite(timestamp)) return null;
+    const gate = readSignedUploadSignature(data);
+    if (!gate.ok) {
+      return { ok: false, error: gate.reason === 'quota' ? IMAGE_LIMIT_MESSAGE : fallback };
+    }
 
+    const { signature, timestamp, cloudName, apiKey, folder } = gate.credentials;
     const formData = new FormData();
     formData.append('file', file);
     formData.append('api_key', apiKey);
@@ -299,10 +312,24 @@ async function uploadSignedStoreImage(storeId: string, token: string, file: File
       body: formData,
     });
     const result = (await readJson(uploaded)) as Record<string, unknown> | null;
-    if (!uploaded.ok || !result) return null;
-    return persistedBrandImageUrl(readString(result.secure_url));
+    if (!uploaded.ok) return { ok: false, error: fallback };
+
+    const registration = registerPayloadFromCloudinary(result);
+    if (!registration) return { ok: false, error: fallback };
+
+    const registered = await fetch(`${API_URL}/notifications/stores/${storeId}/images/register`, {
+      method: 'POST',
+      headers: authHeaders(token, true),
+      body: JSON.stringify(registration),
+    });
+    if (!registered.ok) {
+      const registerBody = brandingRecord(await readJson(registered));
+      const message = readString(registerBody?.message) ?? readString(registerBody?.error) ?? '';
+      return { ok: false, error: /limit/i.test(message) ? IMAGE_LIMIT_MESSAGE : fallback };
+    }
+    return { ok: true, url: registration.secureUrl };
   } catch {
-    return null;
+    return { ok: false, error: fallback };
   }
 }
 
