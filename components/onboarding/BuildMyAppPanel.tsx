@@ -24,9 +24,11 @@ import {
 import { buildRequestAvailability } from '@/lib/onboarding/normalizers';
 import type { ShopifyConnectionSnapshot, SyncGate } from '@/lib/onboarding/types';
 import { recoveryStatusLine, shopifyRecoveryView } from '@/lib/shopify/recovery';
+import { launcherDisplayName } from '@/components/onboarding/LauncherReadinessStrip';
 import { BuildMyAppView } from '@/components/onboarding/BuildMyAppView';
 
 interface LauncherDraft {
+  appName: string | null;
   iconUrl: string | null;
   splashUrl: string | null;
 }
@@ -98,7 +100,7 @@ export function BuildMyAppPanel({
       const token = tokenStorage.getToken();
       const storeId = session?.user?.storeId;
       if (!token || !storeId) {
-        if (!cancelled) setFetchedLauncher({ iconUrl: null, splashUrl: null });
+        if (!cancelled) setFetchedLauncher({ appName: null, iconUrl: null, splashUrl: null });
         return;
       }
       const [branding, profile] = await Promise.all([
@@ -107,14 +109,18 @@ export function BuildMyAppPanel({
       ]);
       if (cancelled) return;
       const draft = mergeStoredBrandAssets(branding ?? emptyBrandingDraft(''), profile.brandAssets);
-      setFetchedLauncher({ iconUrl: draft.iconUrl, splashUrl: draft.splashUrl });
+      const appName =
+        launcherDisplayName(branding?.appName) ??
+        launcherDisplayName(profile.name) ??
+        launcherDisplayName(session?.user?.storeName);
+      setFetchedLauncher({ appName, iconUrl: draft.iconUrl, splashUrl: draft.splashUrl });
     }
 
     void loadLauncher();
     return () => {
       cancelled = true;
     };
-  }, [hasLauncher, sessionStatus, session?.user?.storeId]);
+  }, [hasLauncher, sessionStatus, session?.user?.storeId, session?.user?.storeName]);
 
   useEffect(() => {
     let cancelled = false;
@@ -347,6 +353,7 @@ export function BuildMyAppPanel({
       formError={formError}
       statusLine={recoveryStatusLine(recovery)}
       webhookNote={recovery.webhookNote}
+      appName={launcher ? launcher.appName : fetchedLauncher?.appName}
       iconUrl={launcher ? launcher.iconUrl : fetchedLauncher?.iconUrl}
       splashUrl={launcher ? launcher.splashUrl : fetchedLauncher?.splashUrl}
       launcherPending={launcher === undefined && fetchedLauncher === null}

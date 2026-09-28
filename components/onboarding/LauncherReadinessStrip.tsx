@@ -12,44 +12,53 @@ export function launcherThumbUrl(value: string | null | undefined): string | nul
   return persistedBrandImageUrl(value);
 }
 
+/** Trimmed display name. Blank and whitespace-only stay missing. No substitute is applied. */
+export function launcherDisplayName(value: string | null | undefined): string | null {
+  if (typeof value !== 'string') return null;
+  const name = value.trim();
+  return name.length > 0 ? name : null;
+}
+
 interface LauncherReadinessStripProps {
+  appName?: string | null;
   iconUrl?: string | null;
   splashUrl?: string | null;
   pending?: boolean;
 }
 
 export function LauncherReadinessStrip({
+  appName = null,
   iconUrl = null,
   splashUrl = null,
   pending = false,
 }: LauncherReadinessStripProps) {
+  const name = launcherDisplayName(appName);
   const icon = launcherThumbUrl(iconUrl);
   const splash = launcherThumbUrl(splashUrl);
 
   if (pending) {
     return (
       <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-3" aria-busy="true">
-        <p className="text-sm text-slate-500">Checking your icon and splash...</p>
+        <p className="text-sm text-slate-500">Checking your app name, icon, and splash...</p>
       </div>
     );
   }
 
+  const missingName = !name;
   const missingIcon = !icon;
   const missingSplash = !splash;
+  const missing = missingName || missingIcon || missingSplash;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-      <div
-        className="grid grid-cols-1 divide-y divide-slate-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0"
-        role="group"
-        aria-label="Launcher assets"
-      >
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white" role="group" aria-label="App readiness">
+      <NameCell name={name} />
+      <div className="grid grid-cols-1 divide-y divide-slate-100 border-t border-slate-100 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
         <AssetCell label="App icon" url={icon} shape="icon" />
         <AssetCell label="Splash" url={splash} shape="splash" />
       </div>
-      {missingIcon || missingSplash ? (
+      {missing ? (
         <p className="border-t border-slate-100 px-3 py-2.5 text-sm leading-6 text-slate-600">
-          {missingLead(missingIcon, missingSplash)}{' '}
+          {missingLead(missingName, missingIcon, missingSplash)}{' '}
           <a
             href={BRAND_STEP_HREF}
             className="font-medium text-slate-950 underline decoration-slate-300 underline-offset-4 transition-colors hover:decoration-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
@@ -70,10 +79,30 @@ export function LauncherReadinessStrip({
   );
 }
 
-function missingLead(missingIcon: boolean, missingSplash: boolean): string {
+function missingLead(missingName: boolean, missingIcon: boolean, missingSplash: boolean): string {
+  if (missingName && missingIcon && missingSplash) return 'Add an app name, an app icon, and a splash in';
+  if (missingName && missingIcon) return 'Add an app name and an app icon in';
+  if (missingName && missingSplash) return 'Add an app name and a splash in';
   if (missingIcon && missingSplash) return 'Add an app icon and a splash in';
+  if (missingName) return 'Add an app name in';
   if (missingIcon) return 'Add an app icon in';
   return 'Add a splash in';
+}
+
+function NameCell({ name }: { name: string | null }) {
+  return (
+    <div className="flex min-w-0 items-center px-3 py-2.5">
+      <div className="min-w-0">
+        <p className="text-sm font-medium text-slate-950">App name</p>
+        <p
+          className={name ? 'truncate text-xs font-medium text-emerald-700' : 'text-xs text-slate-500'}
+          title={name ?? undefined}
+        >
+          {name ?? 'Not added'}
+        </p>
+      </div>
+    </div>
+  );
 }
 
 function AssetCell({

@@ -216,6 +216,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Platform-ops clipboard only. `store.id` was already on `GET /api/v1/admin/build-requests` and is now kept on the ops view object for this copy. No backend API change. Shopify Admin tokens are not rendered, logged, or copied. Human review is required because this is a release handoff surface and a backend response field is now retained.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#51`.
 
+### Build my app shows the display name without gating submit
+
+- Date: 2026-09-28.
+- Decision: The merchant Build my app strip also shows the app display name. A non-empty trimmed name from the branding draft is shown as itself. When that screen loads branding without a draft, the name is branding `appName`, then the store name the phone already uses (`GET /api/store` name, then the session store name). A missing, blank, or whitespace-only name uses calm copy and links to `/dashboard/onboarding?step=brand` and Settings Store Branding (`/dashboard/settings#store-branding`). The strip does not invent a name and does not fall back to Cartaisy, the shop domain, or a store id. Submit stays on the existing rule: Shopify connected and `GET /api/v1/shopify/sync` `eligibleForBuild`. This does not change backend `assertBuildEligible`, start EAS, or add ops clipboard controls.
+- Reason: Dashboard #53. Ops can already copy `APP_NAME` (#49). A merchant can still request a build with a blank name, and that binary ships as Cartaisy unless ops invent one. The Build step should show that gap. A hard gate would be a product change to eligibility.
+- Impact: Onboarding ready step and the Build my app strip. Submit eligibility and the ops queue are unchanged. No Shopify token is rendered or logged. Human review is required because this is the merchant-facing publishing name on the build screen.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#53`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.
