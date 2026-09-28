@@ -180,36 +180,53 @@ export function BuildMyAppPanel({
     if (!polling || !requestId) return;
     let cancelled = false;
     let timer = 0;
+    let inFlight = false;
 
     const schedule = () => {
-      timer = window.setTimeout(async () => {
-        const token = tokenStorage.getToken();
-        if (!token || cancelled) return;
-        const result = await getBuildRequest(token, requestId);
-        if (cancelled) return;
-        if (result.kind === 'ok') {
-          setRequest((current) => (isSameBuildSnapshot(current, result.request) ? current : result.request));
-          if (shouldPollBuildRequest(result.request)) schedule();
-          return;
-        }
-        if (result.kind === 'missing') {
-          setRequest(null);
-          setComposing(false);
-          setFormError('We could not find that build. You can request it again.');
-          return;
-        }
-        if (result.message) {
-          setFormError(result.message);
-          return;
-        }
-        schedule();
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        void run();
       }, BUILD_STATUS_POLL_MS);
     };
 
+    const run = async () => {
+      if (cancelled || inFlight) return;
+      const token = tokenStorage.getToken();
+      if (!token) return;
+      inFlight = true;
+      const result = await getBuildRequest(token, requestId);
+      inFlight = false;
+      if (cancelled) return;
+      if (result.kind === 'ok') {
+        setRequest((current) => (isSameBuildSnapshot(current, result.request) ? current : result.request));
+        if (shouldPollBuildRequest(result.request)) schedule();
+        return;
+      }
+      if (result.kind === 'missing') {
+        setRequest(null);
+        setComposing(false);
+        setFormError('We could not find that build. You can request it again.');
+        return;
+      }
+      if (result.message) {
+        setFormError(result.message);
+        return;
+      }
+      schedule();
+    };
+
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible' || cancelled || inFlight) return;
+      window.clearTimeout(timer);
+      void run();
+    };
+
     schedule();
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [polling, requestId]);
 

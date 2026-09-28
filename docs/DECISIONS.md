@@ -256,6 +256,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Merchant Build my app and the platform-ops queue. Backend API contract. No Shopify token is rendered, logged, or sent. Human review is required because this is a release handoff and a backend status PATCH.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#61`. Backend issue: cartaisy-backend `#179`.
 
+### Build my app shows live per-platform progress
+
+- Date: 2026-09-28.
+- Decision: While a requested platform is `queued`, `building`, `waiting_on_merchant`, or `unknown`, Build my app keeps polling `GET /api/v1/build-requests/:id` and also refreshes that request when the browser tab becomes visible. Each platform is its own card. Queued, building, and ready share a three-step rail. Failed says the build did not finish and does not show logs, tooling names, or ids. Install Android build and Install iOS build still appear only when that platform is `ready` and `installUrl` is a safe https URL. A ready platform without that URL says the link will show here when it is available. A request that stays queued keeps the same poll. `/dashboard/admin/build-requests` still pastes and clears the install link. The merchant screen does not mention that queue.
+- Reason: Dashboard #64. Auto dispatch can move a request from queued to building to ready. When dispatch is not configured, the request stays queued and ops paste remains the handoff.
+- Impact: Merchant Build my app presentation and the existing status poll. No new client secret. The admin status PATCH is unchanged. Human review is required because this is the release handoff the merchant watches.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#64`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

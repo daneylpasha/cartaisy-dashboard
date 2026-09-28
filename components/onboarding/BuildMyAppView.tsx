@@ -3,11 +3,15 @@
 import { Check, ExternalLink } from 'lucide-react';
 import {
   ACCESS_NOTES_MAX,
+  buildProgressIndex,
+  isLivePlatformStatus,
   isSettledBuildRequest,
   merchantInstallHref,
   outcomeCopy,
+  platformProgressCopy,
   platformStatusLabel,
   primaryBuildAction,
+  shouldPollBuildRequest,
   type BuildRequest,
   type PlatformKind,
   type PlatformStatus,
@@ -58,71 +62,146 @@ export interface BuildMyAppViewProps {
   onRetry: () => void;
 }
 
-function statusClass(status: PlatformStatus | 'unknown'): string {
-  if (status === 'ready') return 'text-sm text-emerald-700';
-  if (status === 'failed') return 'text-sm text-red-700';
-  if (status === 'waiting_on_merchant') return 'text-sm font-medium text-slate-950';
-  return 'text-sm text-slate-500';
-}
+const PROGRESS_STEPS = [
+  { key: 'queued', label: 'Queued' },
+  { key: 'building', label: 'Building' },
+  { key: 'ready', label: 'Ready' },
+] as const;
 
 function installActionLabel(platform: PlatformKind): string {
   return platform === 'android' ? 'Install Android build' : 'Install iOS build';
 }
 
-function PlatformRow({
+function pillClass(status: PlatformStatus | 'unknown'): string {
+  if (status === 'ready') return 'bg-emerald-50 text-emerald-800';
+  if (status === 'failed') return 'bg-red-50 text-red-800';
+  if (status === 'waiting_on_merchant') return 'bg-slate-950 text-white';
+  return 'bg-slate-100 text-slate-700';
+}
+
+function PlatformChoice({
   platform,
   label,
   checked,
-  locked,
-  status,
-  installUrl,
+  disabled,
   onChange,
 }: {
   platform: PlatformKind;
   label: string;
   checked: boolean;
-  locked: boolean;
-  status: PlatformStatus | 'unknown' | null;
-  installUrl: string | null;
+  disabled: boolean;
   onChange: (value: boolean) => void;
 }) {
   const box = checked
     ? 'border-slate-950 bg-slate-950 text-white'
-    : locked
+    : disabled
       ? 'border-slate-200 bg-slate-50'
       : 'border-slate-300 bg-white';
-  const installHref = merchantInstallHref(status, installUrl);
 
   return (
     <div className="rounded-xl border border-slate-200 px-4 py-3.5">
-      <div className="flex items-center justify-between gap-3">
-        <label className={`flex min-w-0 items-center gap-3 ${locked ? 'cursor-default' : 'cursor-pointer'}`}>
-          <input
-            type="checkbox"
-            name={platform}
-            checked={checked}
-            disabled={locked}
-            onChange={(event) => onChange(event.target.checked)}
-            className="peer sr-only"
-          />
-          <span
-            aria-hidden
-            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border peer-focus-visible:ring-2 peer-focus-visible:ring-slate-400 peer-focus-visible:ring-offset-2 ${box}`}
+      <label className={`flex min-w-0 items-center gap-3 ${disabled ? 'cursor-default' : 'cursor-pointer'}`}>
+        <input
+          type="checkbox"
+          name={platform}
+          checked={checked}
+          disabled={disabled}
+          onChange={(event) => onChange(event.target.checked)}
+          className="peer sr-only"
+        />
+        <span
+          aria-hidden
+          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border peer-focus-visible:ring-2 peer-focus-visible:ring-slate-400 peer-focus-visible:ring-offset-2 ${box}`}
+        >
+          {checked ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
+        </span>
+        <span className="text-sm font-medium text-slate-950">{label}</span>
+      </label>
+    </div>
+  );
+}
+
+function ProgressRail({ label, index }: { label: string; index: number }) {
+  return (
+    <ol aria-label={`${label} progress`} className="mt-4 grid grid-cols-3">
+      {PROGRESS_STEPS.map((step, stepIndex) => {
+        const state = stepIndex < index ? 'complete' : stepIndex === index ? 'current' : 'upcoming';
+        const filled = state !== 'upcoming';
+        return (
+          <li
+            key={step.key}
+            data-step={step.key}
+            data-state={state}
+            aria-current={state === 'current' ? 'step' : undefined}
+            className="min-w-0"
           >
-            {checked ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
-          </span>
-          <span className="text-sm font-medium text-slate-950">{label}</span>
-        </label>
-        {status && (
-          <span className={`${statusClass(status)} shrink-0 text-right`}>{platformStatusLabel(platform, status)}</span>
-        )}
+            <div className="flex items-center">
+              <span
+                aria-hidden
+                className={`size-2.5 shrink-0 rounded-full ${
+                  filled ? 'bg-slate-950' : 'border border-slate-300 bg-white'
+                } ${state === 'current' && index < 2 ? 'motion-safe:animate-pulse' : ''}`}
+              />
+              {stepIndex < PROGRESS_STEPS.length - 1 ? (
+                <span aria-hidden className={`ml-2 h-px flex-1 ${stepIndex < index ? 'bg-slate-950' : 'bg-slate-200'}`} />
+              ) : null}
+            </div>
+            <p className={`mt-2 text-xs ${filled ? 'font-medium text-slate-950' : 'text-slate-400'}`}>{step.label}</p>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function PlatformStudio({
+  platform,
+  label,
+  status,
+  installUrl,
+}: {
+  platform: PlatformKind;
+  label: string;
+  status: PlatformStatus | 'unknown';
+  installUrl: string | null;
+}) {
+  const installHref = merchantInstallHref(status, installUrl);
+  const progress = buildProgressIndex(status);
+  const live = isLivePlatformStatus(status);
+  const quiet = status === 'not_requested';
+
+  return (
+    <div
+      data-platform={platform}
+      data-progress={status}
+      aria-busy={live ? true : undefined}
+      className={
+        quiet
+          ? 'rounded-2xl border border-slate-200/80 bg-slate-50/80 px-4 py-4'
+          : 'rounded-2xl border border-slate-200/80 bg-white px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]'
+      }
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-heading text-[15px] font-semibold tracking-tight text-slate-950">{label}</p>
+          <p className="mt-1 text-sm leading-6 text-slate-600">
+            {platformProgressCopy(platform, status, Boolean(installHref))}
+          </p>
+        </div>
+        <span
+          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${pillClass(status)}`}
+        >
+          {live ? <span aria-hidden className="size-1.5 rounded-full bg-current motion-safe:animate-pulse" /> : null}
+          {platformStatusLabel(platform, status)}
+        </span>
       </div>
+      {progress !== null ? <ProgressRail label={label} index={progress} /> : null}
       {installHref ? (
         <a
           href={installHref}
           target="_blank"
           rel="noopener noreferrer"
-          className={`${PRIMARY_BUTTON} mt-3 w-full gap-2`}
+          className={`${PRIMARY_BUTTON} mt-4 w-full gap-2`}
         >
           {installActionLabel(platform)}
           <ExternalLink aria-hidden className="size-4" />
@@ -171,9 +250,9 @@ export function BuildMyAppView({
         {launcher}
         <div className="mt-6" aria-busy="true">
           <p className="text-sm text-slate-600">Loading your build...</p>
-          <div className="mt-6 space-y-2" aria-hidden>
-            <div className="h-[52px] rounded-xl border border-slate-200 bg-slate-50" />
-            <div className="h-[52px] rounded-xl border border-slate-200 bg-slate-50" />
+          <div className="mt-6 space-y-3" aria-hidden>
+            <div className="h-[108px] rounded-2xl border border-slate-200 bg-slate-50" />
+            <div className="h-[108px] rounded-2xl border border-slate-200 bg-slate-50" />
           </div>
         </div>
       </div>
@@ -208,6 +287,7 @@ export function BuildMyAppView({
   const iosInstall = mode === 'status' && request ? request.platforms.ios.installUrl : null;
   const settled = request ? isSettledBuildRequest(request) : false;
   const summary = mode === 'status' && request ? outcomeCopy(request) : null;
+  const inFlight = mode === 'status' && request ? shouldPollBuildRequest(request) : false;
 
   return (
     <div className="mt-8">
@@ -250,25 +330,29 @@ export function BuildMyAppView({
 
       <fieldset className="mt-6 min-w-0">
         <legend className="text-sm font-medium text-slate-950">Platforms</legend>
-        <div className="mt-3 space-y-2" aria-live="polite">
-          <PlatformRow
-            platform="android"
-            label="Android"
-            checked={mode === 'status' ? androidStatus !== 'not_requested' : android}
-            locked={locked}
-            status={androidStatus}
-            installUrl={androidInstall}
-            onChange={onAndroidChange}
-          />
-          <PlatformRow
-            platform="ios"
-            label="iOS"
-            checked={mode === 'status' ? iosStatus !== 'not_requested' : ios}
-            locked={locked}
-            status={iosStatus}
-            installUrl={iosInstall}
-            onChange={onIosChange}
-          />
+        {inFlight ? (
+          <p className="mt-2 text-sm leading-6 text-slate-500" role="status">
+            This page updates on its own.
+          </p>
+        ) : null}
+        <div className="mt-3 space-y-3" aria-live="polite">
+          {mode === 'status' && androidStatus && iosStatus ? (
+            <>
+              <PlatformStudio platform="android" label="Android" status={androidStatus} installUrl={androidInstall} />
+              <PlatformStudio platform="ios" label="iOS" status={iosStatus} installUrl={iosInstall} />
+            </>
+          ) : (
+            <>
+              <PlatformChoice
+                platform="android"
+                label="Android"
+                checked={android}
+                disabled={locked}
+                onChange={onAndroidChange}
+              />
+              <PlatformChoice platform="ios" label="iOS" checked={ios} disabled={locked} onChange={onIosChange} />
+            </>
+          )}
         </div>
       </fieldset>
 

@@ -9,6 +9,10 @@ import {
   normalizeBuildRequestList,
   outcomeCopy,
   platformStatusLabel,
+  platformProgressCopy,
+  buildProgressIndex,
+  isLivePlatformStatus,
+  PLATFORM_STATUSES,
   isSameBuildSnapshot,
   merchantInstallHref,
   primaryBuildAction,
@@ -52,6 +56,39 @@ assert.equal(platformStatusLabel('android', 'failed'), 'Failed');
 assert.equal(platformStatusLabel('ios', 'queued'), 'Queued');
 assert.equal(platformStatusLabel('android', 'not_requested'), 'Not requested');
 assert.equal(platformStatusLabel('ios', 'unknown'), 'Updating');
+
+assert.equal(buildProgressIndex('queued'), 0);
+assert.equal(buildProgressIndex('building'), 1);
+assert.equal(buildProgressIndex('ready'), 2);
+assert.equal(buildProgressIndex('failed'), null);
+assert.equal(buildProgressIndex('waiting_on_merchant'), null);
+assert.equal(buildProgressIndex('not_requested'), null);
+assert.equal(buildProgressIndex('unknown'), null);
+assert.equal(isLivePlatformStatus('queued'), true);
+assert.equal(isLivePlatformStatus('building'), true);
+assert.equal(isLivePlatformStatus('waiting_on_merchant'), true);
+assert.equal(isLivePlatformStatus('unknown'), true);
+assert.equal(isLivePlatformStatus('ready'), false);
+assert.equal(isLivePlatformStatus('failed'), false);
+
+const progressLeak = /eas|expo|gradle|xcode|fastlane|shpat_|access_token|build id/i;
+for (const status of [...PLATFORM_STATUSES, 'unknown' as const]) {
+  for (const platform of ['android', 'ios'] as const) {
+    const copy = platformProgressCopy(platform, status, false);
+    assert.equal(progressLeak.test(copy), false, copy);
+    assert.ok(copy.length > 0);
+  }
+}
+assert.equal(platformProgressCopy('android', 'queued', false), 'In the queue.');
+assert.equal(platformProgressCopy('ios', 'building', false), 'Building your app.');
+assert.equal(platformProgressCopy('android', 'ready', true), 'Ready to install.');
+assert.equal(
+  platformProgressCopy('ios', 'ready', false),
+  'Ready. The install link will show here when it is available.'
+);
+assert.equal(platformProgressCopy('android', 'failed', false), 'This build did not finish.');
+assert.match(platformProgressCopy('ios', 'waiting_on_merchant', false), /Waiting on Apple/);
+assert.match(platformProgressCopy('android', 'waiting_on_merchant', false), /Waiting on you/);
 
 const moving = request({ android: 'ready', ios: 'waiting_on_merchant' });
 assert.equal(isSameBuildSnapshot(moving, { ...moving }), true);
