@@ -152,6 +152,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Onboarding and branding. Connect, Sync again, and Reconnect are unchanged. This does not start an EAS build. Human review is required because the brand save path and a backend upload are involved.
 - Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/STATUS.md`, `docs/ARCHITECTURE.md`. GitHub issue: `#35`.
 
+### The cookie banner stays off the setup wizard
+
+- Date: 2026-09-28.
+- Decision: The first-party cookie banner is not rendered on `/dashboard/onboarding` or any nested wizard path, including `?step=brand`. Hiding it does not store a consent choice. The same banner still opens on every other route until the merchant chooses. Cookie Settings stays on the marketing footer and on `/cookies`.
+- Reason: Dashboard #38. The banner is fixed to the bottom of the viewport and covered the live phone and the Brand card.
+- Impact: Onboarding presentation only. Connect Shopify, Sync again, Reconnect, branding upload, and Build my app are unchanged. No Shopify token is involved.
+- Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/STATUS.md`, `docs/ARCHITECTURE.md`. GitHub issue: `#38`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

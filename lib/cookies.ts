@@ -45,3 +45,14 @@ export function setConsentCookie(consent: CookieConsent) {
 export function hasConsentChoice(): boolean {
   return getStoredConsent() !== null;
 }
+
+/**
+ * The setup wizard's phone and brand card sit in the same viewport as the
+ * sticky consent banner. Defer the banner on these paths only. This does not
+ * record a choice; other routes still show the banner until the merchant chooses.
+ */
+export function isOnboardingWizardPath(pathname: string | null | undefined): boolean {
+  if (!pathname) return false;
+  const path = pathname.split(/[?#]/, 1)[0].replace(/\/+$/, '') || '/';
+  return path === '/dashboard/onboarding' || path.startsWith('/dashboard/onboarding/');
+}

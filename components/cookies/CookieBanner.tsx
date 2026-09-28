@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { X, Cookie, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import { useCookieConsent } from './CookieConsentProvider';
-import { CookieConsent } from '@/lib/cookies';
+import { CookieConsent, isOnboardingWizardPath } from '@/lib/cookies';
 
 export default function CookieBanner() {
+  const pathname = usePathname();
   const { consent, showBanner, acceptAll, rejectAll, acceptSelected, closeBanner, hasChosen } = useCookieConsent();
   const [showDetails, setShowDetails] = useState(false);
   const [localConsent, setLocalConsent] = useState<CookieConsent>(consent);
@@ -16,7 +18,7 @@ export default function CookieBanner() {
     setLocalConsent(consent);
   }, [consent]);
 
-  if (!showBanner) return null;
+  if (!showBanner || isOnboardingWizardPath(pathname)) return null;
 
   const handleToggle = (key: keyof CookieConsent) => {
     if (key === 'necessary') return; // Can't toggle necessary cookies
