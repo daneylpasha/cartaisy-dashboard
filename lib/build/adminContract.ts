@@ -27,8 +27,9 @@ export interface AdminBuildRequest {
   storeName: string | null;
   storeDomain: string | null;
   /**
-   * Cartaisy store name from `store.appName`. Optional on the ops payload.
-   * The row title stays `storeName`.
+   * Merchant display name from `store.appName`. Optional on the ops payload.
+   * Trimmed. Null when missing, blank, or whitespace-only. The row title
+   * stays `storeName`. Never invented from Cartaisy, the shop domain, or a store id.
    */
   appName?: string | null;
   /**
@@ -133,14 +134,34 @@ export function opsBrandImageUrl(value: unknown): string | null {
   return url;
 }
 
+/** `KEY=value` for the ops clipboard. No quotes around the value. */
+function envAssignment(key: string, value: string): string {
+  return `${key}=${value}`;
+}
+
+/**
+ * Merchant display name for the ops queue. Blank and whitespace-only values
+ * stay null. Does not invent a name.
+ */
+export function opsAppName(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const name = value.trim();
+  return name || null;
+}
+
+/** Clipboard text for the EAS app name. Pass an already trimmed non-empty name. */
+export function appNameEnvAssignment(name: string): string {
+  return envAssignment('APP_NAME', name);
+}
+
 /** Clipboard text for the EAS icon env. Pass an already public https URL. */
 export function iconEnvAssignment(url: string): string {
-  return `ICON_IMAGE_URL=${url}`;
+  return envAssignment('ICON_IMAGE_URL', url);
 }
 
 /** Clipboard text for the EAS splash env. Pass an already public https URL. */
 export function splashEnvAssignment(url: string): string {
-  return `SPLASH_IMAGE_URL=${url}`;
+  return envAssignment('SPLASH_IMAGE_URL', url);
 }
 
 function readStoreIdentity(value: unknown): {
@@ -153,11 +174,10 @@ function readStoreIdentity(value: unknown): {
   const store = asRecord(value);
   const name = typeof store?.name === 'string' ? store.name.trim() : '';
   const domain = typeof store?.domain === 'string' ? store.domain.trim() : '';
-  const appName = typeof store?.appName === 'string' ? store.appName.trim() : '';
   return {
     name: name || null,
     domain: domain || null,
-    appName: appName || null,
+    appName: opsAppName(store?.appName),
     iconUrl: opsBrandImageUrl(store?.iconUrl),
     splashUrl: opsBrandImageUrl(store?.splashUrl),
   };

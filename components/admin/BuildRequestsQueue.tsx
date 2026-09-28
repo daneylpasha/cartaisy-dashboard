@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, Copy } from 'lucide-react';
 import { PLATFORM_STATUSES, type PlatformKind, type PlatformStatus } from '@/lib/build/contract';
 import {
+  appNameEnvAssignment,
   iconEnvAssignment,
+  opsAppName,
   opsBrandImageUrl,
   opsPlatformStatusLabel,
   splashEnvAssignment,
@@ -227,8 +229,10 @@ function RequestRow({
 }) {
   const requested = formatWhen(request.createdAt);
   const title = storeTitle(request);
+  const appName = opsAppName(request.appName);
   const iconUrl = opsBrandImageUrl(request.iconUrl);
   const splashUrl = opsBrandImageUrl(request.splashUrl);
+  const showEas = Boolean(appName || iconUrl || splashUrl);
 
   return (
     <li className="px-4 py-4 sm:px-5" aria-busy={saving}>
@@ -250,27 +254,37 @@ function RequestRow({
               </p>
             ) : null}
           </div>
-          {iconUrl || splashUrl ? (
-            <div className="mt-2.5 flex flex-wrap items-center gap-2">
+          <div className="mt-2.5 flex flex-wrap items-center gap-2">
+            {showEas ? (
               <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">EAS</span>
-              {splashUrl ? (
-                <CopyUrlButton
-                  label="SPLASH_IMAGE_URL=…"
-                  accessibleName={`Copy SPLASH_IMAGE_URL for ${title}`}
-                  value={splashEnvAssignment(splashUrl)}
-                  mono
-                />
-              ) : null}
-              {iconUrl ? (
-                <CopyUrlButton
-                  label="ICON_IMAGE_URL=…"
-                  accessibleName={`Copy ICON_IMAGE_URL for ${title}`}
-                  value={iconEnvAssignment(iconUrl)}
-                  mono
-                />
-              ) : null}
-            </div>
-          ) : null}
+            ) : null}
+            {appName ? (
+              <CopyUrlButton
+                label="APP_NAME=…"
+                accessibleName={`Copy APP_NAME for ${title}`}
+                value={appNameEnvAssignment(appName)}
+                mono
+              />
+            ) : (
+              <span className="text-xs text-slate-400">No app name</span>
+            )}
+            {splashUrl ? (
+              <CopyUrlButton
+                label="SPLASH_IMAGE_URL=…"
+                accessibleName={`Copy SPLASH_IMAGE_URL for ${title}`}
+                value={splashEnvAssignment(splashUrl)}
+                mono
+              />
+            ) : null}
+            {iconUrl ? (
+              <CopyUrlButton
+                label="ICON_IMAGE_URL=…"
+                accessibleName={`Copy ICON_IMAGE_URL for ${title}`}
+                value={iconEnvAssignment(iconUrl)}
+                mono
+              />
+            ) : null}
+          </div>
         </div>
       </div>
 

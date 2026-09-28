@@ -200,6 +200,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Onboarding ready step and the Build my app panel. Ops queue copy controls are unchanged. No Shopify token is rendered or logged.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`. GitHub issue: `#46`.
 
+### Ops copies the merchant display name as APP_NAME
+
+- Date: 2026-09-28.
+- Decision: On `/dashboard/admin/build-requests`, a non-empty trimmed `store.appName` copies as `APP_NAME=<name>` with no extra quotes. The control is labeled `APP_NAME=…` and sits with the existing `ICON_IMAGE_URL=…` and `SPLASH_IMAGE_URL=…` controls. The same assignment helper writes all three. A missing, blank, or whitespace-only name is a calm empty state with no copy control. The queue does not invent a name and does not fall back to Cartaisy, the shop domain, or a store id. The page does not start EAS. Merchant Build my app does not show this control.
+- Reason: Dashboard #49. Cartaisy mobile reads `APP_NAME` at EAS build time. Without it on the clipboard, a merchant launcher can ship as Cartaisy.
+- Impact: Platform-ops clipboard only. No backend API change. Shopify Admin tokens are not rendered, logged, or copied. Human review is required because this is a release handoff surface.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#49`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

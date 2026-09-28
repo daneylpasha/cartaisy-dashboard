@@ -7,6 +7,8 @@ import {
   applyStatusSnapshot,
   normalizeAdminBuildPage,
   normalizeAdminStatusSnapshot,
+  appNameEnvAssignment,
+  opsAppName,
   opsBrandImageUrl,
   opsPlatformStatusLabel,
   iconEnvAssignment,
@@ -116,7 +118,39 @@ assert.equal(branded?.requests[0]?.iconUrl, ICON_URL);
 assert.equal(branded?.requests[0]?.splashUrl, SPLASH_URL);
 assert.equal(iconEnvAssignment(ICON_URL), `ICON_IMAGE_URL=${ICON_URL}`);
 assert.equal(splashEnvAssignment(SPLASH_URL), `SPLASH_IMAGE_URL=${SPLASH_URL}`);
+assert.equal(appNameEnvAssignment('Harbor & Co'), 'APP_NAME=Harbor & Co');
+assert.equal(appNameEnvAssignment('Harbor & Co').includes('"'), false);
+assert.equal(appNameEnvAssignment('Harbor & Co').includes("'"), false);
+assert.equal(opsAppName('  Harbor & Co  '), 'Harbor & Co');
+assert.equal(opsAppName('   '), null);
+assert.equal(opsAppName(''), null);
+assert.equal(opsAppName(null), null);
+assert.equal(opsAppName(undefined), null);
 assert.equal(JSON.stringify(branded).includes(STORE_ID), false);
+
+const blankAppName = normalizeAdminBuildPage({
+  data: {
+    requests: [
+      {
+        ...sample,
+        store: {
+          id: STORE_ID,
+          name: 'Northwind',
+          domain: 'northwind.myshopify.com',
+          appName: ' \n\t ',
+        },
+      },
+    ],
+    pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+  },
+});
+assert.equal(blankAppName?.requests[0]?.appName, null);
+assert.equal(blankAppName?.requests[0]?.storeName, 'Northwind');
+assert.equal(blankAppName?.requests[0]?.storeDomain, 'northwind.myshopify.com');
+const blankBody = JSON.stringify(blankAppName);
+assert.equal(blankBody.includes(STORE_ID), false);
+assert.equal(blankBody.includes('Cartaisy'), false);
+assert.equal(blankBody.includes('APP_NAME'), false);
 
 const leakedQuery = 'https://cdn.example/icon.png?access_token=shpat_secret';
 const httpSplash = 'http://cdn.example/splash.png';
