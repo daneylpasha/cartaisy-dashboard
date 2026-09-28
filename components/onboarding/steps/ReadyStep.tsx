@@ -1,7 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { StoreCredentialsPanel } from '@/components/build/StoreCredentialsPanel';
+import { StoreCredentialsPanel, type StoreAccountSnapshot } from '@/components/build/StoreCredentialsPanel';
 import { BrandHandoff } from '@/components/onboarding/BrandHandoff';
 import { BuildMyAppPanel } from '@/components/onboarding/BuildMyAppPanel';
 import type { BrandingDraft, ShopifyConnectionSnapshot, SyncGate } from '@/lib/onboarding/types';
@@ -27,6 +28,12 @@ export function ReadyStep({
   onCatalogUpdated,
   onRefreshConnection,
 }: ReadyStepProps) {
+  const [storeAccounts, setStoreAccounts] = useState<StoreAccountSnapshot>({
+    phase: 'loading',
+    credentials: null,
+    loadError: null,
+  });
+
   return (
     <section className="rounded-2xl border border-slate-200/80 bg-white px-6 py-8 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-10 sm:py-10">
       <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Step 4</p>
@@ -47,9 +54,10 @@ export function ReadyStep({
         onConnectShopify={onConnectShopify}
         onCatalogUpdated={onCatalogUpdated}
         onRefreshConnection={onRefreshConnection}
+        storeAccounts={storeAccounts}
       />
 
-      <StoreCredentialsPanel surface="build" />
+      <StoreCredentialsPanel surface="build" onStatus={setStoreAccounts} />
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-slate-100 pt-6">
         <button

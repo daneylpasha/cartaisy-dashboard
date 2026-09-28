@@ -19,6 +19,16 @@ import {
 } from '@/lib/build/contract';
 import type { BuildRequestAvailability } from '@/lib/onboarding/types';
 import { LauncherReadinessStrip } from '@/components/onboarding/LauncherReadinessStrip';
+import { StoreSubmitControl } from '@/components/build/StoreSubmitControl';
+import {
+  credentialForSubmit,
+  presentStoreSubmit,
+  shouldPollStoreSubmit,
+  type StoreSubmitJobs,
+  type StoreSubmitPresentation,
+  type SubmitPlatform,
+} from '@/lib/storeSubmit/contract';
+import type { CredentialStatus } from '@/lib/storeCredentials/contract';
 
 const PRIMARY_BUTTON =
   'inline-flex h-11 items-center justify-center rounded-lg bg-slate-950 px-5 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2';
@@ -60,6 +70,20 @@ export interface BuildMyAppViewProps {
   onRequestAnother: () => void;
   onCancelAnother: () => void;
   onRetry: () => void;
+  /** Per-platform store submit. Omitted while the merchant is still choosing a build. */
+  storeSubmit?: StoreSubmitBindings | null;
+}
+
+export interface StoreSubmitBindings {
+  credentialPhase: 'loading' | 'error' | 'ready';
+  credentials: {
+    apple: { status: CredentialStatus };
+    google: { status: CredentialStatus };
+  } | null;
+  jobs: StoreSubmitJobs;
+  busy: { android: boolean; ios: boolean };
+  errors: { android: string | null; ios: string | null };
+  onSubmit: (platform: SubmitPlatform) => void;
 }
 
 const PROGRESS_STEPS = [
@@ -159,11 +183,15 @@ function PlatformStudio({
   label,
   status,
   installUrl,
+  submit,
+  onStoreSubmit,
 }: {
   platform: PlatformKind;
   label: string;
   status: PlatformStatus | 'unknown';
   installUrl: string | null;
+  submit: StoreSubmitPresentation | null;
+  onStoreSubmit: (platform: SubmitPlatform) => void;
 }) {
   const installHref = merchantInstallHref(status, installUrl);
   const progress = buildProgressIndex(status);
@@ -207,6 +235,7 @@ function PlatformStudio({
           <ExternalLink aria-hidden className="size-4" />
         </a>
       ) : null}
+      {submit ? <StoreSubmitControl model={submit} onSubmit={() => onStoreSubmit(submit.platform)} /> : null}
     </div>
   );
 }
@@ -239,6 +268,7 @@ export function BuildMyAppView({
   onRequestAnother,
   onCancelAnother,
   onRetry,
+  storeSubmit = null,
 }: BuildMyAppViewProps) {
   const launcher = (
     <LauncherReadinessStrip appName={appName} iconUrl={iconUrl} splashUrl={splashUrl} pending={launcherPending} />
@@ -287,7 +317,26 @@ export function BuildMyAppView({
   const iosInstall = mode === 'status' && request ? request.platforms.ios.installUrl : null;
   const settled = request ? isSettledBuildRequest(request) : false;
   const summary = mode === 'status' && request ? outcomeCopy(request) : null;
-  const inFlight = mode === 'status' && request ? shouldPollBuildRequest(request) : false;
+  const submitLive = Boolean(
+    storeSubmit &&
+      (['android', 'ios'] as const).some(
+        (platform) => shouldPollStoreSubmit(storeSubmit.jobs[platform]?.status) || storeSubmit.busy[platform]
+      )
+  );
+  const inFlight = (mode === 'status' && request ? shouldPollBuildRequest(request) : false) || submitLive;
+
+  const submitModel = (platform: PlatformKind, status: PlatformStatus | 'unknown'): StoreSubmitPresentation | null => {
+    if (mode !== 'status' || !storeSubmit || status === 'not_requested') return null;
+    return presentStoreSubmit({
+      platform,
+      buildStatus: status,
+      credential: credentialForSubmit(platform, storeSubmit.credentialPhase, storeSubmit.credentials),
+      accountsUnavailable: storeSubmit.credentialPhase === 'error',
+      job: storeSubmit.jobs[platform],
+      busy: storeSubmit.busy[platform],
+      error: storeSubmit.errors[platform],
+    });
+  };
 
   return (
     <div className="mt-8">
@@ -338,8 +387,22 @@ export function BuildMyAppView({
         <div className="mt-3 space-y-3" aria-live="polite">
           {mode === 'status' && androidStatus && iosStatus ? (
             <>
-              <PlatformStudio platform="android" label="Android" status={androidStatus} installUrl={androidInstall} />
-              <PlatformStudio platform="ios" label="iOS" status={iosStatus} installUrl={iosInstall} />
+              <PlatformStudio
+                platform="android"
+                label="Android"
+                status={androidStatus}
+                installUrl={androidInstall}
+                submit={submitModel('android', androidStatus)}
+                onStoreSubmit={storeSubmit?.onSubmit ?? (() => undefined)}
+              />
+              <PlatformStudio
+                platform="ios"
+                label="iOS"
+                status={iosStatus}
+                installUrl={iosInstall}
+                submit={submitModel('ios', iosStatus)}
+                onStoreSubmit={storeSubmit?.onSubmit ?? (() => undefined)}
+              />
             </>
           ) : (
             <>
