@@ -42,6 +42,7 @@ export function ReadyStep({
         connection={connection}
         initialSync={sync}
         productCount={productCount}
+        launcher={{ iconUrl: draft.iconUrl, splashUrl: draft.splashUrl }}
         onConnectShopify={onConnectShopify}
         onCatalogUpdated={onCatalogUpdated}
         onRefreshConnection={onRefreshConnection}
