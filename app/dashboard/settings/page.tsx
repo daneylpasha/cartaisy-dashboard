@@ -10,6 +10,7 @@ import { StoreSettingsForm } from '@/components/settings/StoreSettingsForm';
 import { DeleteStoreDialog } from '@/components/settings/DeleteStoreDialog';
 import { StoreLogoUpload } from '@/components/settings/StoreLogoUpload';
 import { StoreBrandingColors } from '@/components/settings/StoreBrandingColors';
+import { StoreAppBrand } from '@/components/settings/StoreAppBrand';
 import { Button } from '@/components/ui/button';
 import { useShopifyStatus } from '@/hooks/useShopifyStatus';
 import {
@@ -206,6 +207,12 @@ function SettingsContent() {
                 secondaryColor: colors.secondaryColor,
               }));
             }}
+          />
+          <StoreAppBrand
+            appName={store?.name || session?.user?.storeName || 'Your app'}
+            logoUrl={store?.logo ?? null}
+            primaryColor={store?.primaryColor ?? null}
+            secondaryColor={store?.secondaryColor ?? null}
           />
         </div>
       )}
