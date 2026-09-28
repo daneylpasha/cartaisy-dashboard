@@ -240,6 +240,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Onboarding brand step and Settings Store Branding presentation. No backend change, no EAS, and no eligibility change. Shopify Admin tokens are not rendered or logged. Human review is required because this is branding presentation on the onboarding path.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#56`.
 
+### The brand step shows a soft splash boot mock
+
+- Date: 2026-09-28.
+- Decision: The brand step and Settings → Store Branding show a compact splash boot mock under the soft home-screen mock. When the splash is public https, or a blob draft the phone already shows, the mock draws that image full-bleed in a small rounded frame. The trimmed display name is captioned only when it is non-empty, using `launcherDisplayName`. The splash reuses `displayBrandImageUrl`, then keeps only https and blob. Token-shaped and other non-https URLs are dropped. If the splash is missing, the mock shows a blank frame and the same Brand and Store Branding links as the Build readiness strip and the home-screen mock. It does not invent a splash and does not fall back to Cartaisy, the shop domain, a store id, or the logo or icon. Save, Continue, and Build submit are unchanged. The preview step does not show this mock. `SmartHomePreview` and `HomeScreenLauncherMock` are unchanged.
+- Reason: Dashboard #59. Merchants can see the in-app home and the home-screen icon, but not the first-open splash that ops ships as `SPLASH_IMAGE_URL`.
+- Impact: Onboarding brand step and Settings Store Branding presentation. No backend change, no EAS, and no eligibility change. Shopify Admin tokens are not rendered or logged. Human review is required because this is branding presentation on the onboarding path.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#59`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.
