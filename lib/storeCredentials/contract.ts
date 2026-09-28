@@ -21,7 +21,7 @@ export const CREDENTIAL_SIGN_IN_MESSAGE = 'Sign in again to connect your store a
 export const CREDENTIAL_FORBIDDEN_MESSAGE = 'You need to be a store admin to connect store accounts.';
 
 export const CREDENTIALS_HELPER =
-  'Connect the Apple and Google accounts this store publishes with. You will need them before a later submit to the App Store or Google Play. Preview, Build my app, and install links stay available either way.';
+  'Connect the Apple and Google accounts this store publishes with. Submit to the App Store or Google Play uses these accounts once a build is ready. Preview, Build my app, and install links stay available either way.';
 
 export const BUILD_SETUP_SETTINGS_HREF = '/dashboard/settings#build-setup';
 export const BUILD_MY_APP_HREF = '/dashboard/onboarding?step=ready';

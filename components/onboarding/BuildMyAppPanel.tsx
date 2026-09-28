@@ -26,6 +26,10 @@ import type { ShopifyConnectionSnapshot, SyncGate } from '@/lib/onboarding/types
 import { recoveryStatusLine, shopifyRecoveryView } from '@/lib/shopify/recovery';
 import { launcherDisplayName } from '@/components/onboarding/LauncherReadinessStrip';
 import { BuildMyAppView } from '@/components/onboarding/BuildMyAppView';
+import { fetchStoreCredentials } from '@/lib/storeCredentials/client';
+import { CREDENTIAL_SIGN_IN_MESSAGE } from '@/lib/storeCredentials/contract';
+import type { StoreAccountSnapshot } from '@/components/build/StoreCredentialsPanel';
+import { useStoreSubmits } from '@/lib/storeSubmit/useStoreSubmits';
 
 interface LauncherDraft {
   appName: string | null;
@@ -42,6 +46,8 @@ interface BuildMyAppPanelProps {
   onRefreshConnection: () => Promise<void> | void;
   /** Wizard branding draft. When omitted, the panel reads branding itself. */
   launcher?: LauncherDraft;
+  /** Live store-account status from the credential section. When omitted, this panel loads it. */
+  storeAccounts?: StoreAccountSnapshot;
 }
 
 export function BuildMyAppPanel({
@@ -52,6 +58,7 @@ export function BuildMyAppPanel({
   onCatalogUpdated,
   onRefreshConnection,
   launcher,
+  storeAccounts,
 }: BuildMyAppPanelProps) {
   const { data: session, status: sessionStatus } = useSession();
   const hasLauncher = launcher !== undefined;
@@ -70,6 +77,7 @@ export function BuildMyAppPanel({
   const [syncing, setSyncing] = useState(false);
   const [noteSaving, setNoteSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [fetchedAccounts, setFetchedAccounts] = useState<StoreAccountSnapshot | null>(null);
 
   const gate = buildRequestAvailability(sync, {
     isConnected: connection.isConnected,
@@ -90,6 +98,35 @@ export function BuildMyAppPanel({
   const mode = request && !composing ? 'status' : 'compose';
   const requestId = request?.id ?? null;
   const polling = Boolean(request && shouldPollBuildRequest(request));
+  const accounts = storeAccounts ?? fetchedAccounts;
+  const storeSubmits = useStoreSubmits(mode === 'status' ? requestId : null);
+
+  useEffect(() => {
+    if (storeAccounts) return;
+    let cancelled = false;
+
+    async function loadAccounts() {
+      const token = tokenStorage.getToken();
+      if (!token) {
+        if (!cancelled) {
+          setFetchedAccounts({ phase: 'error', credentials: null, loadError: CREDENTIAL_SIGN_IN_MESSAGE });
+        }
+        return;
+      }
+      const result = await fetchStoreCredentials(token);
+      if (cancelled) return;
+      if (!result.ok) {
+        setFetchedAccounts({ phase: 'error', credentials: null, loadError: result.message });
+        return;
+      }
+      setFetchedAccounts({ phase: 'ready', credentials: result.credentials, loadError: null });
+    }
+
+    void loadAccounts();
+    return () => {
+      cancelled = true;
+    };
+  }, [storeAccounts]);
 
   useEffect(() => {
     if (hasLauncher) return;
@@ -374,6 +411,20 @@ export function BuildMyAppPanel({
       iconUrl={launcher ? launcher.iconUrl : fetchedLauncher?.iconUrl}
       splashUrl={launcher ? launcher.splashUrl : fetchedLauncher?.splashUrl}
       launcherPending={launcher === undefined && fetchedLauncher === null}
+      storeSubmit={
+        mode === 'status' && request
+          ? {
+              credentialPhase: accounts?.phase ?? 'loading',
+              credentials: accounts?.credentials ?? null,
+              jobs: storeSubmits.jobs,
+              busy: storeSubmits.busy,
+              errors: storeSubmits.errors,
+              onSubmit: (platform) => {
+                void storeSubmits.start(platform);
+              },
+            }
+          : null
+      }
       onAndroidChange={setAndroid}
       onIosChange={setIos}
       onNotesChange={setNotes}

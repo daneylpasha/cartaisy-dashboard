@@ -20,12 +20,20 @@ import {
   type AppleFormState,
   type PlatformFormState,
 } from '@/components/build/StoreCredentialsView';
+import { StoreSubmitSettings } from '@/components/build/StoreSubmitSettings';
+
+export interface StoreAccountSnapshot {
+  phase: 'loading' | 'error' | 'ready';
+  credentials: StoreCredentialsStatus | null;
+  loadError: string | null;
+}
 
 interface StoreCredentialsPanelProps {
   surface: 'build' | 'settings';
+  onStatus?: (snapshot: StoreAccountSnapshot) => void;
 }
 
-export function StoreCredentialsPanel({ surface }: StoreCredentialsPanelProps) {
+export function StoreCredentialsPanel({ surface, onStatus }: StoreCredentialsPanelProps) {
   const [phase, setPhase] = useState<'loading' | 'error' | 'ready'>('loading');
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadKey, setLoadKey] = useState(0);
@@ -64,6 +72,10 @@ export function StoreCredentialsPanel({ surface }: StoreCredentialsPanelProps) {
       cancelled = true;
     };
   }, [loadKey]);
+
+  useEffect(() => {
+    onStatus?.({ phase, credentials, loadError });
+  }, [onStatus, phase, credentials, loadError]);
 
   async function submitApple() {
     const token = tokenStorage.getToken();
@@ -166,6 +178,7 @@ export function StoreCredentialsPanel({ surface }: StoreCredentialsPanelProps) {
   }
 
   return (
+    <>
     <StoreCredentialsView
       surface={surface}
       phase={phase}
@@ -224,5 +237,9 @@ export function StoreCredentialsPanel({ surface }: StoreCredentialsPanelProps) {
       onGoogleConfirmDisconnect={() => void removeGoogle()}
       onGoogleCancelDisconnect={() => setGoogle((current) => ({ ...current, confirmingDisconnect: false }))}
     />
+    {surface === 'settings' ? (
+      <StoreSubmitSettings credentialPhase={phase} credentials={credentials} />
+    ) : null}
+    </>
   );
 }
