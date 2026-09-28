@@ -10,6 +10,7 @@ import { StoreSettingsForm } from '@/components/settings/StoreSettingsForm';
 import { DeleteStoreDialog } from '@/components/settings/DeleteStoreDialog';
 import { StoreLogoUpload } from '@/components/settings/StoreLogoUpload';
 import { StoreBrandingColors } from '@/components/settings/StoreBrandingColors';
+import { StoreCredentialsPanel } from '@/components/build/StoreCredentialsPanel';
 import { StoreAppBrand } from '@/components/settings/StoreAppBrand';
 import { Button } from '@/components/ui/button';
 import { useShopifyStatus } from '@/hooks/useShopifyStatus';
@@ -28,6 +29,7 @@ import {
   ChevronRight,
   FileText,
   ImageIcon,
+  KeyRound,
 } from 'lucide-react';
 import { canManageSettings } from '@/lib/utils/permissions';
 import { useStoreStats } from '@/hooks/useStoreStats';
@@ -224,6 +226,14 @@ function SettingsContent() {
           <h2 className="text-sm font-semibold tracking-tight text-slate-900">Shopify Connection</h2>
         </div>
         <ConnectShopify />
+      </div>
+
+      <div id="build-setup" className="scroll-mt-20">
+        <div className="flex items-center gap-2 mb-3">
+          <KeyRound className="w-4 h-4 text-slate-600" />
+          <h2 className="text-sm font-semibold tracking-tight text-slate-900">Build setup</h2>
+        </div>
+        <StoreCredentialsPanel surface="settings" />
       </div>
 
       {/* Plan & Usage Section */}

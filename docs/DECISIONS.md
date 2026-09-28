@@ -264,6 +264,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Merchant Build my app presentation and the existing status poll. No new client secret. The admin status PATCH is unchanged. Human review is required because this is the release handoff the merchant watches.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#64`.
 
+### Merchants connect their own Apple and Google Play credentials
+
+- Date: 2026-09-28.
+- Decision: Build my app and Settings → Build setup let a store admin connect that store's App Store Connect API key and Google Play service account. The dashboard sends multipart `POST /api/v1/store-credentials/apple` (`keyId`, `issuerId`, `.p8` file) and `POST /api/v1/store-credentials/google` (`serviceAccount` JSON file), then reads `GET /api/v1/store-credentials`. After save the screen shows only safe metadata: Apple key id last 4, issuer id last 4, and the Google client email. Disconnect is `DELETE` for one platform. `needsAttention` asks for the file again. The private key is not rendered, logged, or put in an error message. Preview, Build my app, and Expo install links stay available when credentials are missing. This does not start EAS Submit, does not call the platform-operator credential read, and does not change build eligibility.
+- Reason: Dashboard #63. Store owners connect their own Apple Developer and Google Play accounts. Backend storage is cartaisy-backend #185 / PR #186.
+- Impact: Merchant Build my app and Settings. Backend API contract for encrypted store credentials. No Shopify token is rendered or sent. Human review is required because this is a credential upload and a backend contract.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#63`. Backend issue: cartaisy-backend `#185`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.
