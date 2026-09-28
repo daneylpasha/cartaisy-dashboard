@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createElement } from 'react';
 import { BuildMyAppView, type BuildMyAppViewProps } from '../../components/onboarding/BuildMyAppView.tsx';
-import { launcherThumbUrl } from '../../components/onboarding/LauncherReadinessStrip.tsx';
+import { launcherDisplayName, launcherThumbUrl } from '../../components/onboarding/LauncherReadinessStrip.tsx';
 import type { BuildRequest } from './contract.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -166,8 +166,9 @@ const noteLimit = html({ accessNotes: 'Hello' });
 assert.ok(noteLimit.includes('maxLength="280"') || noteLimit.includes('maxlength="280"'));
 assertCalm(noteLimit);
 
-const missingAssets = html({ iconUrl: null, splashUrl: null });
+const missingAssets = html({ appName: 'Northwind', iconUrl: null, splashUrl: null });
 assert.equal(isDisabled(buttonTag(missingAssets, 'Build my app')), false);
+assert.ok(missingAssets.includes('Northwind'));
 assert.equal((missingAssets.match(/Not added/g) ?? []).length, 2);
 assert.ok(missingAssets.includes('Add an app icon and a splash in'));
 assert.ok(missingAssets.includes('/dashboard/onboarding?step=brand'));
@@ -177,10 +178,13 @@ assert.equal(missingAssets.includes('<img'), false);
 assertCalm(missingAssets);
 
 const bothReady = html({
+  appName: '  Northwind  ',
   iconUrl: 'https://cdn.example/icon.png',
   splashUrl: 'https://cdn.example/splash.png',
 });
 assert.equal(isDisabled(buttonTag(bothReady, 'Build my app')), false);
+assert.ok(bothReady.includes('Northwind'));
+assert.equal(bothReady.includes('  Northwind'), false);
 assert.match(bothReady, /src="https:\/\/cdn\.example\/icon\.png"/);
 assert.match(bothReady, /src="https:\/\/cdn\.example\/splash\.png"/);
 assert.equal((bothReady.match(/Ready/g) ?? []).length, 2);
@@ -189,7 +193,44 @@ assert.equal(bothReady.includes('step=brand'), false);
 assert.doesNotMatch(bothReady, /cartaisy/i);
 assertCalm(bothReady);
 
+const missingName = html({
+  appName: '   ',
+  iconUrl: 'https://cdn.example/icon.png',
+  splashUrl: 'https://cdn.example/splash.png',
+});
+assert.equal(isDisabled(buttonTag(missingName, 'Build my app')), false);
+assert.ok(missingName.includes('Add an app name in'));
+assert.ok(missingName.includes('Not added'));
+assert.equal((missingName.match(/Not added/g) ?? []).length, 1);
+assert.ok(missingName.includes('/dashboard/onboarding?step=brand'));
+assert.ok(missingName.includes('/dashboard/settings#store-branding'));
+assert.ok(missingName.includes('You can request a build either way.'));
+assert.doesNotMatch(missingName, /cartaisy/i);
+assert.doesNotMatch(missingName, /myshopify/i);
+assert.equal(missingName.includes('APP_NAME'), false);
+assertCalm(missingName);
+
+const blankName = html({
+  appName: '',
+  iconUrl: 'https://cdn.example/icon.png',
+  splashUrl: null,
+});
+assert.equal(isDisabled(buttonTag(blankName, 'Build my app')), false);
+assert.ok(blankName.includes('Add an app name and a splash in'));
+assert.ok(blankName.includes('/dashboard/onboarding?step=brand'));
+assert.doesNotMatch(blankName, /cartaisy/i);
+assertCalm(blankName);
+
+const allMissing = html({ appName: null, iconUrl: null, splashUrl: null });
+assert.equal(isDisabled(buttonTag(allMissing, 'Build my app')), false);
+assert.equal((allMissing.match(/Not added/g) ?? []).length, 3);
+assert.ok(allMissing.includes('Add an app name, an app icon, and a splash in'));
+assert.ok(allMissing.includes('/dashboard/settings#store-branding'));
+assert.doesNotMatch(allMissing, /cartaisy/i);
+assertCalm(allMissing);
+
 const splashMissing = html({
+  appName: 'Northwind',
   iconUrl: 'https://cdn.example/icon.png',
   splashUrl: null,
 });
@@ -202,6 +243,7 @@ assert.ok(splashMissing.includes('/dashboard/onboarding?step=brand'));
 assertCalm(splashMissing);
 
 const poisoned = html({
+  appName: 'Northwind',
   iconUrl: 'https://cdn.example/icon.png?access_token=shpat_secret',
   splashUrl: 'http://cdn.example/splash.png',
 });
@@ -213,6 +255,7 @@ assert.ok(poisoned.includes('Add an app icon and a splash in'));
 assertCalm(poisoned);
 
 const blobPreview = html({
+  appName: 'Northwind',
   iconUrl: 'blob:http://localhost/preview',
   splashUrl: 'https://cdn.example/splash.png',
 });
@@ -222,8 +265,13 @@ assert.ok(blobPreview.includes('Add an app icon in'));
 assert.equal(isDisabled(buttonTag(blobPreview, 'Build my app')), false);
 assertCalm(blobPreview);
 
-const pendingLauncher = html({ launcherPending: true, iconUrl: 'https://cdn.example/icon.png' });
-assert.ok(pendingLauncher.includes('Checking your icon and splash'));
+const pendingLauncher = html({
+  launcherPending: true,
+  appName: 'Northwind',
+  iconUrl: 'https://cdn.example/icon.png',
+});
+assert.ok(pendingLauncher.includes('Checking your app name, icon, and splash'));
+assert.equal(pendingLauncher.includes('Northwind'), false);
 assert.equal(pendingLauncher.includes('Not added'), false);
 assert.equal(pendingLauncher.includes('<img'), false);
 assert.equal(isDisabled(buttonTag(pendingLauncher, 'Build my app')), false);
@@ -232,10 +280,12 @@ assertCalm(pendingLauncher);
 const statusWithAssets = html({
   mode: 'status',
   request: request('building', 'queued'),
+  appName: 'Northwind',
   iconUrl: 'https://cdn.example/icon.png',
   splashUrl: 'https://cdn.example/splash.png',
 });
 assert.equal(statusWithAssets.includes('>Build my app<'), false);
+assert.ok(statusWithAssets.includes('Northwind'));
 assert.match(statusWithAssets, /src="https:\/\/cdn\.example\/icon\.png"/);
 assert.match(statusWithAssets, /src="https:\/\/cdn\.example\/splash\.png"/);
 assertCalm(statusWithAssets);
@@ -245,6 +295,11 @@ assert.equal(launcherThumbUrl('http://cdn.example/icon.png'), null);
 assert.equal(launcherThumbUrl('blob:http://localhost/1'), null);
 assert.equal(launcherThumbUrl('https://cdn.example/icon.png?token=shpss_secret'), null);
 assert.equal(launcherThumbUrl(null), null);
+assert.equal(launcherDisplayName('  Northwind  '), 'Northwind');
+assert.equal(launcherDisplayName('   '), null);
+assert.equal(launcherDisplayName(''), null);
+assert.equal(launcherDisplayName(null), null);
+assert.equal(launcherDisplayName(undefined), null);
 
 const viewSource = readFileSync(join(here, '../../components/onboarding/BuildMyAppView.tsx'), 'utf8');
 const panelSource = readFileSync(join(here, '../../components/onboarding/BuildMyAppPanel.tsx'), 'utf8');
@@ -254,11 +309,18 @@ const settingsSource = readFileSync(join(here, '../../app/dashboard/settings/pag
 
 assert.match(viewSource, /canSubmit: android \|\| ios/);
 assert.doesNotMatch(viewSource, /canSubmit:[\s\S]{0,120}iconUrl/);
+assert.match(readySource, /appName: draft\.appName/);
 assert.match(readySource, /iconUrl: draft\.iconUrl/);
 assert.match(readySource, /splashUrl: draft\.splashUrl/);
 assert.match(panelSource, /buildRequestAvailability/);
+assert.match(panelSource, /launcherDisplayName\(branding\?\.appName\)/);
+assert.match(panelSource, /launcherDisplayName\(profile\.name\)/);
+assert.match(panelSource, /launcherDisplayName\(session\?\.user\?\.storeName\)/);
+assert.doesNotMatch(panelSource, /shopDomain|myshopify/);
 assert.match(settingsSource, /id="store-branding"/);
 assert.doesNotMatch(stripSource, /cartaisy/i);
+assert.doesNotMatch(stripSource, /Your app|clipboard|APP_NAME/);
+assert.doesNotMatch(viewSource, /canSubmit:[\s\S]{0,120}appName/);
 assert.doesNotMatch(stripSource, /console\.(log|debug|info|error|warn)/);
 assert.doesNotMatch(panelSource, /console\.(log|debug|info|error|warn)/);
 

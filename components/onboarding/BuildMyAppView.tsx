@@ -39,6 +39,8 @@ export interface BuildMyAppViewProps {
   statusLine?: string | null;
   /** Operational webhook registration error. Does not block a build by itself. */
   webhookNote?: string | null;
+  /** Branding display name. Trimmed before it is shown. Does not affect submit. */
+  appName?: string | null;
   /** Branding icon. Sanitized before a thumb is drawn. Does not affect submit. */
   iconUrl?: string | null;
   /** Branding splash. Sanitized before a thumb is drawn. Does not affect submit. */
@@ -125,6 +127,7 @@ export function BuildMyAppView({
   formError,
   statusLine = null,
   webhookNote = null,
+  appName = null,
   iconUrl = null,
   splashUrl = null,
   launcherPending = false,
@@ -138,7 +141,7 @@ export function BuildMyAppView({
   onRetry,
 }: BuildMyAppViewProps) {
   const launcher = (
-    <LauncherReadinessStrip iconUrl={iconUrl} splashUrl={splashUrl} pending={launcherPending} />
+    <LauncherReadinessStrip appName={appName} iconUrl={iconUrl} splashUrl={splashUrl} pending={launcherPending} />
   );
 
   if (phase === 'loading') {
