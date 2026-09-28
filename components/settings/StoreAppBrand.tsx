@@ -107,7 +107,8 @@ export function StoreAppBrand({
         mergeStoredBrandAssets(
           {
             ...branding,
-            appName: (branding.appName || startedProps.appName).trim() || 'Your app',
+            // Blank stays blank. The in-app phone supplies its own placeholder.
+            appName: (branding.appName || startedProps.appName).trim(),
             logoUrl: branding.logoUrl ?? settingsBrandImageUrl(startedProps.logoUrl),
           },
           profile.brandAssets

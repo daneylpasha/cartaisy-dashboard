@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { ImagePlus, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
+import { HomeScreenLauncherMock } from '@/components/onboarding/HomeScreenLauncherMock';
 import { SmartHomePreview } from '@/components/onboarding/SmartHomePreview';
 import { HEX_COLOR_REGEX, validateBrandImage } from '@/lib/onboarding/branding';
 import { displayBrandImageUrl } from '@/lib/onboarding/brandAssets';
@@ -118,6 +119,7 @@ export function StoreAppBrandView({
             Live preview
           </p>
           <SmartHomePreview draft={shown} catalog={catalog} sync={sync} />
+          <HomeScreenLauncherMock appName={shown.appName} iconUrl={shown.iconUrl} />
         </div>
 
         <div className="min-w-0 lg:col-start-1">

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { LockedShopifyDetails } from '@/components/onboarding/LockedShopifyDetails';
+import { HomeScreenLauncherMock } from '@/components/onboarding/HomeScreenLauncherMock';
 import { SmartHomePreview } from '@/components/onboarding/SmartHomePreview';
 import { SetupNotice, WizardFooter } from '@/components/onboarding/WizardChrome';
 import { validateBrandImage } from '@/lib/onboarding/branding';
@@ -94,6 +95,7 @@ export function BrandingStep({
             Live preview
           </p>
           <SmartHomePreview draft={draft} catalog={catalog} sync={sync} pending={pending} />
+          <HomeScreenLauncherMock appName={draft.appName} iconUrl={draft.iconUrl} />
         </div>
 
         <div className="min-w-0 lg:col-start-1">
