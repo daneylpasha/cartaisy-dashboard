@@ -168,6 +168,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Onboarding branding persistence. This does not start an EAS build and does not change connect or catalog recovery. Human review is required because the brand save path and the backend branding contract are involved.
 - Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/STATUS.md`, `docs/ARCHITECTURE.md`. GitHub issue: `#37`. Backend issues: `#173`, `#175`.
 
+### Settings replaces icon and splash with the onboarding contract
+
+- Date: 2026-09-28.
+- Decision: Settings → Store Branding lets a connected merchant upload or replace the app icon and splash with the same helpers as the brand step. Prefer `POST /admin/stores/:storeId/branding/icon` and `.../branding/splash`. A successful response is the saved https URL and is not also written to dashboard `brandAssets`. Signed upload, `canUpload`, `POST /notifications/stores/:storeId/images/register`, and a `brandAssets` write run only when that POST returns 404, 405, or 501. Display prefers branding GET `iconUrl`/`appIconUrl` and `splashUrl`/`splashImageUrl`; `brandAssets` fills a field the branding payload omitted. The phone shows the in-memory draft immediately, then the saved https URL. The device screen has no Cartaisy chrome. Token-shaped and non-https URLs are dropped. No Shopify Admin token is written or logged.
+- Reason: Dashboard #41. After onboarding, the merchant should be able to refresh those images without returning to the wizard.
+- Impact: Branding/theme setup on `app/dashboard/settings`. Push, loyalty, analytics, and native EAS assets are unchanged. Human review is required because the brand save path and the backend branding contract are involved.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`. GitHub issue: `#41`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.
