@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { tokenStorage } from '@/lib/api/mutator/custom-instance';
+import { useSession } from '@/lib/auth';
+import { mergeStoredBrandAssets } from '@/lib/onboarding/brandAssets';
+import { emptyBrandingDraft, fetchBranding, fetchStoreProfile } from '@/lib/onboarding/branding';
 import {
   createBuildRequest,
   fetchCatalogSync,
@@ -23,6 +26,11 @@ import type { ShopifyConnectionSnapshot, SyncGate } from '@/lib/onboarding/types
 import { recoveryStatusLine, shopifyRecoveryView } from '@/lib/shopify/recovery';
 import { BuildMyAppView } from '@/components/onboarding/BuildMyAppView';
 
+interface LauncherDraft {
+  iconUrl: string | null;
+  splashUrl: string | null;
+}
+
 interface BuildMyAppPanelProps {
   connection: ShopifyConnectionSnapshot;
   initialSync: SyncGate;
@@ -30,6 +38,8 @@ interface BuildMyAppPanelProps {
   onConnectShopify: () => void;
   onCatalogUpdated: () => void;
   onRefreshConnection: () => Promise<void> | void;
+  /** Wizard branding draft. When omitted, the panel reads branding itself. */
+  launcher?: LauncherDraft;
 }
 
 export function BuildMyAppPanel({
@@ -39,7 +49,11 @@ export function BuildMyAppPanel({
   onConnectShopify,
   onCatalogUpdated,
   onRefreshConnection,
+  launcher,
 }: BuildMyAppPanelProps) {
+  const { data: session, status: sessionStatus } = useSession();
+  const hasLauncher = launcher !== undefined;
+  const [fetchedLauncher, setFetchedLauncher] = useState<LauncherDraft | null>(null);
   const [sync, setSync] = useState(initialSync);
   const [phase, setPhase] = useState<'loading' | 'error' | 'ready'>('loading');
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -74,6 +88,33 @@ export function BuildMyAppPanel({
   const mode = request && !composing ? 'status' : 'compose';
   const requestId = request?.id ?? null;
   const polling = Boolean(request && shouldPollBuildRequest(request));
+
+  useEffect(() => {
+    if (hasLauncher) return;
+    let cancelled = false;
+
+    async function loadLauncher() {
+      if (sessionStatus === 'loading') return;
+      const token = tokenStorage.getToken();
+      const storeId = session?.user?.storeId;
+      if (!token || !storeId) {
+        if (!cancelled) setFetchedLauncher({ iconUrl: null, splashUrl: null });
+        return;
+      }
+      const [branding, profile] = await Promise.all([
+        fetchBranding(storeId, token),
+        fetchStoreProfile(),
+      ]);
+      if (cancelled) return;
+      const draft = mergeStoredBrandAssets(branding ?? emptyBrandingDraft(''), profile.brandAssets);
+      setFetchedLauncher({ iconUrl: draft.iconUrl, splashUrl: draft.splashUrl });
+    }
+
+    void loadLauncher();
+    return () => {
+      cancelled = true;
+    };
+  }, [hasLauncher, sessionStatus, session?.user?.storeId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -306,6 +347,9 @@ export function BuildMyAppPanel({
       formError={formError}
       statusLine={recoveryStatusLine(recovery)}
       webhookNote={recovery.webhookNote}
+      iconUrl={launcher ? launcher.iconUrl : fetchedLauncher?.iconUrl}
+      splashUrl={launcher ? launcher.splashUrl : fetchedLauncher?.splashUrl}
+      launcherPending={launcher === undefined && fetchedLauncher === null}
       onAndroidChange={setAndroid}
       onIosChange={setIos}
       onNotesChange={setNotes}

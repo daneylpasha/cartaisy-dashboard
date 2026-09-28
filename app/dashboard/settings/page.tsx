@@ -178,7 +178,7 @@ function SettingsContent() {
 
       {/* Store Branding Section - Only show when Shopify is connected */}
       {shopifyStatus?.isConnected && store && (
-        <div>
+        <div id="store-branding" className="scroll-mt-20">
           <div className="flex items-center gap-2 mb-3">
             <ImageIcon className="w-4 h-4 text-slate-600" />
             <h2 className="text-sm font-semibold tracking-tight text-slate-900">Store Branding</h2>

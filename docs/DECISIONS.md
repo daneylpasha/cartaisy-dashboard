@@ -187,10 +187,18 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 ### Ops copies the icon as ICON_IMAGE_URL
 
 - Date: 2026-09-28.
-- Decision: On `/dashboard/admin/build-requests`, a public https icon copies as `ICON_IMAGE_URL=<url>`, the same assignment shape splash already uses for `SPLASH_IMAGE_URL=<url>`. The control is labeled `ICON_IMAGE_URL=…`. Copy is still offered only after `opsBrandImageUrl` accepts the value, which reuses `persistedBrandImageUrl`. Missing, non-https, and token-shaped icons stay an empty thumb with no copy control. The page does not start EAS. Merchant Build my app is unchanged.
+- Decision: On `/dashboard/admin/build-requests`, a public https icon copies as `ICON_IMAGE_URL=<url>`, the same assignment shape splash already uses for `SPLASH_IMAGE_URL=<url>`. The control is labeled `ICON_IMAGE_URL=…`. Copy is still offered only after `opsBrandImageUrl` accepts the value, which reuses `persistedBrandImageUrl`. Missing, non-https, and token-shaped icons stay an empty thumb with no copy control. The page does not start EAS. Merchant Build my app does not show these copy controls.
 - Reason: Dashboard #45. Cartaisy mobile reads `ICON_IMAGE_URL` and `SPLASH_IMAGE_URL` at EAS build time. A bare icon URL is easy to paste into the wrong variable.
 - Impact: Platform-ops clipboard only. No backend API change. Shopify Admin tokens are not rendered, logged, or copied. Human review is required because this is a release handoff surface.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#45`.
+
+### Build my app shows icon and splash readiness without gating submit
+
+- Date: 2026-09-28.
+- Decision: The merchant Build my app screen shows a dense icon and splash strip above Platforms. A public https URL from the branding draft (or, if that screen is reused without a draft, from branding GET plus stored `brandAssets`) draws a thumb. Token-shaped, http, and blob values are dropped with `persistedBrandImageUrl` and count as not added. A missing asset uses calm copy and links to `/dashboard/onboarding?step=brand` and Settings Store Branding (`/dashboard/settings#store-branding`). Submit stays on the existing rule: Shopify connected and `GET /api/v1/shopify/sync` `eligibleForBuild`. This does not change backend `assertBuildEligible`, start EAS, or copy env URLs.
+- Reason: Dashboard #46. Merchants can already request a build with no launcher assets. They should see that on the Build step. A hard gate would be a product change to eligibility.
+- Impact: Onboarding ready step and the Build my app panel. Ops queue copy controls are unchanged. No Shopify token is rendered or logged.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`. GitHub issue: `#46`.
 
 ### High-risk auth/store ownership/publishing changes require human review
 

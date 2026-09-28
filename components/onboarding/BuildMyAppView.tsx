@@ -13,6 +13,7 @@ import {
   type PrimaryBuildAction,
 } from '@/lib/build/contract';
 import type { BuildRequestAvailability } from '@/lib/onboarding/types';
+import { LauncherReadinessStrip } from '@/components/onboarding/LauncherReadinessStrip';
 
 const PRIMARY_BUTTON =
   'inline-flex h-11 items-center justify-center rounded-lg bg-slate-950 px-5 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2';
@@ -38,6 +39,12 @@ export interface BuildMyAppViewProps {
   statusLine?: string | null;
   /** Operational webhook registration error. Does not block a build by itself. */
   webhookNote?: string | null;
+  /** Branding icon. Sanitized before a thumb is drawn. Does not affect submit. */
+  iconUrl?: string | null;
+  /** Branding splash. Sanitized before a thumb is drawn. Does not affect submit. */
+  splashUrl?: string | null;
+  /** True while branding is still loading and no draft was passed in. */
+  launcherPending?: boolean;
   onAndroidChange: (value: boolean) => void;
   onIosChange: (value: boolean) => void;
   onNotesChange: (value: string) => void;
@@ -118,6 +125,9 @@ export function BuildMyAppView({
   formError,
   statusLine = null,
   webhookNote = null,
+  iconUrl = null,
+  splashUrl = null,
+  launcherPending = false,
   onAndroidChange,
   onIosChange,
   onNotesChange,
@@ -127,13 +137,20 @@ export function BuildMyAppView({
   onCancelAnother,
   onRetry,
 }: BuildMyAppViewProps) {
+  const launcher = (
+    <LauncherReadinessStrip iconUrl={iconUrl} splashUrl={splashUrl} pending={launcherPending} />
+  );
+
   if (phase === 'loading') {
     return (
-      <div className="mt-8" aria-busy="true">
-        <p className="text-sm text-slate-600">Loading your build...</p>
-        <div className="mt-6 space-y-2" aria-hidden>
-          <div className="h-[52px] rounded-xl border border-slate-200 bg-slate-50" />
-          <div className="h-[52px] rounded-xl border border-slate-200 bg-slate-50" />
+      <div className="mt-8">
+        {launcher}
+        <div className="mt-6" aria-busy="true">
+          <p className="text-sm text-slate-600">Loading your build...</p>
+          <div className="mt-6 space-y-2" aria-hidden>
+            <div className="h-[52px] rounded-xl border border-slate-200 bg-slate-50" />
+            <div className="h-[52px] rounded-xl border border-slate-200 bg-slate-50" />
+          </div>
         </div>
       </div>
     );
@@ -142,7 +159,8 @@ export function BuildMyAppView({
   if (phase === 'error') {
     return (
       <div className="mt-8">
-        <p className="text-sm leading-6 text-slate-600" role="alert">
+        {launcher}
+        <p className="mt-6 text-sm leading-6 text-slate-600" role="alert">
           {loadError ?? 'We could not load your build. Try again.'}
         </p>
         <button type="button" onClick={onRetry} className={`${PRIMARY_BUTTON} mt-6`}>
@@ -194,11 +212,17 @@ export function BuildMyAppView({
         </p>
       )}
 
-      <fieldset
-        className={`min-w-0 ${
-          mode === 'compose' && (availability.reason || statusLine || webhookNote) ? 'mt-6' : summary || formError ? 'mt-6' : ''
-        }`}
+      <div
+        className={
+          (mode === 'compose' && (availability.reason || statusLine || webhookNote)) || summary || formError
+            ? 'mt-6'
+            : ''
+        }
       >
+        {launcher}
+      </div>
+
+      <fieldset className="mt-6 min-w-0">
         <legend className="text-sm font-medium text-slate-950">Platforms</legend>
         <div className="mt-3 space-y-2" aria-live="polite">
           <PlatformRow
