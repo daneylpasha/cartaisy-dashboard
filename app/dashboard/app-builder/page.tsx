@@ -543,7 +543,7 @@ export default function AppBuilderPage() {
             Preview App
           </Link>
           <span className="text-xs text-slate-500">
-            See how your app looks on mobile
+            Module order only. Shopper chrome is on the setup preview.
           </span>
         </div>
 

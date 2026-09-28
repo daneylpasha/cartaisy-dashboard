@@ -111,7 +111,7 @@ export function StoreAppBrandView({
         <div className="min-w-0 lg:col-start-1">
           <h3 className="font-heading text-xl font-semibold tracking-tight text-slate-950">Icon and splash</h3>
           <p className="mt-2 max-w-lg text-sm leading-6 text-slate-600">
-            Replace the home screen icon and the image shoppers see when the app opens. The phone updates as soon as you choose a file.
+            Replace the home screen icon and the image shoppers see when the app opens. The preview updates as soon as you choose a file. The icon is the home-screen mark under the phone. The splash is the opening screen.
           </p>
         </div>
 

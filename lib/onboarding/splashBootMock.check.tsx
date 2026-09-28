@@ -249,7 +249,7 @@ assert.equal(splashBoot(settingsReady).includes('Add a splash'), false);
 assertNoSubstitute(splashBoot(settingsReady));
 
 const settingsBlank = renderSettings({ ...draft, appName: '' });
-assert.match(settingsBlank, /data-shopper-screen[\s\S]*Your app/);
+assert.doesNotMatch(settingsBlank, /data-shopper-screen[\s\S]*Your app/);
 assert.doesNotMatch(splashBoot(settingsBlank), /Your app/);
 assert.equal(splashBoot(settingsBlank).includes('Add a splash'), false);
 

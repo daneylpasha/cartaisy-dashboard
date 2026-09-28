@@ -93,7 +93,7 @@ export default function HomescreenPreviewPage() {
             Homescreen Preview
           </h1>
           <p className="text-slate-600 mt-1">
-            See how your app will look to customers
+            Module order for a published home. Splash, the home header, product, and cart are the shopper phone on Brand and Preview.
           </p>
         </div>
         <Button

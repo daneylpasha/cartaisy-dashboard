@@ -36,12 +36,13 @@ export function PreviewStep({
             Preview your home
           </h1>
           <p className="mt-3 max-w-md text-[15px] leading-7 text-slate-600">
-            This is a starting home. You do not need to build it. You can adjust the layout later.
+            These screens follow the shopper app. Opening is the splash. Home is the default home until you publish a layout. Product and cart use the same chrome.
           </p>
           <ul className="mt-6 space-y-2 text-sm leading-6 text-slate-600">
-            <li>Your app name, colors, and images are applied.</li>
+            <li>Your name, colors, logo, icon, and splash are applied on the screens that use them.</li>
             <li>{productLine}</li>
-            <li>Collection names, when we have them, stay read only.</li>
+            <li>Collection cards use names only. The app uses collection images when the catalog has them.</li>
+            <li>Favorites, wishlist, account, and checkout open in the installed app.</li>
           </ul>
           {shelf.kind !== 'products' ? (
             <button
