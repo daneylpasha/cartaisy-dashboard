@@ -5,9 +5,10 @@
  * (`normalizeConnectionStatus` on GET /shopify/status). A connected store is
  * established and stays on Home. Unknown status does not redirect.
  *
- * The redirect runs only for the auth entry itself (login/signup, or the next
- * dashboard index hit after that visit). Later Home visits, Exit setup, and
- * every other /dashboard/* path stay put so the wizard cannot loop.
+ * The redirect runs only for the auth entry itself (login/signup, a password
+ * reset that lands on Home, or the next dashboard index hit after that visit).
+ * Later Home visits, Exit setup, and every other /dashboard/* path stay put
+ * so the wizard cannot loop.
  */
 
 import { normalizeConnectionStatus } from '../onboarding/normalizers.ts';
@@ -41,8 +42,10 @@ function isAuthReferer(pathname: string | null): boolean {
   return (
     pathname === '/login' ||
     pathname === '/signup' ||
+    pathname === '/reset-password' ||
     pathname.startsWith('/login/') ||
-    pathname.startsWith('/signup/')
+    pathname.startsWith('/signup/') ||
+    pathname.startsWith('/reset-password/')
   );
 }
 

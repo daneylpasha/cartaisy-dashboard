@@ -279,6 +279,7 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Reason: Dashboard #67. Store owners submit with the accounts they connected in #63. Backend submit is cartaisy-backend #187 / PR #189.
 - Impact: Merchant Build my app and Settings → Build setup. Backend API contract for store submit. No Shopify token and no store private key is rendered or sent from the browser. Human review is required because this is the release handoff and a backend contract.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#67`. Backend issue: cartaisy-backend `#187`.
+
 ### The shopper phone follows the installable app chrome
 
 - Date: 2026-09-28.
@@ -286,6 +287,15 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Reason: Dashboard #69. A phone that used a different header, a splash cover, and Home / Search / Bag sold a layout the installable app does not ship.
 - Impact: Onboarding and Settings branding presentation, and the app-builder preview label. Human review is required because this is the merchant-facing shopper preview on the onboarding path.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/HOME_MODULE_EDITOR_CONTRACT.md`. GitHub issue: `#69`.
+
+### Merchants reset a password from the same auth card
+
+- Date: 2026-09-28.
+- Decision: `/login` links to `/forgot-password`. That page posts `{ email }` to backend `POST /api/v1/auth/forgot-password` and always shows "If an account exists with this email, you will receive a password reset link shortly." It does not say whether the email exists or whether the account is Google-only. The same page tells every merchant that Google sign-in stays on Continue with Google. `/reset-password` reads `token` from the query. The value must be 64 hex characters or the page shows an invalid or expired link, with links to request a new one and to sign in. The form checks that the new password and the confirmation match, and that the password is 6 to 128 characters with a letter and a number. The API body is `{ token, newPassword }` only. On success the dashboard stores `data.token` and `data.refreshToken` with `tokenStorage.setTokens`, loads the profile, and opens `/dashboard`. Middleware treats a `/dashboard` visit referred by `/reset-password` like a visit from login, so a disconnected store still enters the setup wizard. `/forgot-password` and `/reset-password` are not middleware auth routes, so a signed-in merchant is not bounced away from the email link. The raw reset token and the new password are not rendered, toasted, logged, or left on the URL after submit.
+- Reason: Dashboard #68. Password login had no recovery. Backend forgot/reset is cartaisy-backend #188 / PR #190. Auto-login matches the login session instead of asking for the password again.
+- Impact: Auth/session only. Login, invite signup, Google sign-in, store ownership, and Shopify are unchanged. Human review is required because this stores a new session after a password change.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#68`. Backend issue: cartaisy-backend `#188`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.
