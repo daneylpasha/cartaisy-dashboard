@@ -5,6 +5,7 @@ import { Check, ChevronDown, Copy } from 'lucide-react';
 import { PLATFORM_STATUSES, type PlatformKind, type PlatformStatus } from '@/lib/build/contract';
 import {
   appNameEnvAssignment,
+  easEnvAssignments,
   iconEnvAssignment,
   opsAppName,
   opsBrandImageUrl,
@@ -167,11 +168,13 @@ function CopyUrlButton({
   accessibleName,
   value,
   mono,
+  emphasis,
 }: {
   label: string;
   accessibleName: string;
   value: string;
   mono?: boolean;
+  emphasis?: boolean;
 }) {
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
   const timer = useRef<number | null>(null);
@@ -206,12 +209,16 @@ function CopyUrlButton({
           }
         );
       }}
-      className="inline-flex h-8 max-w-full items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
+      className={
+        emphasis
+          ? 'inline-flex h-8 max-w-full items-center gap-1.5 rounded-lg bg-slate-950 px-2.5 text-xs font-medium text-white shadow-sm transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2'
+          : 'inline-flex h-8 max-w-full items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2'
+      }
     >
       {state === 'copied' ? (
-        <Check aria-hidden className="size-3.5 shrink-0 text-slate-950" />
+        <Check aria-hidden className={`size-3.5 shrink-0 ${emphasis ? 'text-white' : 'text-slate-950'}`} />
       ) : (
-        <Copy aria-hidden className="size-3.5 shrink-0 text-slate-400" />
+        <Copy aria-hidden className={`size-3.5 shrink-0 ${emphasis ? 'text-white/70' : 'text-slate-400'}`} />
       )}
       <span className={mono && state === 'idle' ? 'truncate font-mono' : 'truncate'}>{text}</span>
     </button>
@@ -235,7 +242,8 @@ function RequestRow({
   const storeId = opsStoreId(request.storeId);
   const iconUrl = opsBrandImageUrl(request.iconUrl);
   const splashUrl = opsBrandImageUrl(request.splashUrl);
-  const showEas = Boolean(appName || storeId || iconUrl || splashUrl);
+  const easEnv = easEnvAssignments({ appName, iconUrl, splashUrl, storeId });
+  const showEas = Boolean(easEnv);
 
   return (
     <li className="px-4 py-4 sm:px-5" aria-busy={saving}>
@@ -260,6 +268,14 @@ function RequestRow({
           <div className="mt-2.5 flex flex-wrap items-center gap-2">
             {showEas ? (
               <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">EAS</span>
+            ) : null}
+            {easEnv ? (
+              <CopyUrlButton
+                label="Copy all EAS env"
+                accessibleName={`Copy all EAS env for ${title}`}
+                value={easEnv}
+                emphasis
+              />
             ) : null}
             {appName ? (
               <CopyUrlButton

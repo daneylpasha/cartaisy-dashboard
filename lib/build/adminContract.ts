@@ -188,6 +188,33 @@ export function storeIdEnvAssignment(storeId: string): string {
   return envAssignment('EXPO_PUBLIC_STORE_ID', storeId);
 }
 
+/**
+ * Every copyable launcher assignment for one ops row.
+ * Order matches the fictional handoff in Cartaisy
+ * `docs/MOBILE_MERCHANT_PROVISIONING_RUNBOOK.md`:
+ * APP_NAME, ICON_IMAGE_URL, SPLASH_IMAGE_URL, EXPO_PUBLIC_STORE_ID.
+ * One `KEY=value` per line, no quotes, LF newlines, no blank lines.
+ * A line is included only when that field's single-copy control would
+ * exist. Null when none qualify. Does not invent values.
+ */
+export function easEnvAssignments(fields: {
+  appName?: unknown;
+  iconUrl?: unknown;
+  splashUrl?: unknown;
+  storeId?: unknown;
+}): string | null {
+  const lines: string[] = [];
+  const appName = opsAppName(fields.appName);
+  const iconUrl = opsBrandImageUrl(fields.iconUrl);
+  const splashUrl = opsBrandImageUrl(fields.splashUrl);
+  const storeId = opsStoreId(fields.storeId);
+  if (appName) lines.push(appNameEnvAssignment(appName));
+  if (iconUrl) lines.push(iconEnvAssignment(iconUrl));
+  if (splashUrl) lines.push(splashEnvAssignment(splashUrl));
+  if (storeId) lines.push(storeIdEnvAssignment(storeId));
+  return lines.length > 0 ? lines.join('\n') : null;
+}
+
 function readStoreIdentity(value: unknown): {
   name: string | null;
   domain: string | null;
