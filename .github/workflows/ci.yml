@@ -36,3 +36,6 @@ jobs:
 
       - name: Google signup checks
         run: npm run test:auth-google
+
+      - name: Password reset checks
+        run: npm run test:auth-password-reset

@@ -67,6 +67,7 @@ export interface LoginResult {
 export interface AuthContextValue extends AuthState {
   login: (credentials: LoginCredentials) => Promise<LoginResult>;
   loginWithGoogle: (idToken: string) => Promise<LoginResult>;
+  signInWithSessionTokens: (accessToken: string, refreshToken: string) => Promise<LoginResult>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   getToken: () => string | null;

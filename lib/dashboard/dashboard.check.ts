@@ -89,6 +89,23 @@ assert.equal(
   '/dashboard/onboarding'
 );
 assert.equal(
+  resolveEntry({
+    ...disconnected,
+    hasEntryCookie: false,
+    refererPath: '/reset-password',
+  }).redirectTo,
+  '/dashboard/onboarding'
+);
+assert.equal(
+  entryNeedsShopifyStatus({
+    pathname: '/dashboard',
+    isAuthRoute: false,
+    hasEntryCookie: false,
+    refererPath: '/reset-password',
+  }),
+  true
+);
+assert.equal(
   resolveEntry({ ...disconnected, hasEntryCookie: false, refererPath: null }).redirectTo,
   null,
   'A later visit to Home stays on Home'

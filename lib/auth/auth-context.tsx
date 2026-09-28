@@ -264,6 +264,82 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const signInWithSessionTokens = useCallback(
+    async (accessToken: string, refreshToken: string): Promise<LoginResult> => {
+      if (!accessToken || !refreshToken) {
+        return { success: false, error: 'Your password was updated. Sign in to continue.' };
+      }
+
+      setState((prev) => ({ ...prev, isLoading: true, error: null }));
+      tokenStorage.setTokens(accessToken, refreshToken);
+
+      try {
+        const response = await getProfile();
+        const status = response.status as number;
+        const profileUser = status === 200 ? response.data?.data?.user : undefined;
+
+        if (!profileUser) {
+          tokenStorage.clear();
+          setState({
+            user: null,
+            isLoading: false,
+            isAuthenticated: false,
+            error: null,
+          });
+          return { success: false, error: 'Your password was updated. Sign in to continue.' };
+        }
+
+        if (!['super_admin', 'admin'].includes(profileUser.role)) {
+          tokenStorage.clear();
+          const errorMessage = 'Dashboard access requires admin privileges';
+          setState({
+            user: null,
+            isLoading: false,
+            isAuthenticated: false,
+            error: errorMessage,
+          });
+          return { success: false, error: errorMessage };
+        }
+
+        const storedUser = tokenStorage.getUser<AuthUser>();
+        const user: AuthUser = {
+          id: profileUser.id,
+          email: profileUser.email,
+          name: profileUser.fullName || storedUser?.name,
+          fullName: profileUser.fullName,
+          role: profileUser.role,
+          storeId: profileUser.storeId ?? storedUser?.storeId,
+          storeName: profileUser.storeName ?? storedUser?.storeName,
+          isActive: profileUser.isActive,
+          isEmailVerified: profileUser.isEmailVerified,
+          avatar: profileUser.avatar,
+          createdAt: profileUser.createdAt,
+          lastLoginAt: profileUser.lastLoginAt,
+        };
+
+        signedInHere.current = true;
+        tokenStorage.setUser(user);
+        setState({
+          user,
+          isLoading: false,
+          isAuthenticated: true,
+          error: null,
+        });
+        return { success: true };
+      } catch {
+        tokenStorage.clear();
+        setState({
+          user: null,
+          isLoading: false,
+          isAuthenticated: false,
+          error: null,
+        });
+        return { success: false, error: 'Your password was updated. Sign in to continue.' };
+      }
+    },
+    [],
+  );
+
   const logout = useCallback(() => {
     tokenStorage.clear();
     setState({
@@ -319,6 +395,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         ...state,
         login,
         loginWithGoogle,
+        signInWithSessionTokens,
         logout,
         refreshUser,
         getToken,

@@ -16,6 +16,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const registered = searchParams.get('registered') === 'true';
+  const passwordReset = searchParams.get('reset') === 'success';
   const { login, loginWithGoogle } = useAuth();
   const googleEnabled = isGoogleSignInEnabled();
   const [email, setEmail] = useState('');
@@ -83,6 +84,12 @@ function LoginForm() {
             </div>
           )}
 
+          {passwordReset && !registered && !error && (
+            <div className="mb-5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-900">
+              Your password was updated. Sign in to continue.
+            </div>
+          )}
+
           {error && (
             <div role="alert" className="mb-5 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-800">
               {error}
@@ -118,7 +125,15 @@ function LoginForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between gap-3">
+                <Label htmlFor="password">Password</Label>
+                <Link
+                  href="/forgot-password"
+                  className="text-sm text-slate-600 underline-offset-4 hover:text-slate-950 hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <div className="relative">
                 <Input
                   id="password"
