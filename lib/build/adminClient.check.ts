@@ -116,6 +116,9 @@ async function main() {
   assert.equal(listed.kind, 'ok');
   if (listed.kind === 'ok') {
     assert.equal(listed.page.requests[0]?.storeName, 'Northwind');
+    assert.equal(listed.page.requests[0]?.appName, null);
+    assert.equal(listed.page.requests[0]?.iconUrl, null);
+    assert.equal(listed.page.requests[0]?.splashUrl, null);
     assert.equal(listed.page.requests[0]?.accessNotes, 'Apple developer invite sent.');
   }
   assert.equal(calls.length, 1);

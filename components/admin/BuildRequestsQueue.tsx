@@ -1,9 +1,12 @@
 'use client';
 
-import { ChevronDown } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Check, ChevronDown, Copy } from 'lucide-react';
 import { PLATFORM_STATUSES, type PlatformKind, type PlatformStatus } from '@/lib/build/contract';
 import {
+  opsBrandImageUrl,
   opsPlatformStatusLabel,
+  splashEnvAssignment,
   type AdminBuildPagination,
   type AdminBuildRequest,
   type AdminQueueFilter,
@@ -111,6 +114,105 @@ function PlatformField({
   );
 }
 
+function BrandThumb({
+  url,
+  label,
+  empty,
+  shape,
+}: {
+  url: string | null;
+  label: string;
+  empty: string;
+  shape: 'icon' | 'splash';
+}) {
+  const [broken, setBroken] = useState(false);
+  const show = Boolean(url) && !broken;
+  const frame = shape === 'icon' ? 'size-11 rounded-[22%]' : 'h-11 w-[4.75rem] rounded-md';
+  const caption = url ? label : empty;
+
+  return (
+    <div className="flex w-[4.75rem] shrink-0 flex-col items-center gap-1.5">
+      <div className={`overflow-hidden border border-slate-200 bg-slate-50 ${frame}`}>
+        {show && url ? (
+          // Merchant image hosts are not in the Next image allowlist.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={url}
+            alt=""
+            referrerPolicy="no-referrer"
+            decoding="async"
+            onError={() => setBroken(true)}
+            className="h-full w-full object-cover"
+          />
+        ) : null}
+      </div>
+      <span
+        className={`text-center text-[10px] leading-4 ${
+          url ? 'font-medium uppercase tracking-[0.08em] text-slate-400' : 'text-slate-400'
+        }`}
+      >
+        {caption}
+      </span>
+    </div>
+  );
+}
+
+function CopyUrlButton({
+  label,
+  accessibleName,
+  value,
+  mono,
+}: {
+  label: string;
+  accessibleName: string;
+  value: string;
+  mono?: boolean;
+}) {
+  const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
+  const timer = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timer.current != null) window.clearTimeout(timer.current);
+    };
+  }, []);
+
+  const text = state === 'copied' ? 'Copied' : state === 'failed' ? 'Could not copy' : label;
+
+  return (
+    <button
+      type="button"
+      data-copy={value}
+      title={value}
+      aria-label={state === 'idle' ? accessibleName : text}
+      onClick={() => {
+        if (!navigator.clipboard?.writeText) {
+          setState('failed');
+          return;
+        }
+        void navigator.clipboard.writeText(value).then(
+          () => {
+            setState('copied');
+            if (timer.current != null) window.clearTimeout(timer.current);
+            timer.current = window.setTimeout(() => setState('idle'), 1600);
+          },
+          () => {
+            setState('failed');
+          }
+        );
+      }}
+      className="inline-flex h-8 max-w-full items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
+    >
+      {state === 'copied' ? (
+        <Check aria-hidden className="size-3.5 shrink-0 text-slate-950" />
+      ) : (
+        <Copy aria-hidden className="size-3.5 shrink-0 text-slate-400" />
+      )}
+      <span className={mono && state === 'idle' ? 'truncate font-mono' : 'truncate'}>{text}</span>
+    </button>
+  );
+}
+
 function RequestRow({
   request,
   saving,
@@ -124,20 +226,50 @@ function RequestRow({
 }) {
   const requested = formatWhen(request.createdAt);
   const title = storeTitle(request);
+  const iconUrl = opsBrandImageUrl(request.iconUrl);
+  const splashUrl = opsBrandImageUrl(request.splashUrl);
 
   return (
-    <li className="px-4 py-5 sm:px-5" aria-busy={saving}>
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h2 className="truncate text-sm font-semibold text-slate-950">{title}</h2>
-          <p className="truncate text-sm text-slate-500">{request.storeDomain ?? 'No shop domain'}</p>
+    <li className="px-4 py-4 sm:px-5" aria-busy={saving}>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+        <div className="flex shrink-0 gap-2">
+          <BrandThumb url={iconUrl} label="Icon" empty="No icon" shape="icon" />
+          <BrandThumb url={splashUrl} label="Splash" empty="No splash" shape="splash" />
         </div>
-        {requested ? (
-          <p className="shrink-0 text-sm text-slate-500 sm:text-right">
-            <span className="text-slate-400">Requested </span>
-            {requested}
-          </p>
-        ) : null}
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <h2 className="truncate text-sm font-semibold text-slate-950">{title}</h2>
+              <p className="truncate text-sm text-slate-500">{request.storeDomain ?? 'No shop domain'}</p>
+            </div>
+            {requested ? (
+              <p className="shrink-0 text-sm text-slate-500 sm:text-right">
+                <span className="text-slate-400">Requested </span>
+                {requested}
+              </p>
+            ) : null}
+          </div>
+          {iconUrl || splashUrl ? (
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-medium uppercase tracking-[0.08em] text-slate-400">EAS</span>
+              {splashUrl ? (
+                <CopyUrlButton
+                  label="SPLASH_IMAGE_URL=…"
+                  accessibleName={`Copy SPLASH_IMAGE_URL for ${title}`}
+                  value={splashEnvAssignment(splashUrl)}
+                  mono
+                />
+              ) : null}
+              {iconUrl ? (
+                <CopyUrlButton
+                  label="Icon URL"
+                  accessibleName={`Copy icon URL for ${title}`}
+                  value={iconUrl}
+                />
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <div className="mt-4">
@@ -221,7 +353,11 @@ export function BuildRequestsQueue({
         <div className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white" aria-busy="true">
           <p className="sr-only">Loading build requests</p>
           <div className="space-y-4 px-5 py-5" aria-hidden>
-            <div className="h-4 w-40 rounded bg-slate-100" />
+            <div className="flex gap-3">
+              <div className="size-11 rounded-[22%] bg-slate-100" />
+              <div className="h-11 w-[4.75rem] rounded-md bg-slate-100" />
+              <div className="h-4 w-40 self-center rounded bg-slate-100" />
+            </div>
             <div className="h-16 rounded-lg bg-slate-50" />
             <div className="h-16 rounded-lg bg-slate-50" />
           </div>

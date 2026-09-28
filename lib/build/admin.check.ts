@@ -7,7 +7,9 @@ import {
   applyStatusSnapshot,
   normalizeAdminBuildPage,
   normalizeAdminStatusSnapshot,
+  opsBrandImageUrl,
   opsPlatformStatusLabel,
+  splashEnvAssignment,
   statusPatchBody,
   type AdminBuildRequest,
 } from './adminContract.ts';
@@ -47,6 +49,9 @@ const first = page?.requests[0];
 assert.equal(first?.id, REQUEST_ID);
 assert.equal(first?.storeName, 'Northwind');
 assert.equal(first?.storeDomain, 'northwind.myshopify.com');
+assert.equal(first?.appName, null);
+assert.equal(first?.iconUrl, null);
+assert.equal(first?.splashUrl, null);
 assert.equal(first?.accessNotes, 'Apple developer invite sent.');
 assert.equal(first?.platforms.android.status, 'queued');
 assert.equal(first?.platforms.ios.status, 'waiting_on_merchant');
@@ -79,7 +84,84 @@ const missingStore = normalizeAdminBuildPage({
 });
 assert.equal(missingStore?.requests[0]?.storeName, null);
 assert.equal(missingStore?.requests[0]?.storeDomain, null);
+assert.equal(missingStore?.requests[0]?.appName, null);
+assert.equal(missingStore?.requests[0]?.iconUrl, null);
+assert.equal(missingStore?.requests[0]?.splashUrl, null);
 assert.equal(missingStore?.requests[0]?.accessNotes, null);
+
+const ICON_URL = 'https://cdn.example/icon.png';
+const SPLASH_URL = 'https://cdn.example/splash.png';
+const branded = normalizeAdminBuildPage({
+  data: {
+    requests: [
+      {
+        ...sample,
+        store: {
+          id: STORE_ID,
+          name: 'Northwind',
+          domain: 'northwind.myshopify.com',
+          appName: '  Northwind  ',
+          iconUrl: `  ${ICON_URL}  `,
+          splashUrl: SPLASH_URL,
+        },
+      },
+    ],
+    pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+  },
+});
+assert.equal(branded?.requests[0]?.appName, 'Northwind');
+assert.equal(branded?.requests[0]?.storeName, 'Northwind');
+assert.equal(branded?.requests[0]?.iconUrl, ICON_URL);
+assert.equal(branded?.requests[0]?.splashUrl, SPLASH_URL);
+assert.equal(splashEnvAssignment(SPLASH_URL), `SPLASH_IMAGE_URL=${SPLASH_URL}`);
+assert.equal(JSON.stringify(branded).includes(STORE_ID), false);
+
+const leakedQuery = 'https://cdn.example/icon.png?access_token=shpat_secret';
+const httpSplash = 'http://cdn.example/splash.png';
+const userinfoIcon = 'https://ops:upload-secret@cdn.example/icon.png';
+const signedSplash = 'https://cdn.example/splash.png?api_key=123&api_secret=signedsecret';
+const unsafe = normalizeAdminBuildPage({
+  data: {
+    requests: [
+      {
+        ...sample,
+        store: {
+          name: 'Northwind',
+          domain: 'northwind.myshopify.com',
+          appName: 'Northwind',
+          iconUrl: leakedQuery,
+          splashUrl: httpSplash,
+        },
+      },
+      {
+        ...sample,
+        id: '66f1c2e0a1b2c3d4e5f60719',
+        store: {
+          name: 'Harbor',
+          domain: 'harbor.myshopify.com',
+          iconUrl: userinfoIcon,
+          splashUrl: signedSplash,
+        },
+      },
+    ],
+    pagination: { page: 1, limit: 20, total: 2, pages: 1 },
+  },
+});
+assert.equal(unsafe?.requests[0]?.iconUrl, null);
+assert.equal(unsafe?.requests[0]?.splashUrl, null);
+assert.equal(unsafe?.requests[1]?.iconUrl, null);
+assert.equal(unsafe?.requests[1]?.splashUrl, null);
+assert.equal(unsafe?.requests[1]?.appName, null);
+const unsafeBody = JSON.stringify(unsafe);
+assert.equal(unsafeBody.includes('shpat_'), false);
+assert.equal(unsafeBody.includes('access_token'), false);
+assert.equal(unsafeBody.includes(httpSplash), false);
+assert.equal(unsafeBody.includes('upload-secret'), false);
+assert.equal(unsafeBody.includes('api_secret'), false);
+assert.equal(unsafeBody.includes('api_key'), false);
+assert.equal(opsBrandImageUrl('blob:http://localhost/1'), null);
+assert.equal(opsBrandImageUrl(null), null);
+assert.equal(opsBrandImageUrl(undefined), null);
 
 const skipped = normalizeAdminBuildPage({
   data: {
@@ -132,9 +214,14 @@ const snapshot = normalizeAdminStatusSnapshot({
 });
 assert.ok(snapshot);
 assert.ok(first);
-const merged = applyStatusSnapshot(first as AdminBuildRequest, snapshot!);
+const brandedFirst = branded?.requests[0];
+assert.ok(brandedFirst);
+const merged = applyStatusSnapshot(brandedFirst as AdminBuildRequest, snapshot!);
 assert.equal(merged.storeName, 'Northwind');
 assert.equal(merged.storeDomain, 'northwind.myshopify.com');
+assert.equal(merged.appName, 'Northwind');
+assert.equal(merged.iconUrl, ICON_URL);
+assert.equal(merged.splashUrl, SPLASH_URL);
 assert.equal(merged.platforms.android.status, 'ready');
 assert.equal(merged.platforms.ios.status, 'waiting_on_merchant');
 assert.equal(merged.accessNotes, 'Apple developer invite sent.');

@@ -1,3 +1,4 @@
+import { persistedBrandImageUrl } from '@/lib/onboarding/brandAssets';
 import {
   PLATFORM_STATUSES,
   platformStatusLabel,
@@ -25,6 +26,21 @@ export interface AdminBuildRequest {
   id: string;
   storeName: string | null;
   storeDomain: string | null;
+  /**
+   * Cartaisy store name from `store.appName`. Optional on the ops payload.
+   * The row title stays `storeName`.
+   */
+  appName?: string | null;
+  /**
+   * Public https app icon. Optional on the ops payload. Null when absent,
+   * not https, or token-shaped. Never invented.
+   */
+  iconUrl?: string | null;
+  /**
+   * Public https splash. Optional on the ops payload. Null when absent,
+   * not https, or token-shaped. Never invented.
+   */
+  splashUrl?: string | null;
   platforms: {
     android: AdminPlatformState;
     ios: AdminPlatformState;
@@ -96,13 +112,49 @@ function readNotes(checklist: unknown): string | null {
   return trimmed ? trimmed : null;
 }
 
-function readStoreIdentity(value: unknown): { name: string | null; domain: string | null } {
+/** Signed-upload and OAuth markers the branding helper does not already name. */
+const OPS_SECRET_URL = /api_secret|client_secret|refresh_token|api_key/i;
+
+/**
+ * Public https image for the ops queue. Reuses `persistedBrandImageUrl`,
+ * which drops token-shaped values, http, and blob previews. Embedded
+ * credentials and signed-upload or OAuth markers are dropped here so they
+ * cannot be drawn or copied. Missing values stay null.
+ */
+export function opsBrandImageUrl(value: unknown): string | null {
+  const url = persistedBrandImageUrl(value);
+  if (!url || OPS_SECRET_URL.test(url)) return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.username || parsed.password) return null;
+  } catch {
+    return null;
+  }
+  return url;
+}
+
+/** Clipboard text for the EAS splash env. Pass an already public https URL. */
+export function splashEnvAssignment(url: string): string {
+  return `SPLASH_IMAGE_URL=${url}`;
+}
+
+function readStoreIdentity(value: unknown): {
+  name: string | null;
+  domain: string | null;
+  appName: string | null;
+  iconUrl: string | null;
+  splashUrl: string | null;
+} {
   const store = asRecord(value);
   const name = typeof store?.name === 'string' ? store.name.trim() : '';
   const domain = typeof store?.domain === 'string' ? store.domain.trim() : '';
+  const appName = typeof store?.appName === 'string' ? store.appName.trim() : '';
   return {
     name: name || null,
     domain: domain || null,
+    appName: appName || null,
+    iconUrl: opsBrandImageUrl(store?.iconUrl),
+    splashUrl: opsBrandImageUrl(store?.splashUrl),
   };
 }
 
@@ -115,6 +167,9 @@ export function normalizeAdminBuildRequest(payload: unknown): AdminBuildRequest 
     id: data.id,
     storeName: store.name,
     storeDomain: store.domain,
+    appName: store.appName,
+    iconUrl: store.iconUrl,
+    splashUrl: store.splashUrl,
     platforms: {
       android: readPlatform(platforms?.android),
       ios: readPlatform(platforms?.ios),
