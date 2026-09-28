@@ -35,8 +35,8 @@ const request: AdminBuildRequest = {
   storeName: 'Northwind',
   storeDomain: 'northwind.myshopify.com',
   platforms: {
-    android: { status: 'queued', updatedAt: '2026-09-23T20:00:00.000Z' },
-    ios: { status: 'waiting_on_merchant', updatedAt: '2026-09-23T21:00:00.000Z' },
+    android: { status: 'queued', updatedAt: '2026-09-23T20:00:00.000Z', installUrl: null },
+    ios: { status: 'waiting_on_merchant', updatedAt: '2026-09-23T21:00:00.000Z', installUrl: null },
   },
   accessNotes: 'Apple developer invite sent.',
   createdAt: '2026-09-23T20:00:00.000Z',
@@ -77,6 +77,12 @@ assert.equal(populated.includes(`>${REQUEST_ID}<`), false);
 assert.ok(populated.includes('No app name'));
 assert.ok(populated.includes('No store id'));
 assert.equal(populated.includes('EAS'), false);
+assert.ok(populated.includes('Install link'));
+assert.ok(populated.includes('Save link'));
+assert.ok(populated.includes('placeholder="https://expo.dev/…"') || populated.includes('placeholder="https://expo.dev/&#x2026;"'));
+assert.equal(populated.includes('>Clear<'), false);
+assert.equal(populated.includes('value="http'), false);
+assert.equal(populated.includes('value="https'), false);
 assert.equal(populated.includes('Copy all EAS env'), false);
 assert.equal(populated.includes('APP_NAME'), false);
 assert.equal(populated.includes('EXPO_PUBLIC_STORE_ID'), false);
@@ -333,6 +339,25 @@ assert.equal(loading.includes('APP_NAME'), false);
 assert.equal(loading.includes('EXPO_PUBLIC_STORE_ID'), false);
 assert.equal(loading.includes(STORE_ID), false);
 assert.equal(loading.includes('Harbor'), false);
+
+const ANDROID_INSTALL = 'https://expo.dev/accounts/northwind/builds/android';
+const withInstall = html({
+  requests: [
+    {
+      ...request,
+      platforms: {
+        android: { status: 'ready', updatedAt: '2026-09-23T22:00:00.000Z', installUrl: ANDROID_INSTALL },
+        ios: { status: 'queued', updatedAt: '2026-09-23T20:00:00.000Z', installUrl: 'http://expo.dev/should-not-show' },
+      },
+    },
+  ],
+});
+assert.ok(withInstall.includes(`value="${ANDROID_INSTALL}"`));
+assert.ok(withInstall.includes('>Clear<'));
+assert.equal((withInstall.match(/>Clear</g) ?? []).length, 1);
+assert.equal(withInstall.includes('http://expo.dev/should-not-show'), false);
+assert.equal(withInstall.includes('shpat_'), false);
+assert.ok(withInstall.includes('Save link'));
 
 const rowError = html({ rowError: { id: request.id, message: 'That status is not allowed.' } });
 assert.ok(rowError.includes('That status is not allowed.'));

@@ -248,6 +248,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Onboarding brand step and Settings Store Branding presentation. No backend change, no EAS, and no eligibility change. Shopify Admin tokens are not rendered or logged. Human review is required because this is branding presentation on the onboarding path.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#59`.
 
+### Ready builds hand off with an Expo install link
+
+- Date: 2026-09-28.
+- Decision: When a build platform is `ready`, the merchant install handoff is an Expo or EAS artifact link stored as `platforms.android.installUrl` or `platforms.ios.installUrl` (`string | null`). Build my app shows Install Android build or Install iOS build only when that platform is `ready` and the value is a non-empty https URL with no credentials and no token-shaped text. The link opens in a new tab with `rel="noopener noreferrer"`. A ready platform without that URL keeps the Ready label and does not render a button. The screen does not invent a URL. On `/dashboard/admin/build-requests`, ops paste the link beside the platform status. Save sends it on `PATCH /api/v1/admin/build-requests/:id/status` as `{ "<platform>": { "status", "installUrl" } }`. `installUrl: null` clears it. Omitting `installUrl` leaves the stored value unchanged. The dashboard only sends https links on `expo.dev`, `expo.io`, or a subdomain (including `u.expo.dev`). The queue shows the current link. This does not start EAS, add TestFlight or APK delivery, or change build eligibility.
+- Reason: Dashboard #61. Product decision on 2026-09-28: a ready build is handed to the merchant as an Expo/EAS link. The field is cartaisy-backend #179. Until that API is deployed, a missing `installUrl` stays null and a status update that omits it is unchanged.
+- Impact: Merchant Build my app and the platform-ops queue. Backend API contract. No Shopify token is rendered, logged, or sent. Human review is required because this is a release handoff and a backend status PATCH.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#61`. Backend issue: cartaisy-backend `#179`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

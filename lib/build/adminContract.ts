@@ -2,6 +2,7 @@ import { persistedBrandImageUrl } from '@/lib/onboarding/brandAssets';
 import {
   PLATFORM_STATUSES,
   platformStatusLabel,
+  readInstallUrl,
   type PlatformKind,
   type PlatformStatus,
 } from './contract.ts';
@@ -16,6 +17,14 @@ const OBJECT_ID = /^[a-f0-9]{24}$/i;
 export interface AdminPlatformState {
   status: PlatformStatus | 'unknown';
   updatedAt: string | null;
+  /** Backend install link. Null when absent or not safe https. Never invented. */
+  installUrl: string | null;
+}
+
+export interface PlatformStatusPatch {
+  status: PlatformStatus;
+  /** Present only when ops set or clear the link. Omitted leaves it unchanged. */
+  installUrl?: string | null;
 }
 
 /**
@@ -110,6 +119,7 @@ function readPlatform(value: unknown): AdminPlatformState {
   return {
     status: known ? (status as PlatformStatus) : 'unknown',
     updatedAt: readTimestamp(record?.updatedAt),
+    installUrl: readInstallUrl(record?.installUrl),
   };
 }
 
@@ -340,6 +350,12 @@ export function applyStatusSnapshot(current: AdminBuildRequest, next: AdminStatu
   };
 }
 
-export function statusPatchBody(platform: PlatformKind, status: PlatformStatus): Record<string, { status: PlatformStatus }> {
-  return { [platform]: { status } };
+export function statusPatchBody(
+  platform: PlatformKind,
+  status: PlatformStatus,
+  installUrl?: string | null
+): Record<string, PlatformStatusPatch> {
+  const patch: PlatformStatusPatch = { status };
+  if (installUrl !== undefined) patch.installUrl = installUrl;
+  return { [platform]: patch };
 }

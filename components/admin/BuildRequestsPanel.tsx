@@ -129,9 +129,18 @@ export function BuildRequestsPanel() {
     setFilter(next);
   };
 
-  const onStatus = async (id: string, platform: PlatformKind, status: PlatformStatus) => {
+  const onStatus = async (
+    id: string,
+    platform: PlatformKind,
+    status: PlatformStatus,
+    installUrl?: string | null
+  ) => {
     const current = requests.find((request) => request.id === id);
-    if (!current || current.platforms[platform].status === status || savingRef.current) return;
+    if (!current || savingRef.current) return;
+    const platformState = current.platforms[platform];
+    const statusSame = platformState.status === status;
+    const linkSame = installUrl === undefined || installUrl === platformState.installUrl;
+    if (statusSame && linkSame) return;
     const token = getToken();
     if (!token) {
       setLoadError('Sign in again to update build requests.');
@@ -142,7 +151,7 @@ export function BuildRequestsPanel() {
     savingRef.current = true;
     setSavingId(id);
     setRowError(null);
-    const result = await updateAdminBuildStatus(token, id, platform, status);
+    const result = await updateAdminBuildStatus(token, id, platform, status, installUrl);
     savingRef.current = false;
     setSavingId(null);
 
@@ -188,7 +197,7 @@ export function BuildRequestsPanel() {
         setRowError(null);
         setPage(next);
       }}
-      onStatus={(id, platform, status) => void onStatus(id, platform, status)}
+      onStatus={(id, platform, status, installUrl) => void onStatus(id, platform, status, installUrl)}
     />
   );
 }

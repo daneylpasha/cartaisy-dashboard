@@ -10,7 +10,10 @@ import {
   outcomeCopy,
   platformStatusLabel,
   isSameBuildSnapshot,
+  merchantInstallHref,
   primaryBuildAction,
+  readExpoInstallUrl,
+  readInstallUrl,
   shouldPollBuildRequest,
   type BuildRequest,
 } from './contract.ts';
@@ -25,12 +28,14 @@ function request(partial: {
   android: BuildRequest['platforms']['android']['status'];
   ios: BuildRequest['platforms']['ios']['status'];
   notes?: string | null;
+  androidUrl?: string | null;
+  iosUrl?: string | null;
 }): BuildRequest {
   return {
     id: '66f1c2e0a1b2c3d4e5f60718',
     platforms: {
-      android: { status: partial.android },
-      ios: { status: partial.ios },
+      android: { status: partial.android, installUrl: partial.androidUrl ?? null },
+      ios: { status: partial.ios, installUrl: partial.iosUrl ?? null },
     },
     accessNotes: partial.notes ?? null,
   };
@@ -52,6 +57,10 @@ const moving = request({ android: 'ready', ios: 'waiting_on_merchant' });
 assert.equal(isSameBuildSnapshot(moving, { ...moving }), true);
 assert.equal(isSameBuildSnapshot(null, moving), false);
 assert.equal(isSameBuildSnapshot(moving, request({ android: 'ready', ios: 'ready' })), false);
+assert.equal(
+  isSameBuildSnapshot(moving, request({ android: 'ready', ios: 'waiting_on_merchant', iosUrl: 'https://expo.dev/accounts/acme/builds/ios' })),
+  false
+);
 assert.equal(shouldPollBuildRequest(moving), true);
 assert.equal(isSettledBuildRequest(moving), false);
 
@@ -86,7 +95,9 @@ const created = normalizeBuildRequest({
 });
 assert.ok(created);
 assert.equal(created?.platforms.android.status, 'queued');
+assert.equal(created?.platforms.android.installUrl, null);
 assert.equal(created?.platforms.ios.status, 'not_requested');
+assert.equal(created?.platforms.ios.installUrl, null);
 assert.equal(created?.accessNotes, 'Apple developer invite sent.');
 assert.equal('storeId' in (created as object), false);
 assert.equal('easBuildId' in (created as object), false);
@@ -111,6 +122,40 @@ const list = normalizeBuildRequestList({
 });
 assert.equal(list.length, 1);
 assert.equal(list[0]?.platforms.ios.status, 'building');
+assert.equal(list[0]?.platforms.android.installUrl, null);
+
+const ANDROID_URL = 'https://expo.dev/accounts/acme/builds/android';
+const IOS_URL = 'https://u.expo.dev/artifact/ios';
+const withLinks = normalizeBuildRequest({
+  data: {
+    id: '66f1c2e0a1b2c3d4e5f60718',
+    platforms: {
+      android: { status: 'ready', installUrl: `  ${ANDROID_URL}  ` },
+      ios: { status: 'building', installUrl: IOS_URL },
+    },
+  },
+});
+assert.equal(withLinks?.platforms.android.installUrl, ANDROID_URL);
+assert.equal(withLinks?.platforms.ios.installUrl, IOS_URL);
+assert.equal(merchantInstallHref('ready', withLinks?.platforms.android.installUrl), ANDROID_URL);
+assert.equal(merchantInstallHref('building', withLinks?.platforms.ios.installUrl), null);
+assert.equal(merchantInstallHref('ready', null), null);
+assert.equal(merchantInstallHref('ready', '   '), null);
+assert.equal(merchantInstallHref('ready', 'http://expo.dev/accounts/acme/builds/android'), null);
+assert.equal(merchantInstallHref('ready', 'https://user:secret@expo.dev/accounts/acme/builds/android'), null);
+assert.equal(merchantInstallHref('ready', 'https://expo.dev/accounts/acme/builds/shpat_secret'), null);
+assert.equal(merchantInstallHref(null, ANDROID_URL), null);
+
+assert.equal(readInstallUrl('https://cdn.example/app'), 'https://cdn.example/app');
+assert.equal(readInstallUrl('not a url'), null);
+assert.equal(readExpoInstallUrl(ANDROID_URL), ANDROID_URL);
+assert.equal(readExpoInstallUrl('https://expo.io/builds/1'), 'https://expo.io/builds/1');
+assert.equal(readExpoInstallUrl('https://builds.expo.dev/1'), 'https://builds.expo.dev/1');
+assert.equal(readExpoInstallUrl(IOS_URL), IOS_URL);
+assert.equal(readExpoInstallUrl('https://cdn.example/app'), null);
+assert.equal(readExpoInstallUrl('https://expo.dev.evil.com/builds/1'), null);
+assert.equal(readExpoInstallUrl('http://expo.dev/builds/1'), null);
+assert.equal(readExpoInstallUrl(null), null);
 
 const payload = buildCreatePayload({
   android: true,

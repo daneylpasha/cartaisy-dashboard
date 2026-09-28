@@ -45,12 +45,16 @@ function html(overrides: Partial<BuildMyAppViewProps>): string {
   return renderToStaticMarkup(createElement(BuildMyAppView, { ...base, ...overrides }));
 }
 
-function request(android: BuildRequest['platforms']['android']['status'], ios: BuildRequest['platforms']['ios']['status']): BuildRequest {
+function request(
+  android: BuildRequest['platforms']['android']['status'],
+  ios: BuildRequest['platforms']['ios']['status'],
+  urls?: { android?: string | null; ios?: string | null }
+): BuildRequest {
   return {
     id: '66f1c2e0a1b2c3d4e5f60718',
     platforms: {
-      android: { status: android },
-      ios: { status: ios },
+      android: { status: android, installUrl: urls?.android ?? null },
+      ios: { status: ios, installUrl: urls?.ios ?? null },
     },
     accessNotes: 'Apple developer invite sent.',
   };
@@ -139,6 +143,71 @@ assert.ok(mixed.includes('Ready'));
 assert.ok(mixed.includes('Building'));
 assert.equal(mixed.includes('Request another build'), false);
 assertCalm(mixed);
+
+const readyWithoutLink = html({
+  mode: 'status',
+  request: request('ready', 'ready'),
+});
+assert.ok(readyWithoutLink.includes('Ready'));
+assert.equal(readyWithoutLink.includes('Install Android build'), false);
+assert.equal(readyWithoutLink.includes('Install iOS build'), false);
+assert.equal(readyWithoutLink.includes('href="http'), false);
+assert.equal(readyWithoutLink.includes('href="https'), false);
+assertCalm(readyWithoutLink);
+
+const ANDROID_INSTALL = 'https://expo.dev/accounts/northwind/builds/android';
+const IOS_INSTALL = 'https://u.expo.dev/artifact/ios';
+const readyWithLinks = html({
+  mode: 'status',
+  request: request('ready', 'ready', { android: ANDROID_INSTALL, ios: IOS_INSTALL }),
+});
+assert.ok(readyWithLinks.includes('Install Android build'));
+assert.ok(readyWithLinks.includes('Install iOS build'));
+assert.ok(readyWithLinks.includes('Ready'));
+assert.ok(readyWithLinks.includes(`href="${ANDROID_INSTALL}"`));
+assert.ok(readyWithLinks.includes(`href="${IOS_INSTALL}"`));
+assert.equal((readyWithLinks.match(/target="_blank"/g) ?? []).length, 2);
+assert.equal((readyWithLinks.match(/rel="noopener noreferrer"/g) ?? []).length, 2);
+assert.doesNotMatch(readyWithLinks, /cartaisy/i);
+assert.equal(readyWithLinks.includes('EAS'), false);
+assertCalm(readyWithLinks);
+
+const readyHttp = html({
+  mode: 'status',
+  request: request('ready', 'not_requested', { android: 'http://expo.dev/accounts/northwind/builds/android' }),
+});
+assert.ok(readyHttp.includes('Ready'));
+assert.equal(readyHttp.includes('Install Android build'), false);
+assert.equal(readyHttp.includes('http://expo.dev'), false);
+assertCalm(readyHttp);
+
+const readySecret = html({
+  mode: 'status',
+  request: request('ready', 'not_requested', {
+    android: 'https://expo.dev/accounts/northwind/builds/shpat_secret',
+  }),
+});
+assert.equal(readySecret.includes('Install Android build'), false);
+assert.equal(readySecret.includes('shpat_'), false);
+assertCalm(readySecret);
+
+const buildingWithLink = html({
+  mode: 'status',
+  request: request('building', 'not_requested', { android: ANDROID_INSTALL }),
+});
+assert.ok(buildingWithLink.includes('Building'));
+assert.equal(buildingWithLink.includes('Install Android build'), false);
+assert.equal(buildingWithLink.includes(ANDROID_INSTALL), false);
+assertCalm(buildingWithLink);
+
+const composeIgnoresLink = html({
+  mode: 'compose',
+  request: request('ready', 'ready', { android: ANDROID_INSTALL, ios: IOS_INSTALL }),
+});
+assert.equal(composeIgnoresLink.includes('Install Android build'), false);
+assert.equal(composeIgnoresLink.includes(ANDROID_INSTALL), false);
+assert.ok(composeIgnoresLink.includes('>Build my app<'));
+assertCalm(composeIgnoresLink);
 
 const settled = html({
   mode: 'status',

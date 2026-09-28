@@ -62,7 +62,9 @@ assert.equal(first?.iconUrl, null);
 assert.equal(first?.splashUrl, null);
 assert.equal(first?.accessNotes, 'Apple developer invite sent.');
 assert.equal(first?.platforms.android.status, 'queued');
+assert.equal(first?.platforms.android.installUrl, null);
 assert.equal(first?.platforms.ios.status, 'waiting_on_merchant');
+assert.equal(first?.platforms.ios.installUrl, null);
 assert.equal(JSON.stringify(first).includes('requestedBy'), false);
 
 const empty = normalizeAdminBuildPage({
@@ -363,6 +365,11 @@ assert.equal(allQuery.has('status'), false);
 
 assert.equal(adminBuildStatusPath(REQUEST_ID), `/admin/build-requests/${REQUEST_ID}/status`);
 assert.deepEqual(statusPatchBody('android', 'ready'), { android: { status: 'ready' } });
+assert.equal(JSON.stringify(statusPatchBody('android', 'ready')).includes('installUrl'), false);
+assert.deepEqual(statusPatchBody('android', 'ready', 'https://expo.dev/accounts/acme/builds/1'), {
+  android: { status: 'ready', installUrl: 'https://expo.dev/accounts/acme/builds/1' },
+});
+assert.deepEqual(statusPatchBody('ios', 'ready', null), { ios: { status: 'ready', installUrl: null } });
 assert.equal(JSON.stringify(statusPatchBody('ios', 'failed')).includes('android'), false);
 
 assert.equal(opsPlatformStatusLabel('android', 'waiting_on_merchant'), 'Waiting on merchant');
@@ -378,7 +385,7 @@ const snapshot = normalizeAdminStatusSnapshot({
     ...sample,
     store: undefined,
     platforms: {
-      android: { status: 'ready', updatedAt: '2026-09-23T22:00:00.000Z' },
+      android: { status: 'ready', updatedAt: '2026-09-23T22:00:00.000Z', installUrl: 'https://expo.dev/accounts/acme/builds/1' },
       ios: sample.platforms.ios,
     },
     updatedAt: '2026-09-23T22:00:00.000Z',
@@ -396,7 +403,9 @@ assert.equal(merged.storeId, STORE_ID);
 assert.equal(merged.iconUrl, ICON_URL);
 assert.equal(merged.splashUrl, SPLASH_URL);
 assert.equal(merged.platforms.android.status, 'ready');
+assert.equal(merged.platforms.android.installUrl, 'https://expo.dev/accounts/acme/builds/1');
 assert.equal(merged.platforms.ios.status, 'waiting_on_merchant');
+assert.equal(merged.platforms.ios.installUrl, null);
 assert.equal(merged.accessNotes, 'Apple developer invite sent.');
 
 console.log('admin build contract ok');
