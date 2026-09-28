@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, Copy } from 'lucide-react';
 import { PLATFORM_STATUSES, type PlatformKind, type PlatformStatus } from '@/lib/build/contract';
 import {
+  iconEnvAssignment,
   opsBrandImageUrl,
   opsPlatformStatusLabel,
   splashEnvAssignment,
@@ -262,9 +263,10 @@ function RequestRow({
               ) : null}
               {iconUrl ? (
                 <CopyUrlButton
-                  label="Icon URL"
-                  accessibleName={`Copy icon URL for ${title}`}
-                  value={iconUrl}
+                  label="ICON_IMAGE_URL=…"
+                  accessibleName={`Copy ICON_IMAGE_URL for ${title}`}
+                  value={iconEnvAssignment(iconUrl)}
+                  mono
                 />
               ) : null}
             </div>

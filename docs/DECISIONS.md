@@ -184,6 +184,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Platform-ops queue presentation and the admin build-request contract. Merchant Build my app is unchanged and still does not show these copy controls. A status update keeps the URLs already on the row. Human review is required because this is a backend API contract and a release handoff surface. No Shopify token is read.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`. GitHub issue: `#43`. Backend issue: `#177`.
 
+### Ops copies the icon as ICON_IMAGE_URL
+
+- Date: 2026-09-28.
+- Decision: On `/dashboard/admin/build-requests`, a public https icon copies as `ICON_IMAGE_URL=<url>`, the same assignment shape splash already uses for `SPLASH_IMAGE_URL=<url>`. The control is labeled `ICON_IMAGE_URL=…`. Copy is still offered only after `opsBrandImageUrl` accepts the value, which reuses `persistedBrandImageUrl`. Missing, non-https, and token-shaped icons stay an empty thumb with no copy control. The page does not start EAS. Merchant Build my app is unchanged.
+- Reason: Dashboard #45. Cartaisy mobile reads `ICON_IMAGE_URL` and `SPLASH_IMAGE_URL` at EAS build time. A bare icon URL is easy to paste into the wrong variable.
+- Impact: Platform-ops clipboard only. No backend API change. Shopify Admin tokens are not rendered, logged, or copied. Human review is required because this is a release handoff surface.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#45`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

@@ -133,6 +133,11 @@ export function opsBrandImageUrl(value: unknown): string | null {
   return url;
 }
 
+/** Clipboard text for the EAS icon env. Pass an already public https URL. */
+export function iconEnvAssignment(url: string): string {
+  return `ICON_IMAGE_URL=${url}`;
+}
+
 /** Clipboard text for the EAS splash env. Pass an already public https URL. */
 export function splashEnvAssignment(url: string): string {
   return `SPLASH_IMAGE_URL=${url}`;

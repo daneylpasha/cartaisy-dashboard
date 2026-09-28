@@ -9,6 +9,7 @@ import {
   normalizeAdminStatusSnapshot,
   opsBrandImageUrl,
   opsPlatformStatusLabel,
+  iconEnvAssignment,
   splashEnvAssignment,
   statusPatchBody,
   type AdminBuildRequest,
@@ -113,6 +114,7 @@ assert.equal(branded?.requests[0]?.appName, 'Northwind');
 assert.equal(branded?.requests[0]?.storeName, 'Northwind');
 assert.equal(branded?.requests[0]?.iconUrl, ICON_URL);
 assert.equal(branded?.requests[0]?.splashUrl, SPLASH_URL);
+assert.equal(iconEnvAssignment(ICON_URL), `ICON_IMAGE_URL=${ICON_URL}`);
 assert.equal(splashEnvAssignment(SPLASH_URL), `SPLASH_IMAGE_URL=${SPLASH_URL}`);
 assert.equal(JSON.stringify(branded).includes(STORE_ID), false);
 
