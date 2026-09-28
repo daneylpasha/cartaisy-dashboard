@@ -222,6 +222,71 @@ async function main() {
   assert.equal(invalid.kind, 'invalid');
   if (invalid.kind === 'invalid') assert.match(invalid.message, /android.status must be one of/);
 
+  reset();
+  tokenStorage.setTokens('access-1', 'refresh-1');
+  routes = [
+    (call) =>
+      path(call.url).endsWith('/admin/build-requests') && call.method === 'GET'
+        ? json(200, {
+            success: true,
+            data: {
+              requests: [
+                {
+                  ...queued,
+                  store: {
+                    id: '66f1c2e0a1b2c3d4e5f60710',
+                    name: 'Northwind',
+                    domain: 'northwind.myshopify.com',
+                    appName: '  Harbor & Co  ',
+                  },
+                },
+              ],
+              pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+            },
+          })
+        : null,
+  ];
+  const named = await listAdminBuildRequests('access-1', { filter: 'all' });
+  assert.equal(named.kind, 'ok');
+  if (named.kind === 'ok') {
+    assert.equal(named.page.requests[0]?.appName, 'Harbor & Co');
+    assert.equal(named.page.requests[0]?.storeName, 'Northwind');
+    assert.equal(named.page.requests[0]?.storeDomain, 'northwind.myshopify.com');
+    assert.equal(JSON.stringify(named.page).includes('66f1c2e0a1b2c3d4e5f60710'), false);
+    assert.equal(JSON.stringify(named.page).includes('Cartaisy'), false);
+  }
+
+  reset();
+  tokenStorage.setTokens('access-1', 'refresh-1');
+  routes = [
+    (call) =>
+      path(call.url).endsWith('/admin/build-requests') && call.method === 'GET'
+        ? json(200, {
+            success: true,
+            data: {
+              requests: [
+                {
+                  ...queued,
+                  store: {
+                    name: 'Northwind',
+                    domain: 'northwind.myshopify.com',
+                    appName: '   ',
+                  },
+                },
+              ],
+              pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+            },
+          })
+        : null,
+  ];
+  const blankName = await listAdminBuildRequests('access-1', { filter: 'all' });
+  assert.equal(blankName.kind, 'ok');
+  if (blankName.kind === 'ok') {
+    assert.equal(blankName.page.requests[0]?.appName, null);
+    assert.equal(blankName.page.requests[0]?.storeName, 'Northwind');
+    assert.equal(JSON.stringify(blankName.page).includes('Cartaisy'), false);
+  }
+
   console.log('admin build client ok');
 }
 

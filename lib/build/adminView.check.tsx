@@ -50,7 +50,10 @@ assert.ok(populated.includes('Queued'));
 assert.ok(populated.includes('No icon'));
 assert.ok(populated.includes('No splash'));
 assert.equal(populated.includes('>66f1c2e0a1b2c3d4e5f60718<'), false);
+assert.ok(populated.includes('No app name'));
 assert.equal(populated.includes('EAS'), false);
+assert.equal(populated.includes('APP_NAME'), false);
+assert.equal(populated.includes('data-copy'), false);
 assert.equal(populated.includes('SPLASH_IMAGE_URL'), false);
 assert.equal(populated.includes('ICON_IMAGE_URL'), false);
 assert.equal(populated.includes('<img'), false);
@@ -60,7 +63,7 @@ assert.equal(populated.includes('Cartaisy'), false);
 const ICON_URL = 'https://cdn.example/icon.png';
 const SPLASH_URL = 'https://cdn.example/splash.png';
 const branded = html({
-  requests: [{ ...request, appName: 'Northwind', iconUrl: ICON_URL, splashUrl: SPLASH_URL }],
+  requests: [{ ...request, appName: '  Harbor & Co  ', iconUrl: ICON_URL, splashUrl: SPLASH_URL }],
 });
 assert.ok(branded.includes(`src="${ICON_URL}"`));
 assert.ok(branded.includes(`src="${SPLASH_URL}"`));
@@ -69,10 +72,42 @@ assert.ok(branded.includes('>EAS<'));
 assert.ok(branded.includes(`data-copy="SPLASH_IMAGE_URL=${SPLASH_URL}"`));
 assert.ok(branded.includes(`data-copy="ICON_IMAGE_URL=${ICON_URL}"`));
 assert.ok(branded.includes('ICON_IMAGE_URL=…'));
+assert.ok(branded.includes('APP_NAME=…'));
+assert.ok(branded.includes('data-copy="APP_NAME=Harbor &amp; Co"'));
+assert.equal(branded.includes('APP_NAME="'), false);
+assert.equal(branded.includes('APP_NAME=&quot;'), false);
+assert.equal(branded.includes('APP_NAME=Northwind'), false);
+assert.equal(branded.includes('APP_NAME=northwind.myshopify.com'), false);
+assert.equal(branded.includes('APP_NAME=Cartaisy'), false);
+assert.equal(branded.includes('No app name'), false);
 assert.equal(branded.includes('No icon'), false);
 assert.equal(branded.includes('No splash'), false);
 assert.equal(branded.includes('Cartaisy'), false);
 assert.equal(branded.includes('shpat_'), false);
+
+const namedOnly = html({
+  requests: [{ ...request, appName: 'Harbor & Co' }],
+});
+assert.ok(namedOnly.includes('data-copy="APP_NAME=Harbor &amp; Co"'));
+assert.ok(namedOnly.includes('APP_NAME=…'));
+assert.ok(namedOnly.includes('>EAS<'));
+assert.ok(namedOnly.includes('No icon'));
+assert.ok(namedOnly.includes('No splash'));
+assert.equal(namedOnly.includes('No app name'), false);
+assert.equal(namedOnly.includes('ICON_IMAGE_URL'), false);
+assert.equal(namedOnly.includes('SPLASH_IMAGE_URL'), false);
+assert.equal(namedOnly.includes('APP_NAME=Northwind'), false);
+assert.equal(namedOnly.includes('Cartaisy'), false);
+
+const blankName = html({
+  requests: [{ ...request, appName: ' \n\t ' }],
+});
+assert.ok(blankName.includes('No app name'));
+assert.ok(blankName.includes('Northwind'));
+assert.equal(blankName.includes('APP_NAME'), false);
+assert.equal(blankName.includes('data-copy'), false);
+assert.equal(blankName.includes('EAS'), false);
+assert.equal(blankName.includes('Cartaisy'), false);
 
 const iconOnly = html({
   requests: [{ ...request, iconUrl: ICON_URL }],
@@ -80,6 +115,8 @@ const iconOnly = html({
 assert.ok(iconOnly.includes(`data-copy="ICON_IMAGE_URL=${ICON_URL}"`));
 assert.ok(iconOnly.includes('ICON_IMAGE_URL=…'));
 assert.ok(iconOnly.includes('No splash'));
+assert.ok(iconOnly.includes('No app name'));
+assert.equal(iconOnly.includes('APP_NAME'), false);
 assert.equal(iconOnly.includes('SPLASH_IMAGE_URL'), false);
 
 const poisoned = html({
@@ -98,6 +135,8 @@ assert.equal(poisoned.includes('upload-secret'), false);
 assert.equal(poisoned.includes('access_token'), false);
 assert.equal(poisoned.includes('SPLASH_IMAGE_URL'), false);
 assert.equal(poisoned.includes('ICON_IMAGE_URL'), false);
+assert.ok(poisoned.includes('No app name'));
+assert.equal(poisoned.includes('APP_NAME'), false);
 assert.equal(poisoned.includes('<img'), false);
 assert.equal(poisoned.includes('EAS'), false);
 
@@ -118,7 +157,7 @@ assert.ok(allEmpty.includes('No build requests yet'));
 
 const forbidden = html({
   phase: 'forbidden',
-  requests: [{ ...request, iconUrl: ICON_URL, splashUrl: SPLASH_URL }],
+  requests: [{ ...request, appName: 'Harbor', iconUrl: ICON_URL, splashUrl: SPLASH_URL }],
 });
 assert.ok(forbidden.includes('Platform ops only'));
 assert.ok(forbidden.includes('store admin'));
@@ -130,22 +169,28 @@ assert.equal(forbidden.includes(ICON_URL), false);
 assert.equal(forbidden.includes(SPLASH_URL), false);
 assert.equal(forbidden.includes('SPLASH_IMAGE_URL'), false);
 assert.equal(forbidden.includes('ICON_IMAGE_URL'), false);
+assert.equal(forbidden.includes('APP_NAME'), false);
+assert.equal(forbidden.includes('Harbor'), false);
 
 const error = html({
   phase: 'error',
   loadError: 'We could not load build requests. Try again.',
-  requests: [{ ...request, iconUrl: ICON_URL, splashUrl: SPLASH_URL }],
+  requests: [{ ...request, appName: 'Harbor', iconUrl: ICON_URL, splashUrl: SPLASH_URL }],
 });
 assert.ok(error.includes('We could not load build requests. Try again.'));
 assert.ok(error.includes('Try again'));
 assert.equal(error.includes('Northwind'), false);
 assert.equal(error.includes('Apple developer invite sent.'), false);
 assert.equal(error.includes(SPLASH_URL), false);
+assert.equal(error.includes('APP_NAME'), false);
+assert.equal(error.includes('Harbor'), false);
 
-const loading = html({ phase: 'loading', requests: [{ ...request, splashUrl: SPLASH_URL }] });
+const loading = html({ phase: 'loading', requests: [{ ...request, appName: 'Harbor', splashUrl: SPLASH_URL }] });
 assert.ok(loading.includes('Loading build requests'));
 assert.equal(loading.includes('Northwind'), false);
 assert.equal(loading.includes(SPLASH_URL), false);
+assert.equal(loading.includes('APP_NAME'), false);
+assert.equal(loading.includes('Harbor'), false);
 
 const rowError = html({ rowError: { id: request.id, message: 'That status is not allowed.' } });
 assert.ok(rowError.includes('That status is not allowed.'));
