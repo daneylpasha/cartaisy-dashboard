@@ -180,6 +180,10 @@ async function main() {
   ];
   const read = await getBuildRequest('stale-access', REQUEST_ID);
   assert.equal(read.kind, 'ok');
+  if (read.kind === 'ok') {
+    assert.equal(read.request.platforms.android.installUrl, null);
+    assert.equal(read.request.platforms.ios.installUrl, null);
+  }
 
   reset();
   tokenStorage.setTokens('stale-access', 'refresh-dead');

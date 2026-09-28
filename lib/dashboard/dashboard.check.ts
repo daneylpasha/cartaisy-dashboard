@@ -186,8 +186,8 @@ const described = describeBuild({
     {
       id: '507f1f77bcf86cd799439011',
       platforms: {
-        android: { status: 'building' },
-        ios: { status: 'waiting_on_merchant' },
+        android: { status: 'building', installUrl: null },
+        ios: { status: 'waiting_on_merchant', installUrl: null },
       },
       accessNotes: null,
     },

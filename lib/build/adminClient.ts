@@ -1,5 +1,5 @@
 import { API_URL, customInstance } from '@/lib/api/mutator/custom-instance';
-import { isBuildRequestId, type PlatformKind, type PlatformStatus } from '@/lib/build/contract';
+import { isBuildRequestId, readExpoInstallUrl, type PlatformKind, type PlatformStatus } from '@/lib/build/contract';
 import {
   adminBuildRequestsPath,
   adminBuildStatusPath,
@@ -28,6 +28,7 @@ export type AdminStatusResult =
 const SIGN_IN = 'Sign in again to update build requests.';
 const LOAD_ERROR = 'We could not load build requests. Try again.';
 const SAVE_ERROR = 'We could not update that status. Try again.';
+const INSTALL_URL_ERROR = 'Use an https link on expo.dev or expo.io.';
 
 async function backend(
   token: string,
@@ -88,13 +89,20 @@ export async function updateAdminBuildStatus(
   token: string,
   id: string,
   platform: PlatformKind,
-  status: PlatformStatus
+  status: PlatformStatus,
+  installUrl?: string | null
 ): Promise<AdminStatusResult> {
   if (!isBuildRequestId(id)) return { kind: 'missing' };
+  let link: string | null | undefined = installUrl;
+  if (link != null) {
+    const accepted = readExpoInstallUrl(link);
+    if (!accepted) return { kind: 'invalid', message: INSTALL_URL_ERROR };
+    link = accepted;
+  }
   try {
     const result = await backend(token, adminBuildStatusPath(id), {
       method: 'PATCH',
-      body: JSON.stringify(statusPatchBody(platform, status)),
+      body: JSON.stringify(statusPatchBody(platform, status, link)),
     });
     if (result.status === 404) return { kind: 'missing' };
     if (result.status === 400) {

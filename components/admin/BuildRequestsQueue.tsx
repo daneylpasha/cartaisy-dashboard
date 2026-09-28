@@ -2,7 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, Copy } from 'lucide-react';
-import { PLATFORM_STATUSES, type PlatformKind, type PlatformStatus } from '@/lib/build/contract';
+import {
+  PLATFORM_STATUSES,
+  readExpoInstallUrl,
+  readInstallUrl,
+  type PlatformKind,
+  type PlatformStatus,
+} from '@/lib/build/contract';
 import {
   appNameEnvAssignment,
   easEnvAssignments,
@@ -24,6 +30,14 @@ const QUIET_BUTTON =
 const PRIMARY_BUTTON =
   'inline-flex h-10 items-center justify-center rounded-lg bg-slate-950 px-4 text-sm font-medium text-white transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2';
 
+const COMPACT_PRIMARY =
+  'inline-flex h-8 items-center justify-center rounded-lg bg-slate-950 px-2.5 text-xs font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2';
+
+const COMPACT_QUIET =
+  'inline-flex h-8 items-center justify-center rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-950 disabled:cursor-not-allowed disabled:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2';
+
+const INSTALL_LINK_ERROR = 'Use an https link on expo.dev or expo.io.';
+
 export type BuildQueuePhase = 'loading' | 'forbidden' | 'error' | 'ready';
 
 export interface BuildRequestsQueueProps {
@@ -40,7 +54,7 @@ export interface BuildRequestsQueueProps {
   onRefresh: () => void;
   onRetry: () => void;
   onPage: (page: number) => void;
-  onStatus: (id: string, platform: PlatformKind, status: PlatformStatus) => void;
+  onStatus: (id: string, platform: PlatformKind, status: PlatformStatus, installUrl?: string | null) => void;
 }
 
 function formatWhen(value: string | null): string | null {
@@ -84,7 +98,37 @@ function PlatformField({
   const state = request.platforms[platform];
   const updated = formatWhen(state.updatedAt);
   const selectId = `${request.id}-${platform}`;
+  const linkId = `${selectId}-install`;
+  const hintId = `${linkId}-hint`;
+  const errorId = `${linkId}-error`;
   const store = storeTitle(request);
+  const saved = readInstallUrl(state.installUrl);
+  const [draft, setDraft] = useState(saved ?? '');
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const knownStatus = state.status !== 'unknown' ? state.status : null;
+  const pending = readExpoInstallUrl(draft);
+  const canSave = Boolean(knownStatus) && !saving && pending != null && pending !== saved;
+  const canClear = !saving && Boolean(saved || draft.trim());
+
+  const saveLink = () => {
+    if (!knownStatus) return;
+    if (!pending) {
+      setLinkError(INSTALL_LINK_ERROR);
+      return;
+    }
+    if (pending === saved) return;
+    setLinkError(null);
+    onStatus(request.id, platform, knownStatus, pending);
+  };
+
+  const clearLink = () => {
+    setLinkError(null);
+    if (!knownStatus || !saved) {
+      setDraft('');
+      return;
+    }
+    onStatus(request.id, platform, knownStatus, null);
+  };
 
   return (
     <div className="rounded-lg border border-slate-200 px-3 py-3">
@@ -100,9 +144,15 @@ function PlatformField({
           disabled={saving}
           onChange={(event) => {
             const next = event.target.value;
-            if ((PLATFORM_STATUSES as readonly string[]).includes(next)) {
-              onStatus(request.id, platform, next as PlatformStatus);
+            if (!(PLATFORM_STATUSES as readonly string[]).includes(next)) return;
+            const status = next as PlatformStatus;
+            if (pending && pending !== saved) {
+              setLinkError(null);
+              onStatus(request.id, platform, status, pending);
+              return;
             }
+            if (draft.trim() && !pending) setLinkError(INSTALL_LINK_ERROR);
+            onStatus(request.id, platform, status);
           }}
           className="h-10 w-full appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-9 text-sm text-slate-950 outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500"
         >
@@ -114,6 +164,58 @@ function PlatformField({
           ))}
         </select>
         <ChevronDown aria-hidden className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+      </div>
+      <label htmlFor={linkId} className="mt-3 block text-[11px] font-medium uppercase tracking-[0.08em] text-slate-500">
+        Install link
+      </label>
+      <input
+        id={linkId}
+        type="url"
+        inputMode="url"
+        autoComplete="off"
+        spellCheck={false}
+        maxLength={2000}
+        value={draft}
+        disabled={saving || !knownStatus}
+        placeholder="https://expo.dev/…"
+        aria-label={`${store} ${label} install link`}
+        aria-invalid={linkError ? true : undefined}
+        aria-describedby={linkError ? `${hintId} ${errorId}` : hintId}
+        onChange={(event) => {
+          setDraft(event.target.value);
+          setLinkError(null);
+        }}
+        className="mt-1.5 h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-950 outline-none placeholder:text-slate-400 focus-visible:ring-2 focus-visible:ring-slate-400 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500"
+      />
+      <p id={hintId} className="mt-1.5 text-xs leading-5 text-slate-500">
+        Expo install link. The merchant sees it when this platform is Ready.
+      </p>
+      {linkError ? (
+        <p id={errorId} className="mt-1.5 text-xs leading-5 text-red-700" role="alert">
+          {linkError}
+        </p>
+      ) : null}
+      <div className="mt-2 flex flex-wrap gap-2">
+        <button
+          type="button"
+          className={COMPACT_PRIMARY}
+          disabled={!canSave}
+          aria-label={`Save ${label} install link`}
+          onClick={saveLink}
+        >
+          Save link
+        </button>
+        {canClear ? (
+          <button
+            type="button"
+            className={COMPACT_QUIET}
+            disabled={saving || !knownStatus}
+            aria-label={`Clear ${label} install link`}
+            onClick={clearLink}
+          >
+            Clear
+          </button>
+        ) : null}
       </div>
       {updated ? <p className="mt-2 text-xs text-slate-500">Updated {updated}</p> : null}
     </div>
@@ -329,8 +431,22 @@ function RequestRow({
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <PlatformField request={request} platform="android" label="Android" saving={saving} onStatus={onStatus} />
-        <PlatformField request={request} platform="ios" label="iOS" saving={saving} onStatus={onStatus} />
+        <PlatformField
+          key={`android-${request.platforms.android.installUrl ?? ''}`}
+          request={request}
+          platform="android"
+          label="Android"
+          saving={saving}
+          onStatus={onStatus}
+        />
+        <PlatformField
+          key={`ios-${request.platforms.ios.installUrl ?? ''}`}
+          request={request}
+          platform="ios"
+          label="iOS"
+          saving={saving}
+          onStatus={onStatus}
+        />
       </div>
       {saving ? <p className="mt-3 text-sm text-slate-500">Saving status...</p> : null}
       {error ? (
@@ -384,7 +500,7 @@ export function BuildRequestsQueue({
         <div>
           <h1 className="font-heading text-[1.75rem] font-semibold tracking-tight text-slate-950">Build requests</h1>
           <p className="mt-2 max-w-xl text-sm leading-6 text-slate-600">
-            Merchant builds across stores. Set Android and iOS as each manual build moves.
+            Merchant builds across stores. Set Android and iOS as each manual build moves, and paste an Expo install link when a platform is ready.
           </p>
         </div>
         {showQueue ? (

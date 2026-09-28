@@ -20,6 +20,8 @@ export type PlatformKind = 'android' | 'ios';
 
 export interface PlatformProgress {
   status: PlatformStatus | 'unknown';
+  /** Backend install link. Null when absent or not safe https. Never invented. */
+  installUrl: string | null;
 }
 
 /**
@@ -56,6 +58,53 @@ export interface PrimaryBuildAction {
 
 const OBJECT_ID = /^[a-f0-9]{24}$/i;
 
+/** Shopify tokens and other secrets that must not be treated as an install link. */
+const INSTALL_URL_SECRET =
+  /shpat_|shpss_|shpca_|shpct_|shpua_|access_token|bearer\s|api_secret|client_secret|refresh_token|api_key/i;
+
+/** expo.dev, expo.io, and subdomains such as u.expo.dev. */
+const EXPO_INSTALL_HOST = /^(?:[a-z0-9-]+\.)*(?:expo\.dev|expo\.io)$/;
+
+/**
+ * Install link safe to open. Absolute https only, with no credentials and no
+ * token-shaped text. Anything else is null. Does not invent a URL.
+ */
+export function readInstallUrl(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed || INSTALL_URL_SECRET.test(trimmed)) return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== 'https:') return null;
+  if (parsed.username || parsed.password) return null;
+  if (!parsed.hostname) return null;
+  return trimmed;
+}
+
+/**
+ * Install link ops may save. Same rules as `readInstallUrl`, and the host
+ * must be Expo or EAS (`expo.dev`, `expo.io`, or a subdomain).
+ */
+export function readExpoInstallUrl(value: unknown): string | null {
+  const url = readInstallUrl(value);
+  if (!url) return null;
+  const host = new URL(url).hostname.toLowerCase();
+  return EXPO_INSTALL_HOST.test(host) ? url : null;
+}
+
+/** Merchant install target. Ready plus a safe https link. Otherwise null. */
+export function merchantInstallHref(
+  status: PlatformStatus | 'unknown' | null,
+  installUrl: string | null | undefined
+): string | null {
+  if (status !== 'ready') return null;
+  return readInstallUrl(installUrl);
+}
+
 const ACTIVE_STATUSES = new Set<PlatformStatus | 'unknown'>([
   'queued',
   'building',
@@ -73,7 +122,9 @@ export function isSameBuildSnapshot(current: BuildRequest | null, next: BuildReq
   return (
     current.accessNotes === next.accessNotes &&
     current.platforms.android.status === next.platforms.android.status &&
-    current.platforms.ios.status === next.platforms.ios.status
+    current.platforms.ios.status === next.platforms.ios.status &&
+    current.platforms.android.installUrl === next.platforms.android.installUrl &&
+    current.platforms.ios.installUrl === next.platforms.ios.installUrl
   );
 }
 
@@ -91,10 +142,11 @@ function readRequestRecord(payload: unknown): Record<string, unknown> | null {
 function readPlatform(value: unknown): PlatformProgress {
   const record = asRecord(value);
   const status = typeof record?.status === 'string' ? record.status : '';
+  const installUrl = readInstallUrl(record?.installUrl);
   if ((PLATFORM_STATUSES as readonly string[]).includes(status)) {
-    return { status: status as PlatformStatus };
+    return { status: status as PlatformStatus, installUrl };
   }
-  return { status: 'unknown' };
+  return { status: 'unknown', installUrl };
 }
 
 export function normalizeBuildRequest(payload: unknown): BuildRequest | null {

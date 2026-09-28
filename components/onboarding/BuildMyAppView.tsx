@@ -1,9 +1,10 @@
 'use client';
 
-import { Check } from 'lucide-react';
+import { Check, ExternalLink } from 'lucide-react';
 import {
   ACCESS_NOTES_MAX,
   isSettledBuildRequest,
+  merchantInstallHref,
   outcomeCopy,
   platformStatusLabel,
   primaryBuildAction,
@@ -64,12 +65,17 @@ function statusClass(status: PlatformStatus | 'unknown'): string {
   return 'text-sm text-slate-500';
 }
 
+function installActionLabel(platform: PlatformKind): string {
+  return platform === 'android' ? 'Install Android build' : 'Install iOS build';
+}
+
 function PlatformRow({
   platform,
   label,
   checked,
   locked,
   status,
+  installUrl,
   onChange,
 }: {
   platform: PlatformKind;
@@ -77,6 +83,7 @@ function PlatformRow({
   checked: boolean;
   locked: boolean;
   status: PlatformStatus | 'unknown' | null;
+  installUrl: string | null;
   onChange: (value: boolean) => void;
 }) {
   const box = checked
@@ -84,29 +91,43 @@ function PlatformRow({
     : locked
       ? 'border-slate-200 bg-slate-50'
       : 'border-slate-300 bg-white';
+  const installHref = merchantInstallHref(status, installUrl);
 
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3.5">
-      <label className={`flex min-w-0 items-center gap-3 ${locked ? 'cursor-default' : 'cursor-pointer'}`}>
-        <input
-          type="checkbox"
-          name={platform}
-          checked={checked}
-          disabled={locked}
-          onChange={(event) => onChange(event.target.checked)}
-          className="peer sr-only"
-        />
-        <span
-          aria-hidden
-          className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border peer-focus-visible:ring-2 peer-focus-visible:ring-slate-400 peer-focus-visible:ring-offset-2 ${box}`}
+    <div className="rounded-xl border border-slate-200 px-4 py-3.5">
+      <div className="flex items-center justify-between gap-3">
+        <label className={`flex min-w-0 items-center gap-3 ${locked ? 'cursor-default' : 'cursor-pointer'}`}>
+          <input
+            type="checkbox"
+            name={platform}
+            checked={checked}
+            disabled={locked}
+            onChange={(event) => onChange(event.target.checked)}
+            className="peer sr-only"
+          />
+          <span
+            aria-hidden
+            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border peer-focus-visible:ring-2 peer-focus-visible:ring-slate-400 peer-focus-visible:ring-offset-2 ${box}`}
+          >
+            {checked ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
+          </span>
+          <span className="text-sm font-medium text-slate-950">{label}</span>
+        </label>
+        {status && (
+          <span className={`${statusClass(status)} shrink-0 text-right`}>{platformStatusLabel(platform, status)}</span>
+        )}
+      </div>
+      {installHref ? (
+        <a
+          href={installHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`${PRIMARY_BUTTON} mt-3 w-full gap-2`}
         >
-          {checked ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
-        </span>
-        <span className="text-sm font-medium text-slate-950">{label}</span>
-      </label>
-      {status && (
-        <span className={`${statusClass(status)} shrink-0 text-right`}>{platformStatusLabel(platform, status)}</span>
-      )}
+          {installActionLabel(platform)}
+          <ExternalLink aria-hidden className="size-4" />
+        </a>
+      ) : null}
     </div>
   );
 }
@@ -183,6 +204,8 @@ export function BuildMyAppView({
   const locked = mode === 'status' || submitting;
   const androidStatus = mode === 'status' && request ? request.platforms.android.status : null;
   const iosStatus = mode === 'status' && request ? request.platforms.ios.status : null;
+  const androidInstall = mode === 'status' && request ? request.platforms.android.installUrl : null;
+  const iosInstall = mode === 'status' && request ? request.platforms.ios.installUrl : null;
   const settled = request ? isSettledBuildRequest(request) : false;
   const summary = mode === 'status' && request ? outcomeCopy(request) : null;
 
@@ -234,6 +257,7 @@ export function BuildMyAppView({
             checked={mode === 'status' ? androidStatus !== 'not_requested' : android}
             locked={locked}
             status={androidStatus}
+            installUrl={androidInstall}
             onChange={onAndroidChange}
           />
           <PlatformRow
@@ -242,6 +266,7 @@ export function BuildMyAppView({
             checked={mode === 'status' ? iosStatus !== 'not_requested' : ios}
             locked={locked}
             status={iosStatus}
+            installUrl={iosInstall}
             onChange={onIosChange}
           />
         </div>

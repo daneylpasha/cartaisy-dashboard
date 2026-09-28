@@ -358,6 +358,76 @@ async function main() {
     assert.equal(JSON.stringify(invalidId.page.requests[0]?.storeId), 'null');
   }
 
+  reset();
+  tokenStorage.setTokens('access-1', 'refresh-1');
+  const INSTALL_URL = 'https://u.expo.dev/artifact/android';
+  routes = [
+    (call) => {
+      if (call.method !== 'PATCH' || !path(call.url).endsWith(`/admin/build-requests/${REQUEST_ID}/status`)) {
+        return null;
+      }
+      assert.equal(call.body, JSON.stringify({ android: { status: 'ready', installUrl: INSTALL_URL } }));
+      return json(200, {
+        success: true,
+        data: {
+          ...queued,
+          store: undefined,
+          platforms: {
+            android: { status: 'ready', updatedAt: '2026-09-23T22:00:00.000Z', installUrl: INSTALL_URL },
+            ios: queued.platforms.ios,
+          },
+        },
+      });
+    },
+  ];
+  const linked = await updateAdminBuildStatus('access-1', REQUEST_ID, 'android', 'ready', `  ${INSTALL_URL}  `);
+  assert.equal(linked.kind, 'ok');
+  if (linked.kind === 'ok') {
+    assert.equal(linked.snapshot.platforms.android.installUrl, INSTALL_URL);
+    assert.equal(linked.snapshot.platforms.ios.installUrl, null);
+  }
+
+  reset();
+  tokenStorage.setTokens('access-1', 'refresh-1');
+  routes = [
+    (call) => {
+      if (call.method !== 'PATCH') return null;
+      assert.equal(call.body, JSON.stringify({ ios: { status: 'ready', installUrl: null } }));
+      return json(200, {
+        success: true,
+        data: {
+          ...queued,
+          store: undefined,
+          platforms: {
+            android: queued.platforms.android,
+            ios: { status: 'ready', updatedAt: '2026-09-23T22:00:00.000Z', installUrl: null },
+          },
+        },
+      });
+    },
+  ];
+  const cleared = await updateAdminBuildStatus('access-1', REQUEST_ID, 'ios', 'ready', null);
+  assert.equal(cleared.kind, 'ok');
+  if (cleared.kind === 'ok') assert.equal(cleared.snapshot.platforms.ios.installUrl, null);
+
+  reset();
+  tokenStorage.setTokens('access-1', 'refresh-1');
+  routes = [() => json(500, { error: 'should not be called' })];
+  const rejected = await updateAdminBuildStatus('access-1', REQUEST_ID, 'android', 'ready', 'https://cdn.example/app.apk');
+  assert.equal(rejected.kind, 'invalid');
+  if (rejected.kind === 'invalid') assert.match(rejected.message, /expo\.dev or expo\.io/);
+  assert.equal(calls.length, 0);
+  const secretLink = await updateAdminBuildStatus(
+    'access-1',
+    REQUEST_ID,
+    'android',
+    'ready',
+    'https://expo.dev/builds/shpat_secret'
+  );
+  assert.equal(secretLink.kind, 'invalid');
+  assert.equal(calls.length, 0);
+  assert.equal(JSON.stringify(secretLink).includes('shpat_'), false);
+
   console.log('admin build client ok');
 }
 
