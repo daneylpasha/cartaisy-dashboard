@@ -52,6 +52,7 @@ assert.ok(populated.includes('No splash'));
 assert.equal(populated.includes('>66f1c2e0a1b2c3d4e5f60718<'), false);
 assert.equal(populated.includes('EAS'), false);
 assert.equal(populated.includes('SPLASH_IMAGE_URL'), false);
+assert.equal(populated.includes('ICON_IMAGE_URL'), false);
 assert.equal(populated.includes('<img'), false);
 assert.equal(populated.includes('shpat_'), false);
 assert.equal(populated.includes('Cartaisy'), false);
@@ -66,8 +67,8 @@ assert.ok(branded.includes(`src="${SPLASH_URL}"`));
 assert.ok(branded.includes('SPLASH_IMAGE_URL=…'));
 assert.ok(branded.includes('>EAS<'));
 assert.ok(branded.includes(`data-copy="SPLASH_IMAGE_URL=${SPLASH_URL}"`));
-assert.ok(branded.includes(`data-copy="${ICON_URL}"`));
-assert.ok(branded.includes('Icon URL'));
+assert.ok(branded.includes(`data-copy="ICON_IMAGE_URL=${ICON_URL}"`));
+assert.ok(branded.includes('ICON_IMAGE_URL=…'));
 assert.equal(branded.includes('No icon'), false);
 assert.equal(branded.includes('No splash'), false);
 assert.equal(branded.includes('Cartaisy'), false);
@@ -76,7 +77,8 @@ assert.equal(branded.includes('shpat_'), false);
 const iconOnly = html({
   requests: [{ ...request, iconUrl: ICON_URL }],
 });
-assert.ok(iconOnly.includes(`data-copy="${ICON_URL}"`));
+assert.ok(iconOnly.includes(`data-copy="ICON_IMAGE_URL=${ICON_URL}"`));
+assert.ok(iconOnly.includes('ICON_IMAGE_URL=…'));
 assert.ok(iconOnly.includes('No splash'));
 assert.equal(iconOnly.includes('SPLASH_IMAGE_URL'), false);
 
@@ -95,6 +97,7 @@ assert.equal(poisoned.includes('shpat_'), false);
 assert.equal(poisoned.includes('upload-secret'), false);
 assert.equal(poisoned.includes('access_token'), false);
 assert.equal(poisoned.includes('SPLASH_IMAGE_URL'), false);
+assert.equal(poisoned.includes('ICON_IMAGE_URL'), false);
 assert.equal(poisoned.includes('<img'), false);
 assert.equal(poisoned.includes('EAS'), false);
 
@@ -126,6 +129,7 @@ assert.equal(forbidden.includes('northwind.myshopify.com'), false);
 assert.equal(forbidden.includes(ICON_URL), false);
 assert.equal(forbidden.includes(SPLASH_URL), false);
 assert.equal(forbidden.includes('SPLASH_IMAGE_URL'), false);
+assert.equal(forbidden.includes('ICON_IMAGE_URL'), false);
 
 const error = html({
   phase: 'error',
