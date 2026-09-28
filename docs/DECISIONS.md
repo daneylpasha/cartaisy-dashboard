@@ -147,7 +147,7 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 ### App icon and splash persist with the brand
 
 - Date: 2026-09-24.
-- Decision: The brand step saves an app icon and a splash image with the rest of the brand. The shared phone shows the in-memory draft immediately, then the saved https URL after upload, the same way the logo already works. Upload tries `POST /admin/stores/:storeId/branding/icon` and `.../branding/splash` first. The live branding contract stores logo, primary color, and secondary color. When those asset routes are missing, the file uses the existing signed store-image upload only when `canUpload` is true, then `POST /notifications/stores/:storeId/images/register` must succeed before the https URL is stored on a store-scoped dashboard record. Reload prefers `iconUrl` or `appIconUrl` and `splashUrl` or `splashImageUrl` from the branding payload when they are present. Shopify Admin tokens are not written. Build my app shows the icon with the app name. It does not show the splash, because that screen did not already show one.
+- Decision: The brand step saves an app icon and a splash image with the rest of the brand. The shared phone shows the in-memory draft immediately, then the saved https URL after upload, the same way the logo already works. Upload tries `POST /admin/stores/:storeId/branding/icon` and `.../branding/splash` first. At the time of this decision the live branding contract stored logo, primary color, and secondary color. When those asset routes are missing, the file uses the existing signed store-image upload only when `canUpload` is true, then `POST /notifications/stores/:storeId/images/register` must succeed before the https URL is stored on a store-scoped dashboard record. Reload prefers `iconUrl` or `appIconUrl` and `splashUrl` or `splashImageUrl` from the branding payload when they are present. Shopify Admin tokens are not written. Build my app shows the icon with the app name. It does not show the splash, because that screen did not already show one. How a successful branding upload is saved is the 2026-09-28 decision.
 - Reason: Dashboard #35. Icon and splash were preview-only drafts, so a reload dropped them.
 - Impact: Onboarding and branding. Connect, Sync again, and Reconnect are unchanged. This does not start an EAS build. Human review is required because the brand save path and a backend upload are involved.
 - Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/STATUS.md`, `docs/ARCHITECTURE.md`. GitHub issue: `#35`.
@@ -159,6 +159,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Reason: Dashboard #38. The banner is fixed to the bottom of the viewport and covered the live phone and the Brand card.
 - Impact: Onboarding presentation only. Connect Shopify, Sync again, Reconnect, branding upload, and Build my app are unchanged. No Shopify token is involved.
 - Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/STATUS.md`, `docs/ARCHITECTURE.md`. GitHub issue: `#38`.
+
+### Branding icon and splash are the saved app images
+
+- Date: 2026-09-28.
+- Decision: After backend branding stores an app icon and splash, those GET fields are the values on the brand form, the live phone, and the Build my app icon. `iconUrl` wins over `appIconUrl`, and `splashUrl` wins over `splashImageUrl`, when both are present. A successful `POST /admin/stores/:storeId/branding/icon` or `.../splash` response is the saved https URL. The wizard does not also require a dashboard `brandAssets` write for that path. Signed notification upload plus `brandAssets` runs only when that POST returns 404, 405, or 501. Dashboard `brandAssets` still fills an icon or splash that branding GET omitted. Connect, Sync again, and Reconnect are unchanged. The phone and Build my app markup are unchanged. Shopify Admin tokens are not written.
+- Reason: Dashboard #37. Backend #173 / PR #175 now persists `iconUrl` and `splashUrl` on store branding and returns the read aliases. Reload and another device should follow that document, not a second dashboard copy written after every upload.
+- Impact: Onboarding branding persistence. This does not start an EAS build and does not change connect or catalog recovery. Human review is required because the brand save path and the backend branding contract are involved.
+- Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/STATUS.md`, `docs/ARCHITECTURE.md`. GitHub issue: `#37`. Backend issues: `#173`, `#175`.
 
 ### High-risk auth/store ownership/publishing changes require human review
 

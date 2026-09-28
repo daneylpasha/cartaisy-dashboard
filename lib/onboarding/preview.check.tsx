@@ -6,6 +6,8 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { BrandHandoff } from '@/components/onboarding/BrandHandoff';
 import { SmartHomePreview } from '@/components/onboarding/SmartHomePreview';
+import { mergeStoredBrandAssets } from '@/lib/onboarding/brandAssets';
+import { brandingFromPayload } from '@/lib/onboarding/branding';
 import type { BrandingDraft, LockedCatalog, SyncGate } from '@/lib/onboarding/types';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -23,6 +25,10 @@ assert.doesNotMatch(previewSource, /cartaisy/i);
 assert.doesNotMatch(brandSource, /preview only/i);
 assert.doesNotMatch(brandSource, /api key|access token|accessToken/i);
 assert.match(wizardSource, /uploadBrandAsset/);
+assert.match(wizardSource, /planBrandAssetSave/);
+assert.match(wizardSource, /plan\.persist === 'dashboard'/);
+assert.match(brandSource, /imageUrl=\{draft\.iconUrl\}/);
+assert.match(brandSource, /imageUrl=\{draft\.splashUrl\}/);
 assert.doesNotMatch(wizardSource, /uploadOptionalBrandAsset/);
 assert.doesNotMatch(previewSource, /from-purple|to-pink|purple-6/);
 assert.match(brandSource, /<SmartHomePreview[\s\S]*draft=\{draft\}/);
@@ -143,5 +149,33 @@ const missingIcon = renderToStaticMarkup(
 assert.match(missingIcon, /Harbor/);
 assert.match(missingIcon, />H</);
 assert.doesNotMatch(missingIcon, /cdn\.example\/icon/);
+
+const fromBranding = mergeStoredBrandAssets(
+  brandingFromPayload(
+    {
+      data: {
+        appName: 'Northwind',
+        logoUrl: 'https://cdn.example/logo.png',
+        primaryColor: '#0F766E',
+        secondaryColor: '#F5F5F4',
+        appIconUrl: 'https://cdn.example/api-icon.png',
+        splashImageUrl: 'https://cdn.example/api-splash.png',
+      },
+    },
+    'Stored name'
+  ),
+  {
+    iconUrl: 'https://cdn.example/stored-icon.png',
+    splashUrl: 'https://cdn.example/stored-splash.png',
+  }
+);
+const brandingScreen = screen(render({ draft: fromBranding }));
+assert.match(brandingScreen, /https:\/\/cdn\.example\/api-icon\.png/);
+assert.match(brandingScreen, /https:\/\/cdn\.example\/api-splash\.png/);
+assert.doesNotMatch(brandingScreen, /stored-icon|stored-splash/);
+const brandingHandoff = renderToStaticMarkup(createElement(BrandHandoff, { draft: fromBranding }));
+assert.match(brandingHandoff, /https:\/\/cdn\.example\/api-icon\.png/);
+assert.doesNotMatch(brandingHandoff, /stored-icon/);
+assert.doesNotMatch(brandingHandoff, /api-splash/);
 
 console.log('preview check ok');
