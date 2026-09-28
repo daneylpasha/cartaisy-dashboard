@@ -209,7 +209,7 @@ function SettingsContent() {
             }}
           />
           <StoreAppBrand
-            appName={store?.name || session?.user?.storeName || 'Your app'}
+            appName={store?.name || session?.user?.storeName || ''}
             logoUrl={store?.logo ?? null}
             primaryColor={store?.primaryColor ?? null}
             secondaryColor={store?.secondaryColor ?? null}

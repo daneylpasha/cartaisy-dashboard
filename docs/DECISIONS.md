@@ -232,6 +232,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Platform-ops clipboard only. No new backend fields. Shopify Admin tokens are not rendered, logged, or copied. Human review is required because this is a release handoff surface.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#55`.
 
+### The brand step shows a soft home-screen launcher mock
+
+- Date: 2026-09-28.
+- Decision: The brand step and Settings → Store Branding show a compact home-screen mock under the live phone. When the icon is public https, or a blob draft the phone already shows, and the display name is non-empty after trim, the mock draws a rounded icon and that name. The name uses `launcherDisplayName`. The icon reuses `displayBrandImageUrl`, then keeps only https and blob. Token-shaped and other non-https URLs are dropped. If the icon or the name is missing, the mock shows a silhouette and the real name when one is present, plus the same Brand and Store Branding links as the Build readiness strip. It does not invent a name or icon and does not fall back to Cartaisy, the shop domain, or a store id. Settings no longer writes the placeholder "Your app" into the branding draft. The in-app phone still uses that placeholder inside `SmartHomePreview` when the name is blank. Save, Continue, and Build submit are unchanged. The preview step does not show this mock. `SmartHomePreview` is unchanged.
+- Reason: Dashboard #56. Merchants can see the in-app home and the Build strip, but not how the icon and name sit on a phone home screen.
+- Impact: Onboarding brand step and Settings Store Branding presentation. No backend change, no EAS, and no eligibility change. Shopify Admin tokens are not rendered or logged. Human review is required because this is branding presentation on the onboarding path.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#56`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.
