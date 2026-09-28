@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { StoreCredentialsPanel } from '@/components/build/StoreCredentialsPanel';
 import { BrandHandoff } from '@/components/onboarding/BrandHandoff';
 import { BuildMyAppPanel } from '@/components/onboarding/BuildMyAppPanel';
 import type { BrandingDraft, ShopifyConnectionSnapshot, SyncGate } from '@/lib/onboarding/types';
@@ -47,6 +48,8 @@ export function ReadyStep({
         onCatalogUpdated={onCatalogUpdated}
         onRefreshConnection={onRefreshConnection}
       />
+
+      <StoreCredentialsPanel surface="build" />
 
       <div className="mt-10 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-slate-100 pt-6">
         <button
