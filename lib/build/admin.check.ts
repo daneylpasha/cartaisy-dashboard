@@ -11,8 +11,10 @@ import {
   opsAppName,
   opsBrandImageUrl,
   opsPlatformStatusLabel,
+  opsStoreId,
   iconEnvAssignment,
   splashEnvAssignment,
+  storeIdEnvAssignment,
   statusPatchBody,
   type AdminBuildRequest,
 } from './adminContract.ts';
@@ -53,12 +55,13 @@ assert.equal(first?.id, REQUEST_ID);
 assert.equal(first?.storeName, 'Northwind');
 assert.equal(first?.storeDomain, 'northwind.myshopify.com');
 assert.equal(first?.appName, null);
+assert.equal(first?.storeId, STORE_ID);
+assert.equal(first?.id === first?.storeId, false);
 assert.equal(first?.iconUrl, null);
 assert.equal(first?.splashUrl, null);
 assert.equal(first?.accessNotes, 'Apple developer invite sent.');
 assert.equal(first?.platforms.android.status, 'queued');
 assert.equal(first?.platforms.ios.status, 'waiting_on_merchant');
-assert.equal(JSON.stringify(first).includes(STORE_ID), false);
 assert.equal(JSON.stringify(first).includes('requestedBy'), false);
 
 const empty = normalizeAdminBuildPage({
@@ -88,6 +91,7 @@ const missingStore = normalizeAdminBuildPage({
 assert.equal(missingStore?.requests[0]?.storeName, null);
 assert.equal(missingStore?.requests[0]?.storeDomain, null);
 assert.equal(missingStore?.requests[0]?.appName, null);
+assert.equal(missingStore?.requests[0]?.storeId, STORE_ID);
 assert.equal(missingStore?.requests[0]?.iconUrl, null);
 assert.equal(missingStore?.requests[0]?.splashUrl, null);
 assert.equal(missingStore?.requests[0]?.accessNotes, null);
@@ -113,6 +117,7 @@ const branded = normalizeAdminBuildPage({
   },
 });
 assert.equal(branded?.requests[0]?.appName, 'Northwind');
+assert.equal(branded?.requests[0]?.storeId, STORE_ID);
 assert.equal(branded?.requests[0]?.storeName, 'Northwind');
 assert.equal(branded?.requests[0]?.iconUrl, ICON_URL);
 assert.equal(branded?.requests[0]?.splashUrl, SPLASH_URL);
@@ -121,12 +126,25 @@ assert.equal(splashEnvAssignment(SPLASH_URL), `SPLASH_IMAGE_URL=${SPLASH_URL}`);
 assert.equal(appNameEnvAssignment('Harbor & Co'), 'APP_NAME=Harbor & Co');
 assert.equal(appNameEnvAssignment('Harbor & Co').includes('"'), false);
 assert.equal(appNameEnvAssignment('Harbor & Co').includes("'"), false);
+assert.equal(storeIdEnvAssignment(STORE_ID), `EXPO_PUBLIC_STORE_ID=${STORE_ID}`);
+assert.equal(storeIdEnvAssignment(STORE_ID).includes('"'), false);
+assert.equal(storeIdEnvAssignment(STORE_ID).includes("'"), false);
 assert.equal(opsAppName('  Harbor & Co  '), 'Harbor & Co');
 assert.equal(opsAppName('   '), null);
 assert.equal(opsAppName(''), null);
 assert.equal(opsAppName(null), null);
 assert.equal(opsAppName(undefined), null);
-assert.equal(JSON.stringify(branded).includes(STORE_ID), false);
+const STORE_ID_UPPER = '66F1C2E0A1B2C3D4E5F60710';
+assert.equal(opsStoreId(`  ${STORE_ID}  `), STORE_ID);
+assert.equal(opsStoreId(STORE_ID_UPPER), STORE_ID_UPPER);
+assert.equal(opsStoreId(''), null);
+assert.equal(opsStoreId('   '), null);
+assert.equal(opsStoreId(null), null);
+assert.equal(opsStoreId(undefined), null);
+assert.equal(opsStoreId('northwind.myshopify.com'), null);
+assert.equal(opsStoreId('Harbor & Co'), null);
+assert.equal(opsStoreId(REQUEST_ID.slice(0, 23)), null);
+assert.equal(opsStoreId(`${STORE_ID}a`), null);
 
 const blankAppName = normalizeAdminBuildPage({
   data: {
@@ -145,12 +163,76 @@ const blankAppName = normalizeAdminBuildPage({
   },
 });
 assert.equal(blankAppName?.requests[0]?.appName, null);
+assert.equal(blankAppName?.requests[0]?.storeId, STORE_ID);
 assert.equal(blankAppName?.requests[0]?.storeName, 'Northwind');
 assert.equal(blankAppName?.requests[0]?.storeDomain, 'northwind.myshopify.com');
 const blankBody = JSON.stringify(blankAppName);
-assert.equal(blankBody.includes(STORE_ID), false);
 assert.equal(blankBody.includes('Cartaisy'), false);
 assert.equal(blankBody.includes('APP_NAME'), false);
+
+function pageForStore(store: unknown, id = REQUEST_ID) {
+  return normalizeAdminBuildPage({
+    data: {
+      requests: [{ ...sample, id, store }],
+      pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+    },
+  });
+}
+
+const paddedStoreId = pageForStore({
+  id: `  ${STORE_ID}\n`,
+  name: 'Northwind',
+  domain: 'northwind.myshopify.com',
+});
+assert.equal(paddedStoreId?.requests[0]?.storeId, STORE_ID);
+
+const upperStoreId = pageForStore({
+  id: STORE_ID_UPPER,
+  name: 'Northwind',
+  domain: 'northwind.myshopify.com',
+});
+assert.equal(upperStoreId?.requests[0]?.storeId, STORE_ID_UPPER);
+assert.equal(storeIdEnvAssignment(upperStoreId?.requests[0]?.storeId ?? ''), `EXPO_PUBLIC_STORE_ID=${STORE_ID_UPPER}`);
+
+const missingStoreId = pageForStore({
+  name: 'Northwind',
+  domain: 'northwind.myshopify.com',
+  appName: 'Harbor',
+});
+assert.equal(missingStoreId?.requests[0]?.storeId, null);
+assert.equal(missingStoreId?.requests[0]?.id, REQUEST_ID);
+assert.equal(missingStoreId?.requests[0]?.appName, 'Harbor');
+assert.equal(missingStoreId?.requests[0]?.storeDomain, 'northwind.myshopify.com');
+assert.equal(JSON.stringify(missingStoreId?.requests[0]).includes(STORE_ID), false);
+assert.notEqual(missingStoreId?.requests[0]?.storeId, REQUEST_ID);
+
+const domainAsId = pageForStore({
+  id: 'northwind.myshopify.com',
+  name: 'Northwind',
+  domain: 'northwind.myshopify.com',
+  appName: 'Harbor',
+});
+assert.equal(domainAsId?.requests[0]?.storeId, null);
+assert.equal(domainAsId?.requests[0]?.storeDomain, 'northwind.myshopify.com');
+assert.equal(domainAsId?.requests[0]?.appName, 'Harbor');
+assert.equal(domainAsId?.requests[0]?.id, REQUEST_ID);
+
+const nameAsId = pageForStore({
+  id: 'Harbor & Co',
+  name: 'Northwind',
+  domain: 'northwind.myshopify.com',
+  appName: 'Harbor & Co',
+});
+assert.equal(nameAsId?.requests[0]?.storeId, null);
+assert.equal(nameAsId?.requests[0]?.appName, 'Harbor & Co');
+assert.equal(nameAsId?.requests[0]?.storeName, 'Northwind');
+
+const requestIdAsFallback = pageForStore({
+  name: 'Northwind',
+  domain: 'northwind.myshopify.com',
+});
+assert.equal(requestIdAsFallback?.requests[0]?.storeId, null);
+assert.notEqual(requestIdAsFallback?.requests[0]?.storeId, REQUEST_ID);
 
 const leakedQuery = 'https://cdn.example/icon.png?access_token=shpat_secret';
 const httpSplash = 'http://cdn.example/splash.png';
@@ -185,10 +267,13 @@ const unsafe = normalizeAdminBuildPage({
 });
 assert.equal(unsafe?.requests[0]?.iconUrl, null);
 assert.equal(unsafe?.requests[0]?.splashUrl, null);
+assert.equal(unsafe?.requests[0]?.storeId, null);
 assert.equal(unsafe?.requests[1]?.iconUrl, null);
 assert.equal(unsafe?.requests[1]?.splashUrl, null);
 assert.equal(unsafe?.requests[1]?.appName, null);
+assert.equal(unsafe?.requests[1]?.storeId, null);
 const unsafeBody = JSON.stringify(unsafe);
+assert.equal(unsafeBody.includes(STORE_ID), false);
 assert.equal(unsafeBody.includes('shpat_'), false);
 assert.equal(unsafeBody.includes('access_token'), false);
 assert.equal(unsafeBody.includes(httpSplash), false);
@@ -256,6 +341,7 @@ const merged = applyStatusSnapshot(brandedFirst as AdminBuildRequest, snapshot!)
 assert.equal(merged.storeName, 'Northwind');
 assert.equal(merged.storeDomain, 'northwind.myshopify.com');
 assert.equal(merged.appName, 'Northwind');
+assert.equal(merged.storeId, STORE_ID);
 assert.equal(merged.iconUrl, ICON_URL);
 assert.equal(merged.splashUrl, SPLASH_URL);
 assert.equal(merged.platforms.android.status, 'ready');

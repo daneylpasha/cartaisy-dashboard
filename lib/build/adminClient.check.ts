@@ -117,6 +117,8 @@ async function main() {
   if (listed.kind === 'ok') {
     assert.equal(listed.page.requests[0]?.storeName, 'Northwind');
     assert.equal(listed.page.requests[0]?.appName, null);
+    assert.equal(listed.page.requests[0]?.storeId, '66f1c2e0a1b2c3d4e5f60710');
+    assert.notEqual(listed.page.requests[0]?.storeId, REQUEST_ID);
     assert.equal(listed.page.requests[0]?.iconUrl, null);
     assert.equal(listed.page.requests[0]?.splashUrl, null);
     assert.equal(listed.page.requests[0]?.accessNotes, 'Apple developer invite sent.');
@@ -250,9 +252,10 @@ async function main() {
   assert.equal(named.kind, 'ok');
   if (named.kind === 'ok') {
     assert.equal(named.page.requests[0]?.appName, 'Harbor & Co');
+    assert.equal(named.page.requests[0]?.storeId, '66f1c2e0a1b2c3d4e5f60710');
     assert.equal(named.page.requests[0]?.storeName, 'Northwind');
     assert.equal(named.page.requests[0]?.storeDomain, 'northwind.myshopify.com');
-    assert.equal(JSON.stringify(named.page).includes('66f1c2e0a1b2c3d4e5f60710'), false);
+    assert.notEqual(named.page.requests[0]?.storeId, REQUEST_ID);
     assert.equal(JSON.stringify(named.page).includes('Cartaisy'), false);
   }
 
@@ -283,8 +286,76 @@ async function main() {
   assert.equal(blankName.kind, 'ok');
   if (blankName.kind === 'ok') {
     assert.equal(blankName.page.requests[0]?.appName, null);
+    assert.equal(blankName.page.requests[0]?.storeId, null);
     assert.equal(blankName.page.requests[0]?.storeName, 'Northwind');
+    assert.equal(JSON.stringify(blankName.page).includes('66f1c2e0a1b2c3d4e5f60710'), false);
+    assert.notEqual(blankName.page.requests[0]?.storeId, REQUEST_ID);
     assert.equal(JSON.stringify(blankName.page).includes('Cartaisy'), false);
+  }
+
+  reset();
+  tokenStorage.setTokens('access-1', 'refresh-1');
+  routes = [
+    (call) =>
+      path(call.url).endsWith('/admin/build-requests') && call.method === 'GET'
+        ? json(200, {
+            success: true,
+            data: {
+              requests: [
+                {
+                  ...queued,
+                  store: {
+                    id: '  66F1C2E0A1B2C3D4E5F60710  ',
+                    name: 'Northwind',
+                    domain: 'northwind.myshopify.com',
+                  },
+                },
+              ],
+              pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+            },
+          })
+        : null,
+  ];
+  const exactId = await listAdminBuildRequests('access-1', { filter: 'all' });
+  assert.equal(exactId.kind, 'ok');
+  if (exactId.kind === 'ok') {
+    assert.equal(exactId.page.requests[0]?.storeId, '66F1C2E0A1B2C3D4E5F60710');
+    assert.notEqual(exactId.page.requests[0]?.storeId, REQUEST_ID);
+  }
+
+  reset();
+  tokenStorage.setTokens('access-1', 'refresh-1');
+  routes = [
+    (call) =>
+      path(call.url).endsWith('/admin/build-requests') && call.method === 'GET'
+        ? json(200, {
+            success: true,
+            data: {
+              requests: [
+                {
+                  ...queued,
+                  store: {
+                    id: 'northwind.myshopify.com',
+                    name: 'Northwind',
+                    domain: 'northwind.myshopify.com',
+                    appName: 'Harbor',
+                  },
+                },
+              ],
+              pagination: { page: 1, limit: 20, total: 1, pages: 1 },
+            },
+          })
+        : null,
+  ];
+  const invalidId = await listAdminBuildRequests('access-1', { filter: 'all' });
+  assert.equal(invalidId.kind, 'ok');
+  if (invalidId.kind === 'ok') {
+    assert.equal(invalidId.page.requests[0]?.storeId, null);
+    assert.equal(invalidId.page.requests[0]?.appName, 'Harbor');
+    assert.equal(invalidId.page.requests[0]?.storeDomain, 'northwind.myshopify.com');
+    assert.equal(invalidId.page.requests[0]?.id, REQUEST_ID);
+    assert.notEqual(invalidId.page.requests[0]?.storeId, REQUEST_ID);
+    assert.equal(JSON.stringify(invalidId.page.requests[0]?.storeId), 'null');
   }
 
   console.log('admin build client ok');

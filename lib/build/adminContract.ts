@@ -19,13 +19,21 @@ export interface AdminPlatformState {
 }
 
 /**
- * One cross-store build request for the ops queue. Requester ids and store
- * ids stay off this object so the screen cannot render them by accident.
+ * One cross-store build request for the ops queue. Requester ids stay off
+ * this object. `storeId` is only the merchant store ObjectId from `store.id`,
+ * kept so ops can copy `EXPO_PUBLIC_STORE_ID`. It is not the row title and
+ * it is never taken from the build-request id.
  */
 export interface AdminBuildRequest {
   id: string;
   storeName: string | null;
   storeDomain: string | null;
+  /**
+   * Merchant store ObjectId from `store.id` only. Optional. Trimmed.
+   * A 24-character hex id, or null when missing or invalid. Not the
+   * build-request id, shop domain, or app name. Not the row title.
+   */
+  storeId?: string | null;
   /**
    * Merchant display name from `store.appName`. Optional on the ops payload.
    * Trimmed. Null when missing, blank, or whitespace-only. The row title
@@ -164,10 +172,27 @@ export function splashEnvAssignment(url: string): string {
   return envAssignment('SPLASH_IMAGE_URL', url);
 }
 
+/**
+ * Merchant store ObjectId for the ops queue. Accepts a 24-character hex id
+ * after trim, preserving that exact string. Anything else stays null. Does
+ * not invent an id.
+ */
+export function opsStoreId(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const id = value.trim();
+  return isObjectId(id) ? id : null;
+}
+
+/** Clipboard text for the EAS store id. Pass an already valid ObjectId. */
+export function storeIdEnvAssignment(storeId: string): string {
+  return envAssignment('EXPO_PUBLIC_STORE_ID', storeId);
+}
+
 function readStoreIdentity(value: unknown): {
   name: string | null;
   domain: string | null;
   appName: string | null;
+  storeId: string | null;
   iconUrl: string | null;
   splashUrl: string | null;
 } {
@@ -178,6 +203,7 @@ function readStoreIdentity(value: unknown): {
     name: name || null,
     domain: domain || null,
     appName: opsAppName(store?.appName),
+    storeId: opsStoreId(store?.id),
     iconUrl: opsBrandImageUrl(store?.iconUrl),
     splashUrl: opsBrandImageUrl(store?.splashUrl),
   };
@@ -193,6 +219,7 @@ export function normalizeAdminBuildRequest(payload: unknown): AdminBuildRequest 
     storeName: store.name,
     storeDomain: store.domain,
     appName: store.appName,
+    storeId: store.storeId,
     iconUrl: store.iconUrl,
     splashUrl: store.splashUrl,
     platforms: {

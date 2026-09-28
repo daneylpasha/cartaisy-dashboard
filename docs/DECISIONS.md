@@ -208,6 +208,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Platform-ops clipboard only. No backend API change. Shopify Admin tokens are not rendered, logged, or copied. Human review is required because this is a release handoff surface.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#49`.
 
+### Ops copies the merchant store id as EXPO_PUBLIC_STORE_ID
+
+- Date: 2026-09-28.
+- Decision: On `/dashboard/admin/build-requests`, a valid 24-character hex `store.id` copies as `EXPO_PUBLIC_STORE_ID=<id>` with no quotes. The control is labeled `EXPO_PUBLIC_STORE_ID=…` and sits with `APP_NAME=…`, `ICON_IMAGE_URL=…`, and `SPLASH_IMAGE_URL=…`. The same assignment helper writes it. The raw id is not the row title. A missing or invalid id is a calm empty state with no copy control. The queue does not invent an id and does not fall back to the build-request id, the shop domain, or the app name. The page does not start EAS. Merchant Build my app does not show this control.
+- Reason: Dashboard #51. Cartaisy mobile reads `EXPO_PUBLIC_STORE_ID` at EAS build time. A wrong or missing store id ships a binary that cannot talk to the merchant tenant.
+- Impact: Platform-ops clipboard only. `store.id` was already on `GET /api/v1/admin/build-requests` and is now kept on the ops view object for this copy. No backend API change. Shopify Admin tokens are not rendered, logged, or copied. Human review is required because this is a release handoff surface and a backend response field is now retained.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#51`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.
