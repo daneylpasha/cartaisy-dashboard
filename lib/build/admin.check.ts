@@ -8,6 +8,7 @@ import {
   normalizeAdminBuildPage,
   normalizeAdminStatusSnapshot,
   appNameEnvAssignment,
+  easEnvAssignments,
   opsAppName,
   opsBrandImageUrl,
   opsPlatformStatusLabel,
@@ -129,12 +130,62 @@ assert.equal(appNameEnvAssignment('Harbor & Co').includes("'"), false);
 assert.equal(storeIdEnvAssignment(STORE_ID), `EXPO_PUBLIC_STORE_ID=${STORE_ID}`);
 assert.equal(storeIdEnvAssignment(STORE_ID).includes('"'), false);
 assert.equal(storeIdEnvAssignment(STORE_ID).includes("'"), false);
+const fullEasEnv = [
+  'APP_NAME=Harbor & Co',
+  `ICON_IMAGE_URL=${ICON_URL}`,
+  `SPLASH_IMAGE_URL=${SPLASH_URL}`,
+  `EXPO_PUBLIC_STORE_ID=${STORE_ID}`,
+].join('\n');
+assert.equal(
+  easEnvAssignments({
+    appName: '  Harbor & Co  ',
+    iconUrl: `  ${ICON_URL}  `,
+    splashUrl: SPLASH_URL,
+    storeId: `  ${STORE_ID}  `,
+  }),
+  fullEasEnv,
+);
+assert.equal(fullEasEnv.includes('\r'), false);
+assert.equal(fullEasEnv.includes('"'), false);
+assert.equal(fullEasEnv.includes("'"), false);
+assert.equal(fullEasEnv.endsWith('\n'), false);
+const STORE_ID_UPPER = '66F1C2E0A1B2C3D4E5F60710';
+assert.equal(
+  easEnvAssignments({
+    appName: 'Harbor',
+    splashUrl: SPLASH_URL,
+    storeId: STORE_ID_UPPER,
+  }),
+  ['APP_NAME=Harbor', `SPLASH_IMAGE_URL=${SPLASH_URL}`, `EXPO_PUBLIC_STORE_ID=${STORE_ID_UPPER}`].join('\n'),
+);
+assert.equal(easEnvAssignments({ iconUrl: ICON_URL }), `ICON_IMAGE_URL=${ICON_URL}`);
+const iconOnlyEnv = easEnvAssignments({
+  appName: '  ',
+  iconUrl: ICON_URL,
+  splashUrl: 'http://cdn.example/splash.png',
+  storeId: 'northwind.myshopify.com',
+});
+assert.equal(iconOnlyEnv, `ICON_IMAGE_URL=${ICON_URL}`);
+assert.equal(iconOnlyEnv?.includes('Cartaisy'), false);
+assert.equal(iconOnlyEnv?.includes(REQUEST_ID), false);
+assert.equal(iconOnlyEnv?.includes('northwind'), false);
+assert.equal(
+  easEnvAssignments({
+    appName: ' \n\t ',
+    iconUrl: 'https://cdn.example/icon.png?access_token=shpat_secret',
+    splashUrl: 'https://ops:upload-secret@cdn.example/splash.png',
+    storeId: 'northwind.myshopify.com',
+  }),
+  null,
+);
+assert.equal(easEnvAssignments({ appName: '', iconUrl: '', splashUrl: '', storeId: '' }), null);
+assert.equal(easEnvAssignments({ storeId: REQUEST_ID.slice(0, 23), appName: '   ' }), null);
+assert.equal(easEnvAssignments({ storeId: `${REQUEST_ID}zz`, iconUrl: 'blob:http://localhost/preview' }), null);
 assert.equal(opsAppName('  Harbor & Co  '), 'Harbor & Co');
 assert.equal(opsAppName('   '), null);
 assert.equal(opsAppName(''), null);
 assert.equal(opsAppName(null), null);
 assert.equal(opsAppName(undefined), null);
-const STORE_ID_UPPER = '66F1C2E0A1B2C3D4E5F60710';
 assert.equal(opsStoreId(`  ${STORE_ID}  `), STORE_ID);
 assert.equal(opsStoreId(STORE_ID_UPPER), STORE_ID_UPPER);
 assert.equal(opsStoreId(''), null);

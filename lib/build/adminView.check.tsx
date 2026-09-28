@@ -17,6 +17,19 @@ function withoutCopyAttrs(markup: string): string {
   return markup.replace(/ data-copy="[^"]*"/g, '').replace(/ title="[^"]*"/g, '');
 }
 
+function decodeAttr(value: string): string {
+  return value
+    .replace(/&#10;/g, '\n')
+    .replace(/&#x0*a;/gi, '\n')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
+}
+
+function copyValues(markup: string): string[] {
+  return [...markup.matchAll(/data-copy="([^"]*)"/g)].map((match) => decodeAttr(match[1] ?? ''));
+}
+
 const request: AdminBuildRequest = {
   id: REQUEST_ID,
   storeName: 'Northwind',
@@ -64,6 +77,7 @@ assert.equal(populated.includes(`>${REQUEST_ID}<`), false);
 assert.ok(populated.includes('No app name'));
 assert.ok(populated.includes('No store id'));
 assert.equal(populated.includes('EAS'), false);
+assert.equal(populated.includes('Copy all EAS env'), false);
 assert.equal(populated.includes('APP_NAME'), false);
 assert.equal(populated.includes('EXPO_PUBLIC_STORE_ID'), false);
 assert.equal(populated.includes('data-copy'), false);
@@ -108,6 +122,22 @@ assert.equal(branded.includes('No icon'), false);
 assert.equal(branded.includes('No splash'), false);
 assert.equal(branded.includes('Cartaisy'), false);
 assert.equal(branded.includes('shpat_'), false);
+assert.ok(branded.includes('Copy all EAS env'));
+const brandedBlock = [
+  'APP_NAME=Harbor & Co',
+  `ICON_IMAGE_URL=${ICON_URL}`,
+  `SPLASH_IMAGE_URL=${SPLASH_URL}`,
+  `EXPO_PUBLIC_STORE_ID=${STORE_ID}`,
+].join('\n');
+const brandedCopies = copyValues(branded);
+assert.ok(brandedCopies.includes(brandedBlock));
+assert.equal(brandedCopies.filter((value) => value.includes('\n')).length, 1);
+assert.equal(brandedBlock.includes('\r'), false);
+assert.equal(brandedBlock.endsWith('\n'), false);
+assert.equal(brandedCopies.includes('APP_NAME=Harbor & Co'), true);
+assert.equal(brandedCopies.includes(`ICON_IMAGE_URL=${ICON_URL}`), true);
+assert.equal(brandedCopies.includes(`SPLASH_IMAGE_URL=${SPLASH_URL}`), true);
+assert.equal(brandedCopies.includes(`EXPO_PUBLIC_STORE_ID=${STORE_ID}`), true);
 
 const namedOnly = html({
   requests: [{ ...request, appName: 'Harbor & Co' }],
@@ -115,6 +145,12 @@ const namedOnly = html({
 assert.ok(namedOnly.includes('data-copy="APP_NAME=Harbor &amp; Co"'));
 assert.ok(namedOnly.includes('APP_NAME=…'));
 assert.ok(namedOnly.includes('>EAS<'));
+assert.ok(namedOnly.includes('Copy all EAS env'));
+assert.deepEqual(
+  copyValues(namedOnly).filter((value) => value.includes('\n')),
+  [],
+);
+assert.equal(copyValues(namedOnly).filter((value) => value === 'APP_NAME=Harbor & Co').length, 2);
 assert.ok(namedOnly.includes('No icon'));
 assert.ok(namedOnly.includes('No splash'));
 assert.ok(namedOnly.includes('No store id'));
@@ -135,6 +171,7 @@ assert.equal(blankName.includes('APP_NAME'), false);
 assert.equal(blankName.includes('EXPO_PUBLIC_STORE_ID'), false);
 assert.equal(blankName.includes('data-copy'), false);
 assert.equal(blankName.includes('EAS'), false);
+assert.equal(blankName.includes('Copy all EAS env'), false);
 assert.equal(blankName.includes('Cartaisy'), false);
 
 const STORE_ID_UPPER = '66F1C2E0A1B2C3D4E5F60710';
@@ -144,6 +181,9 @@ const storeOnly = html({
 assert.ok(storeOnly.includes(`data-copy="EXPO_PUBLIC_STORE_ID=${STORE_ID_UPPER}"`));
 assert.ok(storeOnly.includes('EXPO_PUBLIC_STORE_ID=…'));
 assert.ok(storeOnly.includes('>EAS<'));
+assert.ok(storeOnly.includes('Copy all EAS env'));
+assert.equal(copyValues(storeOnly).includes(`EXPO_PUBLIC_STORE_ID=${STORE_ID_UPPER}`), true);
+assert.equal(copyValues(storeOnly).some((value) => value.includes('\n')), false);
 assert.ok(storeOnly.includes('No app name'));
 assert.ok(storeOnly.includes('No icon'));
 assert.ok(storeOnly.includes('No splash'));
@@ -188,6 +228,23 @@ assert.ok(iconOnly.includes('No store id'));
 assert.equal(iconOnly.includes('APP_NAME'), false);
 assert.equal(iconOnly.includes('EXPO_PUBLIC_STORE_ID'), false);
 assert.equal(iconOnly.includes('SPLASH_IMAGE_URL'), false);
+assert.ok(iconOnly.includes('Copy all EAS env'));
+assert.equal(copyValues(iconOnly).includes(`ICON_IMAGE_URL=${ICON_URL}`), true);
+assert.equal(copyValues(iconOnly).some((value) => value.includes('\n')), false);
+
+const partial = html({
+  requests: [{ ...request, iconUrl: ICON_URL, storeId: STORE_ID }],
+});
+assert.ok(partial.includes('Copy all EAS env'));
+assert.ok(partial.includes('No app name'));
+assert.ok(partial.includes('No splash'));
+assert.equal(
+  copyValues(partial).includes([`ICON_IMAGE_URL=${ICON_URL}`, `EXPO_PUBLIC_STORE_ID=${STORE_ID}`].join('\n')),
+  true,
+);
+assert.equal(copyValues(partial).some((value) => value.includes('APP_NAME')), false);
+assert.equal(copyValues(partial).some((value) => value.includes('SPLASH_IMAGE_URL')), false);
+assert.equal(copyValues(partial).some((value) => value.includes('\n\n')), false);
 
 const poisoned = html({
   requests: [
@@ -211,6 +268,7 @@ assert.equal(poisoned.includes('APP_NAME'), false);
 assert.equal(poisoned.includes('EXPO_PUBLIC_STORE_ID'), false);
 assert.equal(poisoned.includes('<img'), false);
 assert.equal(poisoned.includes('EAS'), false);
+assert.equal(poisoned.includes('Copy all EAS env'), false);
 
 const empty = html({
   requests: [],
@@ -241,6 +299,7 @@ assert.equal(forbidden.includes(ICON_URL), false);
 assert.equal(forbidden.includes(SPLASH_URL), false);
 assert.equal(forbidden.includes('SPLASH_IMAGE_URL'), false);
 assert.equal(forbidden.includes('ICON_IMAGE_URL'), false);
+assert.equal(forbidden.includes('Copy all EAS env'), false);
 assert.equal(forbidden.includes('APP_NAME'), false);
 assert.equal(forbidden.includes('EXPO_PUBLIC_STORE_ID'), false);
 assert.equal(forbidden.includes(STORE_ID), false);
@@ -256,6 +315,7 @@ assert.ok(error.includes('Try again'));
 assert.equal(error.includes('Northwind'), false);
 assert.equal(error.includes('Apple developer invite sent.'), false);
 assert.equal(error.includes(SPLASH_URL), false);
+assert.equal(error.includes('Copy all EAS env'), false);
 assert.equal(error.includes('APP_NAME'), false);
 assert.equal(error.includes('EXPO_PUBLIC_STORE_ID'), false);
 assert.equal(error.includes(STORE_ID), false);
@@ -268,6 +328,7 @@ const loading = html({
 assert.ok(loading.includes('Loading build requests'));
 assert.equal(loading.includes('Northwind'), false);
 assert.equal(loading.includes(SPLASH_URL), false);
+assert.equal(loading.includes('Copy all EAS env'), false);
 assert.equal(loading.includes('APP_NAME'), false);
 assert.equal(loading.includes('EXPO_PUBLIC_STORE_ID'), false);
 assert.equal(loading.includes(STORE_ID), false);

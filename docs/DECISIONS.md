@@ -224,6 +224,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Onboarding ready step and the Build my app strip. Submit eligibility and the ops queue are unchanged. No Shopify token is rendered or logged. Human review is required because this is the merchant-facing publishing name on the build screen.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#53`.
 
+### Ops copies every launcher assignment as one EAS env block
+
+- Date: 2026-09-28.
+- Decision: On `/dashboard/admin/build-requests`, when at least one launcher assignment is copyable, a dense control labeled `Copy all EAS env` copies them as one multiline block. Order is `APP_NAME`, `ICON_IMAGE_URL`, `SPLASH_IMAGE_URL`, `EXPO_PUBLIC_STORE_ID`. Each line is `KEY=value` with no quotes and LF newlines. A line is included only when that field's single-copy control would be shown: a trimmed `store.appName`, a public https icon or splash from `opsBrandImageUrl` (`persistedBrandImageUrl`), and a 24-character hex `store.id`. Missing lines are omitted. If none qualify, the control is absent. The four single-field controls stay. The page does not start EAS, invent values, or fall back to Cartaisy, the shop domain, the build-request id, or placeholders. Merchant Build my app does not show this control. The shape matches the fictional handoff block in Cartaisy `docs/MOBILE_MERCHANT_PROVISIONING_RUNBOOK.md`.
+- Reason: Dashboard #55. First-client EAS handoffs were four separate pastes. One block matches the runbook and reduces a missed variable.
+- Impact: Platform-ops clipboard only. No new backend fields. Shopify Admin tokens are not rendered, logged, or copied. Human review is required because this is a release handoff surface.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#55`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.
