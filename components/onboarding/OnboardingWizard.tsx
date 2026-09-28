@@ -10,6 +10,7 @@ import {
   emptyBrandingDraft,
   fetchBranding,
   fetchStoreProfile,
+  planBrandAssetSave,
   saveAppName,
   saveBrandColors,
   saveStoredBrandAsset,
@@ -316,10 +317,11 @@ export function OnboardingWizard() {
       return;
     }
 
-    let url = uploaded.ok ? uploaded.url : null;
-    let saveError: string | null = null;
-    if (url) {
-      const saved = await saveStoredBrandAsset(kind, url);
+    const plan = planBrandAssetSave(uploaded);
+    let url: string | null = plan.persist === 'none' ? null : plan.url;
+    let saveError: string | null = plan.persist === 'none' ? plan.error : null;
+    if (plan.persist === 'dashboard') {
+      const saved = await saveStoredBrandAsset(kind, plan.url);
       if (!saved.ok) {
         url = null;
         saveError = saved.error;

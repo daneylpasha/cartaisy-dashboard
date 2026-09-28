@@ -7,7 +7,12 @@ import {
   readSignedUploadSignature,
   registerPayloadFromCloudinary,
 } from '@/lib/onboarding/brandAssets';
-import { brandingFromPayload, emptyBrandingDraft } from '@/lib/onboarding/branding';
+import {
+  brandingAssetRouteMissing,
+  brandingFromPayload,
+  emptyBrandingDraft,
+  planBrandAssetSave,
+} from '@/lib/onboarding/branding';
 
 const parsed = brandingFromPayload(
   {
@@ -67,6 +72,62 @@ const apiWins = mergeStoredBrandAssets(parsed, {
 });
 assert.equal(apiWins.iconUrl, 'https://cdn.example/icon.png');
 assert.equal(apiWins.splashUrl, 'https://cdn.example/splash.png');
+
+const brandingSave = planBrandAssetSave({
+  ok: true,
+  url: 'https://cdn.example/branding-icon.png',
+  storedByBrandingApi: true,
+  error: null,
+});
+assert.equal(brandingSave.persist, 'branding');
+if (brandingSave.persist === 'branding') {
+  assert.equal(brandingSave.url, 'https://cdn.example/branding-icon.png');
+}
+
+const aliasSave = planBrandAssetSave({
+  ok: true,
+  url: 'https://cdn.example/from-app-icon.png',
+  storedByBrandingApi: true,
+  error: null,
+});
+assert.equal(aliasSave.persist, 'branding');
+
+const signedSave = planBrandAssetSave({
+  ok: true,
+  url: 'https://cdn.example/signed-icon.png',
+  storedByBrandingApi: false,
+  error: null,
+});
+assert.equal(signedSave.persist, 'dashboard');
+if (signedSave.persist === 'dashboard') {
+  assert.equal(signedSave.url, 'https://cdn.example/signed-icon.png');
+}
+
+const rejectedSave = planBrandAssetSave({
+  ok: true,
+  url: 'https://cdn.example/icon.png?access_token=shpat_secret',
+  storedByBrandingApi: true,
+  error: null,
+});
+assert.equal(rejectedSave.persist, 'none');
+
+const failedSave = planBrandAssetSave({
+  ok: false,
+  url: null,
+  storedByBrandingApi: false,
+  error: 'We could not upload the app icon.',
+});
+assert.equal(failedSave.persist, 'none');
+if (failedSave.persist === 'none') {
+  assert.equal(failedSave.error, 'We could not upload the app icon.');
+}
+
+assert.equal(brandingAssetRouteMissing(404), true);
+assert.equal(brandingAssetRouteMissing(405), true);
+assert.equal(brandingAssetRouteMissing(501), true);
+assert.equal(brandingAssetRouteMissing(400), false);
+assert.equal(brandingAssetRouteMissing(200), false);
+assert.equal(brandingAssetRouteMissing(500), false);
 
 const quota = readSignedUploadSignature({
   canUpload: false,

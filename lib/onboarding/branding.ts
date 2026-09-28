@@ -226,11 +226,40 @@ function readAssetUrl(kind: OptionalBrandAsset, data: Record<string, unknown> | 
   );
 }
 
+/** The branding icon/splash route is not deployed. Other statuses are real failures. */
+export function brandingAssetRouteMissing(status: number): boolean {
+  return status === 404 || status === 405 || status === 501;
+}
+
+export type BrandAssetSavePlan =
+  | { persist: 'branding'; url: string }
+  | { persist: 'dashboard'; url: string }
+  | { persist: 'none'; error: string };
+
+/**
+ * A successful branding POST already stored the https URL on the branding
+ * document. Dashboard `brandAssets` is only for the signed-upload fallback.
+ */
+export function planBrandAssetSave(uploaded: {
+  ok: boolean;
+  url: string | null;
+  storedByBrandingApi: boolean;
+  error: string | null;
+}): BrandAssetSavePlan {
+  const url = uploaded.ok ? persistedBrandImageUrl(uploaded.url) : null;
+  if (!url) {
+    return { persist: 'none', error: uploaded.error ?? 'We could not upload the image.' };
+  }
+  if (uploaded.storedByBrandingApi) return { persist: 'branding', url };
+  return { persist: 'dashboard', url };
+}
+
 /**
  * Prefer the branding upload route, the same style as the logo.
  * A missing route (404/405/501) falls through to the signed store-image
  * upload, which checks `canUpload` and registers the file before the URL
- * is kept. The caller stores that https URL with the brand.
+ * is kept. When the branding route succeeds, its response URL is the saved
+ * value. The signed path is the only one stored on dashboard `brandAssets`.
  */
 export async function uploadBrandAsset(
   storeId: string,
@@ -253,7 +282,7 @@ export async function uploadBrandAsset(
     return { ok: false, url: null, storedByBrandingApi: false, error: fallback };
   }
 
-  if (response.status !== 404 && response.status !== 405 && response.status !== 501) {
+  if (!brandingAssetRouteMissing(response.status)) {
     const body = await readJson(response);
     const data = brandingRecord(body);
     if (!response.ok) {
