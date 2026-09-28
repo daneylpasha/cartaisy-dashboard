@@ -232,7 +232,7 @@ assert.match(homeScreen(settingsReady), /Northwind/);
 assert.equal(launcher(settingsReady).includes('Add an app'), false);
 
 const settingsBlank = renderSettings({ ...draft, appName: '' });
-assert.match(settingsBlank, /data-shopper-screen[\s\S]*Your app/);
+assert.doesNotMatch(settingsBlank, /data-shopper-screen[\s\S]*Your app/);
 assert.doesNotMatch(launcher(settingsBlank), /Your app/);
 assert.match(launcher(settingsBlank), /Add an app name in/);
 

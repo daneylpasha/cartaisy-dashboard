@@ -105,9 +105,11 @@ const markup = renderToStaticMarkup(
 );
 const phone = screen(markup);
 assert.match(phone, /Northwind/);
-assert.match(phone, /https:\/\/cdn\.example\/icon\.png/);
-assert.match(phone, /https:\/\/cdn\.example\/splash\.png/);
+assert.match(phone, /https:\/\/cdn\.example\/logo\.png/);
 assert.match(phone, /#0f766e/);
+assert.doesNotMatch(phone, /splash\.png/);
+assert.match(markup, /data-home-screen[\s\S]*src="https:\/\/cdn\.example\/icon\.png"/);
+assert.match(markup, /data-splash-frame[\s\S]*src="https:\/\/cdn\.example\/splash\.png"/);
 assert.doesNotMatch(phone, /cartaisy/i);
 assert.doesNotMatch(markup, /cartaisy/i);
 assert.match(markup, /Replace App icon/);
@@ -151,7 +153,8 @@ const localPreview = renderToStaticMarkup(
     onImageError: () => undefined,
   })
 );
-assert.match(screen(localPreview), /blob:http:\/\/localhost\/preview/);
+assert.match(localPreview, /data-home-screen[\s\S]*src="blob:http:\/\/localhost\/preview"/);
+assert.doesNotMatch(screen(localPreview), /blob:http:\/\/localhost\/preview/);
 assert.match(localPreview, /Uploading/);
 
 console.log('settings brand check ok');

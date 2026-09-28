@@ -31,6 +31,8 @@ assert.match(brandSource, /imageUrl=\{draft\.iconUrl\}/);
 assert.match(brandSource, /imageUrl=\{draft\.splashUrl\}/);
 assert.doesNotMatch(wizardSource, /uploadOptionalBrandAsset/);
 assert.doesNotMatch(previewSource, /from-purple|to-pink|purple-6/);
+assert.doesNotMatch(previewSource, /9:41/);
+assert.doesNotMatch(previewSource, /Your app/);
 assert.match(brandSource, /<SmartHomePreview[\s\S]*draft=\{draft\}/);
 assert.match(previewStepSource, /<SmartHomePreview[\s\S]*draft=\{draft\}/);
 assert.match(wizardSource, /onDraftChange=\{setDraft\}/);
@@ -86,6 +88,7 @@ function render(overrides: {
   catalog?: LockedCatalog;
   sync?: SyncGate;
   pending?: boolean;
+  initialScreen?: 'opening' | 'home' | 'product' | 'cart' | 'wishlist' | 'account';
 }): string {
   return renderToStaticMarkup(
     createElement(SmartHomePreview, {
@@ -99,17 +102,55 @@ function render(overrides: {
 
 const populated = render({});
 const populatedScreen = screen(populated);
+assert.match(populatedScreen, /data-preview-screen="home"/);
 assert.match(populatedScreen, /Northwind/);
+assert.match(populatedScreen, /Search Northwind/);
+assert.match(populatedScreen, /Add delivery address/);
+assert.match(populatedScreen, /Selected from the shop/);
+assert.match(populatedScreen, /Featured/);
+assert.match(populatedScreen, /Browse/);
+assert.match(populatedScreen, />Home</);
+assert.match(populatedScreen, />Cart</);
+assert.match(populatedScreen, />Wishlist</);
+assert.match(populatedScreen, />Account</);
+assert.doesNotMatch(populatedScreen, />Bag</);
+assert.doesNotMatch(populatedScreen, /9:41/);
 assert.match(populatedScreen, /https:\/\/cdn\.example\/logo\.png/);
-assert.match(populatedScreen, /https:\/\/cdn\.example\/icon\.png/);
-assert.match(populatedScreen, /https:\/\/cdn\.example\/splash\.png/);
+assert.doesNotMatch(populatedScreen, /https:\/\/cdn\.example\/icon\.png/);
+assert.doesNotMatch(populatedScreen, /https:\/\/cdn\.example\/splash\.png/);
 assert.match(populatedScreen, /#0f766e/);
 assert.match(populatedScreen, /#f5f5f4/);
 assert.match(populatedScreen, /Linen overshirt/);
 assert.match(populatedScreen, /\$128/);
 assert.match(populatedScreen, /Outerwear/);
+assert.match(populated, /data-shopper-limits/);
+assert.match(populated, /installable build/);
+assert.match(populated, /published home/);
 assert.doesNotMatch(populatedScreen, /cartaisy/i);
 assert.doesNotMatch(populated, /cartaisy/i);
+
+const iconOnly = screen(render({ draft: { ...draft, logoUrl: null } }));
+assert.match(iconOnly, /https:\/\/cdn\.example\/icon\.png/);
+assert.doesNotMatch(iconOnly, /https:\/\/cdn\.example\/logo\.png/);
+
+const opening = screen(render({ initialScreen: 'opening' }));
+assert.match(opening, /data-preview-screen="opening"/);
+assert.match(opening, /https:\/\/cdn\.example\/splash\.png/);
+assert.doesNotMatch(opening, /Search Northwind/);
+assert.doesNotMatch(opening, /9:41/);
+
+const productScreen = screen(render({ initialScreen: 'product' }));
+assert.match(productScreen, /Linen overshirt/);
+assert.match(productScreen, /\$128/);
+assert.match(productScreen, /Add to Cart/);
+assert.match(productScreen, /Buy Now/);
+assert.match(productScreen, /Secure checkout continues on the store&#x27;s page\.|Secure checkout continues on the store's page\./);
+
+const cartScreen = screen(render({ initialScreen: 'cart' }));
+assert.match(cartScreen, /Linen overshirt/);
+assert.match(cartScreen, /Proceed to Checkout \(1\)/);
+assert.match(cartScreen, /Subtotal \(1 Item\)/);
+assert.match(cartScreen, />Cart</);
 
 const renamed = screen(render({ draft: { ...draft, appName: 'Harbor & Co' } }));
 assert.match(renamed, /Harbor &amp; Co|Harbor & Co/);
@@ -121,11 +162,14 @@ assert.match(recolored, /#9a3412/);
 assert.doesNotMatch(recolored, /#0f766e/);
 
 const unnamed = screen(render({ draft: { ...draft, appName: '  ' } }));
-assert.match(unnamed, /Your app/);
+assert.match(unnamed, /Welcome/);
+assert.match(unnamed, />Search</);
+assert.doesNotMatch(unnamed, /Your app/);
 
 const emptyCatalog: LockedCatalog = { ...catalog, collections: [], products: [] };
 const empty = screen(render({ catalog: emptyCatalog }));
-assert.match(empty, /No products in this catalog yet\./);
+assert.match(empty, /Nothing to show yet/);
+assert.match(empty, /Products will show up here once they&#x27;re available\.|Products will show up here once they're available\./);
 assert.match(empty, /Northwind/);
 assert.doesNotMatch(empty, /Linen overshirt/);
 assert.doesNotMatch(empty, /cartaisy/i);
@@ -169,10 +213,12 @@ const fromBranding = mergeStoredBrandAssets(
     splashUrl: 'https://cdn.example/stored-splash.png',
   }
 );
-const brandingScreen = screen(render({ draft: fromBranding }));
-assert.match(brandingScreen, /https:\/\/cdn\.example\/api-icon\.png/);
-assert.match(brandingScreen, /https:\/\/cdn\.example\/api-splash\.png/);
-assert.doesNotMatch(brandingScreen, /stored-icon|stored-splash/);
+const brandingOpening = screen(render({ draft: fromBranding, initialScreen: 'opening' }));
+assert.match(brandingOpening, /https:\/\/cdn\.example\/api-splash\.png/);
+assert.doesNotMatch(brandingOpening, /stored-splash/);
+const brandingIcon = screen(render({ draft: { ...fromBranding, logoUrl: null, splashUrl: null } }));
+assert.match(brandingIcon, /https:\/\/cdn\.example\/api-icon\.png/);
+assert.doesNotMatch(brandingIcon, /stored-icon/);
 const brandingHandoff = renderToStaticMarkup(createElement(BrandHandoff, { draft: fromBranding }));
 assert.match(brandingHandoff, /https:\/\/cdn\.example\/api-icon\.png/);
 assert.doesNotMatch(brandingHandoff, /stored-icon/);

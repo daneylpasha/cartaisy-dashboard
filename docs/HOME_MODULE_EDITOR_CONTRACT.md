@@ -34,6 +34,7 @@
 - Explicit backend validation of store-owned Shopify references must be verified before relying on it.
 - Draft/publish/status behavior for home modules was not identified in audited dashboard files.
 - Mobile rendering expectations are inferred from preview/mobile naming and must be verified in the mobile repo before being treated as implemented.
+- `app/dashboard/app-builder/preview` is a module stack for a published home. It is not the shopper phone. The shopper opening screen, default home, product, and cart live on the setup preview (`components/onboarding/SmartHomePreview.tsx`). When a layout is published, the installed app draws those modules under its own home header and replaces the default home.
 - Current app-builder behavior is not proof of final backend/mobile contract completeness.
 
 ## Related docs/issues:
