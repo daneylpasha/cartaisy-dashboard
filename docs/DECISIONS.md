@@ -176,6 +176,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Branding/theme setup on `app/dashboard/settings`. Push, loyalty, analytics, and native EAS assets are unchanged. Human review is required because the brand save path and the backend branding contract are involved.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`. GitHub issue: `#41`.
 
+### The ops build queue shows public icon and splash URLs
+
+- Date: 2026-09-28.
+- Decision: `/dashboard/admin/build-requests` shows each store's app icon and splash beside the existing name and shop domain. `store.appName`, `store.iconUrl`, and `store.splashUrl` on `GET /api/v1/admin/build-requests` are optional. A missing field renders an empty thumb. The dashboard does not invent a CDN URL. A copy control is shown only after `persistedBrandImageUrl` accepts the value as public https and not token-shaped. Embedded credentials and signed-upload or OAuth markers (`api_key`, `api_secret`, `client_secret`, `refresh_token`) are dropped as well. Splash copies as `SPLASH_IMAGE_URL=<url>`. The icon copies as that https URL alone. Thumbs have no Cartaisy chrome. Shopify Admin tokens are not rendered, logged, or copied.
+- Reason: Dashboard #43. Operators need the merchant splash and icon when they set EAS env. Backend #177 / PR #178 adds those fields on the platform-ops list only, https-only, and does not start a build.
+- Impact: Platform-ops queue presentation and the admin build-request contract. Merchant Build my app is unchanged and still does not show these copy controls. A status update keeps the URLs already on the row. Human review is required because this is a backend API contract and a release handoff surface. No Shopify token is read.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`. GitHub issue: `#43`. Backend issue: `#177`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.
