@@ -9,7 +9,9 @@ import {
   opsAppName,
   opsBrandImageUrl,
   opsPlatformStatusLabel,
+  opsStoreId,
   splashEnvAssignment,
+  storeIdEnvAssignment,
   type AdminBuildPagination,
   type AdminBuildRequest,
   type AdminQueueFilter,
@@ -230,9 +232,10 @@ function RequestRow({
   const requested = formatWhen(request.createdAt);
   const title = storeTitle(request);
   const appName = opsAppName(request.appName);
+  const storeId = opsStoreId(request.storeId);
   const iconUrl = opsBrandImageUrl(request.iconUrl);
   const splashUrl = opsBrandImageUrl(request.splashUrl);
-  const showEas = Boolean(appName || iconUrl || splashUrl);
+  const showEas = Boolean(appName || storeId || iconUrl || splashUrl);
 
   return (
     <li className="px-4 py-4 sm:px-5" aria-busy={saving}>
@@ -267,6 +270,16 @@ function RequestRow({
               />
             ) : (
               <span className="text-xs text-slate-400">No app name</span>
+            )}
+            {storeId ? (
+              <CopyUrlButton
+                label="EXPO_PUBLIC_STORE_ID=…"
+                accessibleName={`Copy EXPO_PUBLIC_STORE_ID for ${title}`}
+                value={storeIdEnvAssignment(storeId)}
+                mono
+              />
+            ) : (
+              <span className="text-xs text-slate-400">No store id</span>
             )}
             {splashUrl ? (
               <CopyUrlButton
