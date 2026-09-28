@@ -130,7 +130,11 @@ const waiting = html({
 });
 assert.ok(waiting.includes('Waiting on you'));
 assert.ok(waiting.includes('Waiting on Apple'));
-assert.equal((waiting.match(/checked=""/g) ?? []).length, 2);
+assert.ok(waiting.includes('Waiting on you before this can continue.'));
+assert.ok(waiting.includes('Waiting on Apple before this can continue.'));
+assert.equal((waiting.match(/type="checkbox"/g) ?? []).length, 0);
+assert.equal(waiting.includes('aria-label="Android progress"'), false);
+assert.ok(waiting.includes('This page updates on its own.'));
 assert.equal(waiting.includes('>Build my app<'), false);
 assert.ok(waiting.includes('Apple developer invite sent.'));
 assertCalm(waiting);
@@ -141,14 +145,36 @@ const mixed = html({
 });
 assert.ok(mixed.includes('Ready'));
 assert.ok(mixed.includes('Building'));
+assert.ok(mixed.includes('Building your app.'));
+assert.ok(mixed.includes('Ready to install.') === false);
+assert.ok(mixed.includes('aria-label="Android progress"'));
+assert.ok(mixed.includes('aria-label="iOS progress"'));
+assert.ok(mixed.includes('data-progress="ready"'));
+assert.ok(mixed.includes('data-progress="building"'));
+assert.ok(mixed.includes('This page updates on its own.'));
 assert.equal(mixed.includes('Request another build'), false);
 assertCalm(mixed);
+
+const queuedLive = html({
+  mode: 'status',
+  request: request('queued', 'not_requested'),
+});
+assert.ok(queuedLive.includes('In the queue.'));
+assert.ok(queuedLive.includes('Not included in this request.'));
+assert.ok(queuedLive.includes('This page updates on its own.'));
+assert.ok(queuedLive.includes('aria-busy="true"'));
+assert.equal((queuedLive.match(/data-state="current"/g) ?? []).length, 1);
+assert.equal(queuedLive.includes('Install Android build'), false);
+assert.equal(queuedLive.includes('>Build my app<'), false);
+assertCalm(queuedLive);
 
 const readyWithoutLink = html({
   mode: 'status',
   request: request('ready', 'ready'),
 });
 assert.ok(readyWithoutLink.includes('Ready'));
+assert.ok(readyWithoutLink.includes('The install link will show here when it is available.'));
+assert.equal(readyWithoutLink.includes('This page updates on its own.'), false);
 assert.equal(readyWithoutLink.includes('Install Android build'), false);
 assert.equal(readyWithoutLink.includes('Install iOS build'), false);
 assert.equal(readyWithoutLink.includes('href="http'), false);
@@ -163,6 +189,7 @@ const readyWithLinks = html({
 });
 assert.ok(readyWithLinks.includes('Install Android build'));
 assert.ok(readyWithLinks.includes('Install iOS build'));
+assert.ok(readyWithLinks.includes('Ready to install.'));
 assert.ok(readyWithLinks.includes('Ready'));
 assert.ok(readyWithLinks.includes(`href="${ANDROID_INSTALL}"`));
 assert.ok(readyWithLinks.includes(`href="${IOS_INSTALL}"`));
@@ -216,6 +243,10 @@ const settled = html({
 assert.ok(settled.includes('One app is ready. The other did not finish.'));
 assert.ok(settled.includes('Request another build'));
 assert.ok(settled.includes('Failed'));
+assert.ok(settled.includes('This build did not finish.'));
+assert.ok(settled.includes('data-progress="failed"'));
+assert.equal(settled.includes('aria-label="iOS progress"'), false);
+assert.doesNotMatch(settled, /gradle|xcode|fastlane|expo\.dev/i);
 assertCalm(settled);
 
 const recheck = html({
@@ -377,6 +408,10 @@ const stripSource = readFileSync(join(here, '../../components/onboarding/Launche
 const settingsSource = readFileSync(join(here, '../../app/dashboard/settings/page.tsx'), 'utf8');
 
 assert.match(viewSource, /canSubmit: android \|\| ios/);
+assert.match(viewSource, /platformProgressCopy/);
+assert.match(viewSource, /buildProgressIndex/);
+assert.match(panelSource, /visibilitychange/);
+assert.doesNotMatch(viewSource, /expo\.dev|easBuildId|gradle|xcode|fastlane/i);
 assert.doesNotMatch(viewSource, /canSubmit:[\s\S]{0,120}iconUrl/);
 assert.match(readySource, /appName: draft\.appName/);
 assert.match(readySource, /iconUrl: draft\.iconUrl/);

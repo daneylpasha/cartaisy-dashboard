@@ -33,7 +33,7 @@ export function ReadyStep({
         Build my app
       </h1>
       <p className="mt-3 max-w-lg text-[15px] leading-7 text-slate-600">
-        Choose Android, iOS, or both. We will show each one here as it moves forward.
+        Choose Android, iOS, or both. Each one stays on this page as it moves from the queue to ready.
       </p>
 
       <BrandHandoff draft={draft} />

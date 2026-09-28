@@ -222,6 +222,48 @@ export function platformStatusLabel(platform: PlatformKind, status: PlatformStat
   }
 }
 
+/** Queued, building, and ready share one rail. Other states do not pretend to be mid-build. */
+export function buildProgressIndex(status: PlatformStatus | 'unknown'): number | null {
+  if (status === 'queued') return 0;
+  if (status === 'building') return 1;
+  if (status === 'ready') return 2;
+  return null;
+}
+
+/** True while a platform can still move without a merchant refresh. */
+export function isLivePlatformStatus(status: PlatformStatus | 'unknown'): boolean {
+  return status === 'queued' || status === 'building' || status === 'waiting_on_merchant' || status === 'unknown';
+}
+
+/**
+ * Merchant copy for one platform. No build tooling, logs, or secrets.
+ * A ready platform without a safe install link says the link will appear.
+ */
+export function platformProgressCopy(
+  platform: PlatformKind,
+  status: PlatformStatus | 'unknown',
+  hasInstall: boolean
+): string {
+  switch (status) {
+    case 'queued':
+      return 'In the queue.';
+    case 'building':
+      return 'Building your app.';
+    case 'ready':
+      return hasInstall ? 'Ready to install.' : 'Ready. The install link will show here when it is available.';
+    case 'failed':
+      return 'This build did not finish.';
+    case 'waiting_on_merchant':
+      return platform === 'ios'
+        ? 'Waiting on Apple before this can continue.'
+        : 'Waiting on you before this can continue.';
+    case 'not_requested':
+      return 'Not included in this request.';
+    default:
+      return 'Checking this build.';
+  }
+}
+
 export function outcomeCopy(request: BuildRequest): string | null {
   if (!isSettledBuildRequest(request)) return null;
   const android = request.platforms.android.status;
