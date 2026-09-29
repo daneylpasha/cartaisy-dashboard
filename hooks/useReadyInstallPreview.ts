@@ -11,7 +11,7 @@ import {
 
 /**
  * Loads the store build list for Brand, Preview, and Settings.
- * Starts in loading so the phone mock is not painted before the list returns.
+ * Starts in loading so a finished install is not covered before the list returns.
  * A refresh keeps an already-known install on screen.
  */
 export function useReadyInstallPreview(refreshKey: string): InstallPreviewModel {

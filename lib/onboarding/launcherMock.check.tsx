@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { launcherMockIconUrl } from '@/components/onboarding/HomeScreenLauncherMock';
+import { HomeScreenLauncherMock, launcherMockIconUrl } from '@/components/onboarding/HomeScreenLauncherMock';
 import { BrandingStep } from '@/components/onboarding/steps/BrandingStep';
 import { StoreAppBrandView } from '@/components/settings/StoreAppBrandView';
 import { EMPTY_CATALOG } from '@/lib/onboarding/normalizers';
@@ -24,13 +24,13 @@ const settingsContainerSource = source('../../components/settings/StoreAppBrand.
 const settingsPageSource = source('../../app/dashboard/settings/page.tsx');
 const buildViewSource = source('../../components/onboarding/BuildMyAppView.tsx');
 
-assert.match(brandSource, /<HomeScreenLauncherMock appName=\{draft\.appName\} iconUrl=\{draft\.iconUrl\} \/>/);
+assert.doesNotMatch(brandSource, /HomeScreenLauncherMock|SmartHomePreview|SplashBootMock/);
 assert.match(brandSource, /const nameReady = draft\.appName\.trim\(\)\.length >= 2;/);
 assert.match(
   brandSource,
   /const blocked =\n\s*Boolean\(loadError\) \|\| !nameReady \|\| !primaryValid \|\| !secondaryValid \|\| logoUploading \|\| iconUploading \|\| splashUploading;/
 );
-assert.match(settingsViewSource, /<HomeScreenLauncherMock appName=\{shown\.appName\} iconUrl=\{shown\.iconUrl\} \/>/);
+assert.doesNotMatch(settingsViewSource, /HomeScreenLauncherMock|SmartHomePreview|SplashBootMock/);
 assert.doesNotMatch(previewStepSource, /HomeScreenLauncherMock/);
 assert.doesNotMatch(buildViewSource, /HomeScreenLauncherMock/);
 assert.doesNotMatch(mockSource, /cartaisy/i);
@@ -101,6 +101,12 @@ function isDisabled(tag: string): boolean {
   return / disabled(?:=|>|\s)/.test(tag);
 }
 
+function renderLauncher(next: BrandingDraft): string {
+  return renderToStaticMarkup(
+    createElement(HomeScreenLauncherMock, { appName: next.appName, iconUrl: next.iconUrl })
+  );
+}
+
 function renderBrand(next: BrandingDraft): string {
   return renderToStaticMarkup(
     createElement(BrandingStep, {
@@ -141,7 +147,12 @@ function assertSoftLinks(block: string) {
   assert.doesNotMatch(block, /Your app/);
 }
 
-const ready = renderBrand(draft);
+const readyPage = renderBrand(draft);
+assert.doesNotMatch(readyPage, /data-launcher-mock|data-shopper-screen|data-splash-boot-mock/);
+assert.match(readyPage, /data-install-preview="instructions"/);
+assert.equal(isDisabled(continueButton(readyPage)), false);
+
+const ready = renderLauncher(draft);
 const readyMock = launcher(ready);
 assert.match(homeScreen(ready), /src="https:\/\/cdn\.example\/icon\.png"/);
 assert.match(homeScreen(ready), /Northwind/);
@@ -150,9 +161,8 @@ assert.equal(readyMock.includes('Add an app'), false);
 assert.doesNotMatch(readyMock, /cartaisy/i);
 assert.doesNotMatch(readyMock, /northwind\.myshopify\.com/);
 assert.doesNotMatch(readyMock, /884422/);
-assert.equal(isDisabled(continueButton(ready)), false);
 
-const blobDraft = renderBrand({
+const blobDraft = renderLauncher({
   ...draft,
   iconUrl: 'blob:http://localhost/preview',
   iconPersisted: false,
@@ -160,38 +170,38 @@ const blobDraft = renderBrand({
 assert.match(homeScreen(blobDraft), /src="blob:http:\/\/localhost\/preview"/);
 assert.match(homeScreen(blobDraft), /Northwind/);
 assert.equal(launcher(blobDraft).includes('Add an app'), false);
-assert.equal(isDisabled(continueButton(blobDraft)), false);
+assert.equal(isDisabled(continueButton(renderBrand({ ...draft, iconUrl: 'blob:http://localhost/preview', iconPersisted: false }))), false);
 
-const missingIcon = renderBrand({ ...draft, iconUrl: null });
+const missingIcon = renderLauncher({ ...draft, iconUrl: null });
 const missingIconMock = launcher(missingIcon);
 assert.equal(homeScreen(missingIcon).includes('<img'), false);
 assert.match(homeScreen(missingIcon), /Northwind/);
 assert.match(missingIconMock, /Add an app icon in/);
 assertSoftLinks(missingIconMock);
-assert.equal(isDisabled(continueButton(missingIcon)), false);
+assert.equal(isDisabled(continueButton(renderBrand({ ...draft, iconUrl: null }))), false);
 
-const blankName = renderBrand({ ...draft, appName: '   ' });
+const blankName = renderLauncher({ ...draft, appName: '   ' });
 const blankMock = launcher(blankName);
 assert.match(homeScreen(blankName), /src="https:\/\/cdn\.example\/icon\.png"/);
 assert.equal(homeScreen(blankName).includes('Northwind'), false);
 assert.match(blankMock, /Add an app name in/);
 assert.equal(blankMock.includes('Add an app icon'), false);
 assertSoftLinks(blankMock);
-assert.equal(isDisabled(continueButton(blankName)), true);
+assert.equal(isDisabled(continueButton(renderBrand({ ...draft, appName: '   ' }))), true);
 
-const shortName = renderBrand({ ...draft, appName: 'N' });
+const shortName = renderLauncher({ ...draft, appName: 'N' });
 assert.match(homeScreen(shortName), />N</);
 assert.equal(launcher(shortName).includes('Add an app'), false);
-assert.equal(isDisabled(continueButton(shortName)), true);
+assert.equal(isDisabled(continueButton(renderBrand({ ...draft, appName: 'N' }))), true);
 
-const bothMissing = renderBrand({ ...draft, appName: '', iconUrl: null });
+const bothMissing = renderLauncher({ ...draft, appName: '', iconUrl: null });
 const bothMock = launcher(bothMissing);
 assert.equal(homeScreen(bothMissing).includes('<img'), false);
 assert.match(bothMock, /Add an app name and an app icon in/);
 assertSoftLinks(bothMock);
-assert.equal(isDisabled(continueButton(bothMissing)), true);
+assert.equal(isDisabled(continueButton(renderBrand({ ...draft, appName: '', iconUrl: null }))), true);
 
-const poisoned = renderBrand({
+const poisoned = renderLauncher({
   ...draft,
   iconUrl: 'https://cdn.example/icon.png?access_token=shpat_secret',
 });
@@ -201,9 +211,8 @@ assert.equal(poisonedMock.includes('shpat_'), false);
 assert.match(poisonedMock, /Northwind/);
 assert.match(poisonedMock, /Add an app icon in/);
 assertSoftLinks(poisonedMock);
-assert.equal(isDisabled(continueButton(poisoned)), false);
 
-const httpIcon = renderBrand({ ...draft, iconUrl: 'http://cdn.example/icon.png' });
+const httpIcon = renderLauncher({ ...draft, iconUrl: 'http://cdn.example/icon.png' });
 assert.equal(launcher(httpIcon).includes('http://cdn.example'), false);
 assert.match(launcher(httpIcon), /Add an app icon in/);
 
@@ -227,16 +236,19 @@ function renderSettings(next: BrandingDraft): string {
 }
 
 const settingsReady = renderSettings(draft);
-assert.match(homeScreen(settingsReady), /src="https:\/\/cdn\.example\/icon\.png"/);
-assert.match(homeScreen(settingsReady), /Northwind/);
-assert.equal(launcher(settingsReady).includes('Add an app'), false);
+assert.doesNotMatch(settingsReady, /data-launcher-mock|data-shopper-screen|data-splash-boot-mock/);
+assert.match(settingsReady, /data-install-preview="instructions"/);
+const settingsLauncher = renderLauncher(draft);
+assert.match(homeScreen(settingsLauncher), /src="https:\/\/cdn\.example\/icon\.png"/);
+assert.match(homeScreen(settingsLauncher), /Northwind/);
+assert.equal(launcher(settingsLauncher).includes('Add an app'), false);
 
-const settingsBlank = renderSettings({ ...draft, appName: '' });
-assert.doesNotMatch(settingsBlank, /data-shopper-screen[\s\S]*Your app/);
+const settingsBlank = renderLauncher({ ...draft, appName: '' });
+assert.doesNotMatch(renderSettings({ ...draft, appName: '' }), /data-shopper-screen/);
 assert.doesNotMatch(launcher(settingsBlank), /Your app/);
 assert.match(launcher(settingsBlank), /Add an app name in/);
 
-const settingsBlob = renderSettings({
+const settingsBlob = renderLauncher({
   ...draft,
   iconUrl: 'blob:http://localhost/settings-preview',
   iconPersisted: false,

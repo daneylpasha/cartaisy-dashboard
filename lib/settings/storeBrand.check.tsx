@@ -18,7 +18,8 @@ const viewSource = source('../../components/settings/StoreAppBrandView.tsx');
 const containerSource = source('../../components/settings/StoreAppBrand.tsx');
 const pageSource = source('../../app/dashboard/settings/page.tsx');
 
-assert.match(viewSource, /<SmartHomePreview[\s\S]*draft=\{shown\}/);
+assert.doesNotMatch(viewSource, /SmartHomePreview|HomeScreenLauncherMock|SplashBootMock/);
+assert.match(viewSource, /<BrandInstallPreview model=\{installPreview\} \/>/);
 assert.doesNotMatch(viewSource, /cartaisy/i);
 assert.doesNotMatch(viewSource, /console\.(log|debug|info|error|warn)/);
 assert.doesNotMatch(containerSource, /console\.(log|debug|info|error|warn)/);
@@ -80,13 +81,6 @@ const quiet: SyncGate = {
   eligibilityReason: null,
 };
 
-function screen(markup: string): string {
-  const start = markup.indexOf('data-shopper-screen');
-  const end = markup.indexOf('<figcaption');
-  assert.ok(start >= 0 && end > start);
-  return markup.slice(start, end);
-}
-
 const markup = renderToStaticMarkup(
   createElement(StoreAppBrandView, {
     draft,
@@ -103,18 +97,14 @@ const markup = renderToStaticMarkup(
     onImageError: () => undefined,
   })
 );
-const phone = screen(markup);
-assert.match(phone, /Northwind/);
-assert.match(phone, /https:\/\/cdn\.example\/logo\.png/);
-assert.match(phone, /#0f766e/);
-assert.doesNotMatch(phone, /splash\.png/);
-assert.match(markup, /data-home-screen[\s\S]*src="https:\/\/cdn\.example\/icon\.png"/);
-assert.match(markup, /data-splash-frame[\s\S]*src="https:\/\/cdn\.example\/splash\.png"/);
-assert.doesNotMatch(phone, /cartaisy/i);
+assert.match(markup, /data-install-preview="instructions"/);
+assert.match(markup, /See it on your phone/);
+assert.match(markup, /src="https:\/\/cdn\.example\/icon\.png"/);
+assert.match(markup, /src="https:\/\/cdn\.example\/splash\.png"/);
+assert.doesNotMatch(markup, /data-shopper-screen|data-launcher-mock|data-splash-frame|Live preview/);
 assert.doesNotMatch(markup, /cartaisy/i);
 assert.match(markup, /Replace App icon/);
 assert.match(markup, /Replace Splash/);
-assert.match(markup, /Live preview/);
 assert.equal(markup.match(/class="sr-only top-0 left-0"/g)?.length, 2);
 
 const hidden = renderToStaticMarkup(
@@ -136,7 +126,8 @@ const hidden = renderToStaticMarkup(
 assert.doesNotMatch(hidden, /shpat_|shpss_|access_token|http:\/\/cdn\.example\/splash/);
 assert.match(hidden, /Add App icon/);
 assert.match(hidden, /Add Splash/);
-assert.doesNotMatch(screen(hidden), /cartaisy/i);
+assert.doesNotMatch(hidden, /data-shopper-screen/);
+assert.doesNotMatch(hidden, /cartaisy/i);
 
 const localPreview = renderToStaticMarkup(
   createElement(StoreAppBrandView, {
@@ -154,8 +145,8 @@ const localPreview = renderToStaticMarkup(
     onImageError: () => undefined,
   })
 );
-assert.match(localPreview, /data-home-screen[\s\S]*src="blob:http:\/\/localhost\/preview"/);
-assert.doesNotMatch(screen(localPreview), /blob:http:\/\/localhost\/preview/);
+assert.match(localPreview, /src="blob:http:\/\/localhost\/preview"/);
+assert.doesNotMatch(localPreview, /data-shopper-screen|data-home-screen/);
 assert.match(localPreview, /Uploading/);
 
 console.log('settings brand check ok');

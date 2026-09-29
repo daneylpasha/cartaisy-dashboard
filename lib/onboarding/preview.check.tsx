@@ -33,10 +33,12 @@ assert.doesNotMatch(wizardSource, /uploadOptionalBrandAsset/);
 assert.doesNotMatch(previewSource, /from-purple|to-pink|purple-6/);
 assert.doesNotMatch(previewSource, /9:41/);
 assert.doesNotMatch(previewSource, /Your app/);
-assert.match(brandSource, /<SmartHomePreview[\s\S]*draft=\{draft\}/);
-assert.match(previewStepSource, /<SmartHomePreview[\s\S]*draft=\{draft\}/);
+assert.doesNotMatch(brandSource, /SmartHomePreview|HomeScreenLauncherMock|SplashBootMock/);
+assert.doesNotMatch(previewStepSource, /SmartHomePreview/);
+assert.match(brandSource, /<BrandInstallPreview model=\{installPreview\} \/>/);
+assert.match(previewStepSource, /<BrandInstallPreview model=\{installPreview\} \/>/);
 assert.match(wizardSource, /onDraftChange=\{setDraft\}/);
-assert.equal(previewStepSource.match(/<SmartHomePreview/g)?.length, 1);
+assert.equal(previewStepSource.match(/<SmartHomePreview/g)?.length ?? 0, 0);
 
 const draft: BrandingDraft = {
   appName: 'Northwind',

@@ -1,10 +1,22 @@
-import type { ReactNode } from 'react';
 import { InstallQrMark } from '@/components/build/InstallQrMark';
 import { readInstallUrl } from '@/lib/build/contract';
-import { installPreviewMode, showsBrandMock, type InstallPreviewModel, type ReadyInstall } from '@/lib/build/installPreview';
+import {
+  FIRST_BUILD_CTA,
+  FIRST_BUILD_EYEBROW,
+  FIRST_BUILD_LEAD,
+  FIRST_BUILD_STEPS,
+  FIRST_BUILD_TITLE,
+  installPreviewMode,
+  type InstallPreviewModel,
+  type ReadyInstall,
+} from '@/lib/build/installPreview';
+import { APP_BUILDER_PUBLISH_HREF } from '@/lib/homeLayout/publish';
 import { BUILD_MY_APP_HREF } from '@/lib/storeCredentials/contract';
 
 const EYEBROW = 'mb-3 text-center text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500';
+const LINK =
+  'font-medium text-slate-950 underline decoration-slate-300 underline-offset-4 transition-colors hover:decoration-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400';
+const GO_LIVE_HREF = '/dashboard';
 
 function safeInstalls(installs: ReadyInstall[]): ReadyInstall[] {
   const next: ReadyInstall[] = [];
@@ -49,24 +61,52 @@ function CompactInstall({ installs }: { installs: ReadyInstall[] }) {
   );
 }
 
+function FirstBuildGuide() {
+  return (
+    <div data-first-build="">
+      <h2 className="text-center font-heading text-base font-semibold tracking-tight text-slate-950">
+        {FIRST_BUILD_TITLE}
+      </h2>
+      <p className="mt-2 text-center text-sm leading-6 text-slate-600">{FIRST_BUILD_LEAD}</p>
+      <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm leading-6 text-slate-700">
+        <li>{FIRST_BUILD_STEPS[0]}</li>
+        <li>
+          <a href={APP_BUILDER_PUBLISH_HREF} className={LINK}>
+            Publish home
+          </a>
+          {' so the installed app uses that layout.'}
+        </li>
+        <li>{FIRST_BUILD_STEPS[2]}</li>
+        <li>
+          {'Scan the install code on '}
+          <a href={GO_LIVE_HREF} className={LINK}>
+            Go live
+          </a>
+          {' when it appears.'}
+        </li>
+      </ol>
+      <a
+        href={BUILD_MY_APP_HREF}
+        className="mt-5 flex h-11 items-center justify-center rounded-lg bg-slate-950 px-4 text-sm font-medium text-white transition-colors hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
+      >
+        {FIRST_BUILD_CTA}
+      </a>
+    </div>
+  );
+}
+
 /**
- * Light phone mock while no ready install exists.
- * A loading build list does not paint that mock over a finished install.
+ * Install code when a ready public URL exists.
+ * Otherwise, how to get the first build. The phone mock is not shown.
  */
-export function BrandInstallPreview({
-  model,
-  children,
-}: {
-  model?: InstallPreviewModel;
-  children: ReactNode;
-}) {
+export function BrandInstallPreview({ model }: { model?: InstallPreviewModel }) {
   const shown = model ? { ...model, installs: safeInstalls(model.installs) } : undefined;
-  const mode = shown && shown.installs.length > 0 ? 'install' : installPreviewMode(shown);
-  if (mode === 'mock') {
+  const mode = installPreviewMode(shown);
+  if (mode === 'instructions') {
     return (
-      <div data-install-preview="mock">
-        <p className={EYEBROW}>Live preview</p>
-        {children}
+      <div data-install-preview="instructions">
+        <p className={EYEBROW}>{FIRST_BUILD_EYEBROW}</p>
+        <FirstBuildGuide />
       </div>
     );
   }
@@ -85,8 +125,4 @@ export function BrandInstallPreview({
       <CompactInstall installs={shown?.installs ?? []} />
     </div>
   );
-}
-
-export function brandPreviewShowsMock(model: InstallPreviewModel | undefined): boolean {
-  return showsBrandMock(model);
 }

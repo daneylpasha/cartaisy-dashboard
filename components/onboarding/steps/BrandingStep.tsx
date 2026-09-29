@@ -7,9 +7,6 @@ import { Label } from '@/components/ui/label';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { BrandInstallPreview } from '@/components/onboarding/BrandInstallPreview';
 import { LockedShopifyDetails } from '@/components/onboarding/LockedShopifyDetails';
-import { HomeScreenLauncherMock } from '@/components/onboarding/HomeScreenLauncherMock';
-import { SplashBootMock } from '@/components/onboarding/SplashBootMock';
-import { SmartHomePreview } from '@/components/onboarding/SmartHomePreview';
 import { brandStepLead, type InstallPreviewModel } from '@/lib/build/installPreview';
 import { SetupNotice, WizardFooter } from '@/components/onboarding/WizardChrome';
 import { validateBrandImage } from '@/lib/onboarding/branding';
@@ -43,7 +40,7 @@ interface BrandingStepProps {
   onBack: () => void;
   onContinue: () => void;
   onRetry: () => void;
-  /** Build list for this store. Omitted renders the light phone mock. */
+  /** Build list for this store. Omitted shows how to get the first build. */
   installPreview?: InstallPreviewModel;
 }
 
@@ -51,8 +48,6 @@ export function BrandingStep({
   draft,
   connection,
   catalog,
-  sync,
-  pending = false,
   warning,
   loadError,
   fieldError,
@@ -95,11 +90,7 @@ export function BrandingStep({
         </div>
 
         <div className="mt-8 lg:sticky lg:top-6 lg:col-start-2 lg:row-span-2 lg:mt-0 lg:self-start">
-          <BrandInstallPreview model={installPreview}>
-            <SmartHomePreview draft={draft} catalog={catalog} sync={sync} pending={pending} />
-            <HomeScreenLauncherMock appName={draft.appName} iconUrl={draft.iconUrl} />
-            <SplashBootMock appName={draft.appName} splashUrl={draft.splashUrl} />
-          </BrandInstallPreview>
+          <BrandInstallPreview model={installPreview} />
         </div>
 
         <div className="min-w-0 lg:col-start-1">

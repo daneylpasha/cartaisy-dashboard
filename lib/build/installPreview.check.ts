@@ -109,13 +109,16 @@ assert.equal(installQrSlots(null).length, 0);
 assert.match(INSTALL_QR_WAIT_COPY, /scannable install code/);
 assert.doesNotMatch(INSTALL_QR_WAIT_COPY, /qr|eas|cartaisy|expo/i);
 
-assert.equal(showsBrandMock(undefined), true);
+assert.equal(showsBrandMock(undefined), false);
 assert.equal(showsBrandMock({ phase: 'loading', installs: [] }), false);
-assert.equal(showsBrandMock({ phase: 'unavailable', installs: [] }), true);
-assert.equal(showsBrandMock({ phase: 'ready', installs: [] }), true);
+assert.equal(showsBrandMock({ phase: 'unavailable', installs: [] }), false);
+assert.equal(showsBrandMock({ phase: 'ready', installs: [] }), false);
 assert.equal(showsBrandMock({ phase: 'ready', installs: both }), false);
+assert.equal(installPreviewMode(undefined), 'instructions');
 assert.equal(installPreviewMode({ phase: 'loading', installs: [] }), 'loading');
-assert.equal(installPreviewMode({ phase: 'unavailable', installs: [] }), 'mock');
+assert.equal(installPreviewMode({ phase: 'loading', installs: both }), 'install');
+assert.equal(installPreviewMode({ phase: 'unavailable', installs: [] }), 'instructions');
+assert.equal(installPreviewMode({ phase: 'ready', installs: [] }), 'instructions');
 assert.equal(installPreviewMode({ phase: 'ready', installs: both }), 'install');
 
 const empty: InstallPreviewModel = { phase: 'ready', installs: [] };
@@ -125,7 +128,8 @@ assert.deepEqual(installPreviewWhileLoading(known), known);
 
 const failed = installPreviewFromList(empty, { kind: 'error' });
 assert.deepEqual(failed, { phase: 'unavailable', installs: [] });
-assert.equal(showsBrandMock(failed), true);
+assert.equal(showsBrandMock(failed), false);
+assert.equal(installPreviewMode(failed), 'instructions');
 
 const kept = installPreviewFromList(known, { kind: 'error' });
 assert.deepEqual(kept, known);
@@ -139,22 +143,22 @@ assert.equal(loaded.phase, 'ready');
 assert.equal(loaded.installs.length, 1);
 assert.equal(showsBrandMock(loaded), false);
 
-assert.match(brandStepLead(undefined), /The phone uses this draft/);
-assert.match(brandStepLead(undefined), /installable app shows the published home/);
-assert.match(brandStepLead(undefined), /Module-stack edits stay off the device until Publish/);
+assert.match(brandStepLead(undefined), /Your first build is how you open this on a phone/);
+assert.doesNotMatch(brandStepLead(undefined), /The phone uses this draft/);
 assert.doesNotMatch(brandStepLead({ phase: 'loading', installs: [] }), /The phone uses this draft/);
-assert.doesNotMatch(brandStepLead({ phase: 'loading', installs: [] }), /smart default/);
+assert.doesNotMatch(brandStepLead({ phase: 'loading', installs: [] }), /first build/);
 assert.match(brandStepLead(known), /Scan the code/);
-assert.doesNotMatch(brandStepLead(known), /smart default/);
-assert.match(settingsBrandLead(undefined), /under the phone/);
+assert.doesNotMatch(brandStepLead(known), /first build/);
+assert.match(settingsBrandLead(undefined), /The next build uses these images/);
+assert.doesNotMatch(settingsBrandLead(undefined), /under the phone/);
 assert.doesNotMatch(settingsBrandLead(known), /under the phone/);
-assert.match(previewStepLead(undefined), /These screens follow the shopper app/);
-assert.match(previewStepLead(undefined), /installable app shows the published home/);
-assert.match(previewStepLead(undefined), /Module-stack edits stay off the device until Publish/);
+assert.match(previewStepLead(undefined), /Publish your home, then start a build/);
+assert.match(previewStepLead(undefined), /Go live on Home/);
+assert.doesNotMatch(previewStepLead(undefined), /These screens follow the shopper app/);
 assert.match(previewStepLead({ phase: 'loading', installs: [] }), /Checking whether an installable build is ready/);
-assert.doesNotMatch(previewStepLead({ phase: 'loading', installs: [] }), /smart default/);
+assert.doesNotMatch(previewStepLead({ phase: 'loading', installs: [] }), /Go live/);
 assert.match(previewStepLead(known), /open Build/);
 assert.doesNotMatch(previewStepLead(known), /These screens follow the shopper app/);
-assert.doesNotMatch(previewStepLead(known), /smart default/);
+assert.doesNotMatch(previewStepLead(known), /Go live/);
 
 console.log('install preview ok');

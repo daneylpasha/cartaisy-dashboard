@@ -1,4 +1,3 @@
-import { INSTALLABLE_HOME_CAPTION } from '../onboarding/shopperChrome.ts';
 import { merchantInstallHref, type BuildRequest, type PlatformKind, type PlatformStatus } from './contract.ts';
 
 export interface ReadyInstall {
@@ -87,24 +86,23 @@ export function installQrSlots(request: BuildRequest | null): InstallQrSlot[] {
 }
 
 /**
- * Phone mock is the wait state: no model yet (tests and callers that have not
- * loaded), a failed list, or a loaded list with no ready install URL.
- * Loading hides the phone so a finished install is not covered by the mock.
+ * The branding phone is not a wait state. A missing install shows first-build
+ * instructions. This stays false so older callers do not paint the phone.
  */
 export function showsBrandMock(model: InstallPreviewModel | undefined): boolean {
-  if (!model) return true;
-  if (model.phase === 'loading') return false;
-  if (model.phase === 'unavailable') return true;
-  return model.installs.length === 0;
+  void model;
+  return false;
 }
 
-export function installPreviewMode(model: InstallPreviewModel | undefined): 'mock' | 'loading' | 'install' {
-  if (showsBrandMock(model)) return 'mock';
+export function installPreviewMode(
+  model: InstallPreviewModel | undefined
+): 'instructions' | 'loading' | 'install' {
+  if (model && model.installs.length > 0) return 'install';
   if (model?.phase === 'loading') return 'loading';
-  return 'install';
+  return 'instructions';
 }
 
-/** Keep a known install on screen while a refresh is in flight. Otherwise do not show the phone. */
+/** Keep a known install on screen while a refresh is in flight. Otherwise stay on loading. */
 export function installPreviewWhileLoading(current: InstallPreviewModel): InstallPreviewModel {
   if (current.installs.length > 0) return { phase: 'ready', installs: current.installs };
   return { phase: 'loading', installs: [] };
@@ -121,6 +119,18 @@ export function installPreviewFromList(
   return { phase: 'ready', installs: readyInstallsFromList(result.requests) };
 }
 
+export const FIRST_BUILD_EYEBROW = 'First build';
+export const FIRST_BUILD_TITLE = 'See it on your phone';
+export const FIRST_BUILD_LEAD =
+  'The install code is the real app. It appears after your first build.';
+export const FIRST_BUILD_STEPS = [
+  'Confirm your brand.',
+  'Publish home so the installed app uses that layout.',
+  'Open Build my app and start the build.',
+  'Scan the install code on Go live when it appears.',
+] as const;
+export const FIRST_BUILD_CTA = 'Build my app';
+
 export function brandStepLead(model: InstallPreviewModel | undefined): string {
   if (model?.phase === 'loading') {
     return 'We filled this in from your store where we could. Shopify details stay locked.';
@@ -128,7 +138,7 @@ export function brandStepLead(model: InstallPreviewModel | undefined): string {
   if (model && model.phase === 'ready' && model.installs.length > 0) {
     return 'We filled this in from your store where we could. Scan the code to open the app on your phone. Shopify details stay locked.';
   }
-  return `We filled this in from your store where we could. The phone uses this draft and updates as you edit. ${INSTALLABLE_HOME_CAPTION} Shopify details stay locked.`;
+  return 'We filled this in from your store where we could. Your first build is how you open this on a phone. Shopify details stay locked.';
 }
 
 export function settingsBrandLead(model: InstallPreviewModel | undefined): string {
@@ -138,7 +148,7 @@ export function settingsBrandLead(model: InstallPreviewModel | undefined): strin
   if (model && model.phase === 'ready' && model.installs.length > 0) {
     return 'Replace the home screen icon and the image shoppers see when the app opens. Scan the code to install the app. The next build uses these images.';
   }
-  return 'Replace the home screen icon and the image shoppers see when the app opens. The preview updates as soon as you choose a file. The icon is the home-screen mark under the phone. The splash is the opening screen.';
+  return 'Replace the home screen icon and the image shoppers see when the app opens. The next build uses these images.';
 }
 
 export function previewStepLead(model: InstallPreviewModel | undefined): string {
@@ -148,5 +158,5 @@ export function previewStepLead(model: InstallPreviewModel | undefined): string 
   if (model && model.phase === 'ready' && model.installs.length > 0) {
     return 'The installable app is ready. Scan the code, or open Build to install it.';
   }
-  return `These screens follow the shopper app. Opening is the splash. ${INSTALLABLE_HOME_CAPTION} Product and cart use the same chrome.`;
+  return 'Publish your home, then start a build. Scan the install code when it appears. Go live on Home follows the same step.';
 }

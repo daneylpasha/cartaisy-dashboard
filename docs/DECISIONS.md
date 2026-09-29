@@ -384,6 +384,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Connected Home presentation. Build my app, App Builder publish, and the disconnected checklist stay. Human review is required because this sits next to Shopify recovery, home publish, and the release handoff. It does not change auth, store ownership, the publish write, or Build eligibility.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/HOME_MODULE_EDITOR_CONTRACT.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#96`.
 
+### A missing install shows first-build steps, not a phone
+
+- Date: 2026-09-29.
+- Decision: Brand, Preview, and Settings do not show the branding phone, the home-screen mock, or the splash boot mock. When no platform is `ready` with a public https `installUrl`, including a failed build list and a caller that has not loaded one, that column shows how to get the first build: confirm brand, publish home (`/dashboard/app-builder#publish-home`), open Build my app, then scan the install code on the Home Go live strip (`/dashboard`). The primary action is Build my app. While the build list is loading and no install is already known, that column says it is checking and does not show the steps over a finished install. When at least one ready public https install URL exists, the same column centers the compact install code and Open Build. The code is still drawn in the browser from that URL only. An unsafe URL is not a code and falls through to the first-build steps. Branding editors stay. `/dashboard/app-builder/preview` stays the module stack. It is not the branding phone, and its caption no longer points at a phone on Brand or Preview. This replaces the 2026-09-29 rule that kept the light phone as the wait state before the first ready install.
+- Reason: Dashboard #99. Product decision on 2026-09-29 (Daniyal): the phone mock is not a preview of the installable app. The install code is.
+- Impact: Brand, Preview, and Settings presentation. Build my app, the Go live strip, and App Builder publish are unchanged. No new backend field. No Shopify token and no Expo token is rendered. Human review is required because this is the merchant-facing install handoff and the branding preview.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/HOME_MODULE_EDITOR_CONTRACT.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#99`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

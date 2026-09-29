@@ -44,7 +44,7 @@ function previewLead(
   sections: { isVisible: boolean }[] | null
 ): string {
   const base =
-    'Module stack. Splash, the home header, product, and cart are the shopper phone on Brand and Preview.';
+    'Module stack for this home. Publish home, then the install code on Build my app is the app on a phone.';
   if (!status || !sections) return base;
   return `${base} ${publishStatusCopy(status, sections).detail}`;
 }

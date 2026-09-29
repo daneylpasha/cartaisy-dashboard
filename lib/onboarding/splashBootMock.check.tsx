@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { splashBootImageUrl } from '@/components/onboarding/SplashBootMock';
+import { SplashBootMock, splashBootImageUrl } from '@/components/onboarding/SplashBootMock';
 import { BrandingStep } from '@/components/onboarding/steps/BrandingStep';
 import { StoreAppBrandView } from '@/components/settings/StoreAppBrandView';
 import { EMPTY_CATALOG } from '@/lib/onboarding/normalizers';
@@ -24,15 +24,13 @@ const previewStepSource = source('../../components/onboarding/steps/PreviewStep.
 const settingsViewSource = source('../../components/settings/StoreAppBrandView.tsx');
 const buildViewSource = source('../../components/onboarding/BuildMyAppView.tsx');
 
-assert.match(brandSource, /<HomeScreenLauncherMock appName=\{draft\.appName\} iconUrl=\{draft\.iconUrl\} \/>/);
-assert.match(brandSource, /<SplashBootMock appName=\{draft\.appName\} splashUrl=\{draft\.splashUrl\} \/>/);
+assert.doesNotMatch(brandSource, /HomeScreenLauncherMock|SplashBootMock|SmartHomePreview/);
 assert.match(brandSource, /const nameReady = draft\.appName\.trim\(\)\.length >= 2;/);
 assert.match(
   brandSource,
   /const blocked =\n\s*Boolean\(loadError\) \|\| !nameReady \|\| !primaryValid \|\| !secondaryValid \|\| logoUploading \|\| iconUploading \|\| splashUploading;/
 );
-assert.match(settingsViewSource, /<HomeScreenLauncherMock appName=\{shown\.appName\} iconUrl=\{shown\.iconUrl\} \/>/);
-assert.match(settingsViewSource, /<SplashBootMock appName=\{shown\.appName\} splashUrl=\{shown\.splashUrl\} \/>/);
+assert.doesNotMatch(settingsViewSource, /HomeScreenLauncherMock|SplashBootMock|SmartHomePreview/);
 assert.doesNotMatch(previewStepSource, /SplashBootMock/);
 assert.doesNotMatch(buildViewSource, /SplashBootMock/);
 assert.doesNotMatch(previewSource, /SplashBootMock/);
@@ -104,6 +102,12 @@ function isDisabled(tag: string): boolean {
   return / disabled(?:=|>|\s)/.test(tag);
 }
 
+function renderSplash(next: BrandingDraft): string {
+  return renderToStaticMarkup(
+    createElement(SplashBootMock, { appName: next.appName, splashUrl: next.splashUrl })
+  );
+}
+
 function renderBrand(next: BrandingDraft): string {
   return renderToStaticMarkup(
     createElement(BrandingStep, {
@@ -154,7 +158,12 @@ function assertNoSubstitute(block: string) {
   assert.doesNotMatch(block, /logo\.png|icon\.png/);
 }
 
-const ready = renderBrand(draft);
+const readyPage = renderBrand(draft);
+assert.doesNotMatch(readyPage, /data-splash-boot-mock|data-shopper-screen|data-launcher-mock/);
+assert.match(readyPage, /data-install-preview="instructions"/);
+assert.equal(isDisabled(continueButton(readyPage)), false);
+
+const ready = renderSplash(draft);
 const readyMock = splashBoot(ready);
 assert.match(splashFrame(ready), /src="https:\/\/cdn\.example\/splash\.png"/);
 assert.match(splashFrame(ready), /object-cover/);
@@ -162,14 +171,13 @@ assert.match(readyMock, /Northwind/);
 assert.equal(readyMock.includes('step=brand'), false);
 assert.equal(readyMock.includes('Add a splash'), false);
 assertNoSubstitute(readyMock);
-assert.equal(isDisabled(continueButton(ready)), false);
 
-const trimmedName = renderBrand({ ...draft, appName: '  Northwind  ' });
+const trimmedName = renderSplash({ ...draft, appName: '  Northwind  ' });
 assert.match(splashBoot(trimmedName), /Northwind/);
 assert.equal(splashBoot(trimmedName).includes('  Northwind  '), false);
-assert.equal(isDisabled(continueButton(trimmedName)), false);
+assert.equal(isDisabled(continueButton(renderBrand({ ...draft, appName: '  Northwind  ' }))), false);
 
-const blobDraft = renderBrand({
+const blobDraft = renderSplash({
   ...draft,
   splashUrl: 'blob:http://localhost/preview',
   splashPersisted: false,
@@ -178,36 +186,39 @@ assert.match(splashFrame(blobDraft), /src="blob:http:\/\/localhost\/preview"/);
 assert.match(splashBoot(blobDraft), /Northwind/);
 assert.equal(splashBoot(blobDraft).includes('Add a splash'), false);
 assertNoSubstitute(splashBoot(blobDraft));
-assert.equal(isDisabled(continueButton(blobDraft)), false);
+assert.equal(
+  isDisabled(continueButton(renderBrand({ ...draft, splashUrl: 'blob:http://localhost/preview', splashPersisted: false }))),
+  false
+);
 
-const missingSplash = renderBrand({ ...draft, splashUrl: null });
+const missingSplash = renderSplash({ ...draft, splashUrl: null });
 const missingMock = splashBoot(missingSplash);
 assert.equal(splashFrame(missingSplash).includes('<img'), false);
 assert.match(missingMock, /Northwind/);
 assertSoftLinks(missingMock);
-assert.equal(isDisabled(continueButton(missingSplash)), false);
+assert.equal(isDisabled(continueButton(renderBrand({ ...draft, splashUrl: null }))), false);
 
-const blankName = renderBrand({ ...draft, appName: '   ' });
+const blankName = renderSplash({ ...draft, appName: '   ' });
 const blankMock = splashBoot(blankName);
 assert.match(splashFrame(blankName), /src="https:\/\/cdn\.example\/splash\.png"/);
 assert.equal(blankMock.includes('Northwind'), false);
 assert.equal(blankMock.includes('Add a splash'), false);
 assertNoSubstitute(blankMock);
-assert.equal(isDisabled(continueButton(blankName)), true);
+assert.equal(isDisabled(continueButton(renderBrand({ ...draft, appName: '   ' }))), true);
 
-const shortName = renderBrand({ ...draft, appName: 'N' });
+const shortName = renderSplash({ ...draft, appName: 'N' });
 assert.match(splashBoot(shortName), />N</);
 assert.equal(splashBoot(shortName).includes('Add a splash'), false);
-assert.equal(isDisabled(continueButton(shortName)), true);
+assert.equal(isDisabled(continueButton(renderBrand({ ...draft, appName: 'N' }))), true);
 
-const bothMissing = renderBrand({ ...draft, appName: '', splashUrl: null });
+const bothMissing = renderSplash({ ...draft, appName: '', splashUrl: null });
 const bothMock = splashBoot(bothMissing);
 assert.equal(splashFrame(bothMissing).includes('<img'), false);
 assert.equal(bothMock.includes('Northwind'), false);
 assertSoftLinks(bothMock);
-assert.equal(isDisabled(continueButton(bothMissing)), true);
+assert.equal(isDisabled(continueButton(renderBrand({ ...draft, appName: '', splashUrl: null }))), true);
 
-const poisoned = renderBrand({
+const poisoned = renderSplash({
   ...draft,
   splashUrl: 'https://cdn.example/splash.png?access_token=shpat_secret',
 });
@@ -216,12 +227,11 @@ assert.equal(poisonedMock.includes('<img'), false);
 assert.equal(poisonedMock.includes('shpat_'), false);
 assert.match(poisonedMock, /Northwind/);
 assertSoftLinks(poisonedMock);
-assert.equal(isDisabled(continueButton(poisoned)), false);
 
-const httpSplash = renderBrand({ ...draft, splashUrl: 'http://cdn.example/splash.png' });
+const httpSplash = renderSplash({ ...draft, splashUrl: 'http://cdn.example/splash.png' });
 assert.equal(splashBoot(httpSplash).includes('http://cdn.example'), false);
 assert.match(splashBoot(httpSplash), /Add a splash in/);
-assert.equal(isDisabled(continueButton(httpSplash)), false);
+assert.equal(isDisabled(continueButton(renderBrand({ ...draft, splashUrl: 'http://cdn.example/splash.png' }))), false);
 
 function renderSettings(next: BrandingDraft): string {
   return renderToStaticMarkup(
@@ -243,22 +253,25 @@ function renderSettings(next: BrandingDraft): string {
 }
 
 const settingsReady = renderSettings(draft);
-assert.match(splashFrame(settingsReady), /src="https:\/\/cdn\.example\/splash\.png"/);
-assert.match(splashBoot(settingsReady), /Northwind/);
-assert.equal(splashBoot(settingsReady).includes('Add a splash'), false);
-assertNoSubstitute(splashBoot(settingsReady));
+assert.doesNotMatch(settingsReady, /data-splash-boot-mock|data-shopper-screen|data-launcher-mock/);
+assert.match(settingsReady, /data-install-preview="instructions"/);
+const settingsSplash = renderSplash(draft);
+assert.match(splashFrame(settingsSplash), /src="https:\/\/cdn\.example\/splash\.png"/);
+assert.match(splashBoot(settingsSplash), /Northwind/);
+assert.equal(splashBoot(settingsSplash).includes('Add a splash'), false);
+assertNoSubstitute(splashBoot(settingsSplash));
 
-const settingsBlank = renderSettings({ ...draft, appName: '' });
-assert.doesNotMatch(settingsBlank, /data-shopper-screen[\s\S]*Your app/);
+const settingsBlank = renderSplash({ ...draft, appName: '' });
+assert.doesNotMatch(renderSettings({ ...draft, appName: '' }), /data-shopper-screen/);
 assert.doesNotMatch(splashBoot(settingsBlank), /Your app/);
 assert.equal(splashBoot(settingsBlank).includes('Add a splash'), false);
 
-const settingsMissing = renderSettings({ ...draft, splashUrl: null });
+const settingsMissing = renderSplash({ ...draft, splashUrl: null });
 assert.equal(splashFrame(settingsMissing).includes('<img'), false);
 assert.match(splashBoot(settingsMissing), /Northwind/);
 assertSoftLinks(splashBoot(settingsMissing));
 
-const settingsBlob = renderSettings({
+const settingsBlob = renderSplash({
   ...draft,
   splashUrl: 'blob:http://localhost/settings-preview',
   splashPersisted: false,
