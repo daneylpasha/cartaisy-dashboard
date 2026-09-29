@@ -14,22 +14,65 @@ const STEP_LABELS: Record<OnboardingStep, string> = {
   ready: 'Ready',
 };
 
+/** Quiet label when no merchant name is known. */
+export const WIZARD_HEADER_FALLBACK = 'Setup';
+
+const SHOP_DOMAIN = /^(?:https?:\/\/)?[a-z0-9][a-z0-9-]*\.myshopify\.com\/?$/i;
+const STORE_ID = /^[a-f0-9]{24}$/i;
+const PLATFORM_WORDMARK = /^cartaisy$/i;
+
+function acceptableHeaderMark(value: string | null | undefined): string | null {
+  if (typeof value !== 'string') return null;
+  const name = value.trim();
+  if (!name) return null;
+  if (PLATFORM_WORDMARK.test(name)) return null;
+  if (SHOP_DOMAIN.test(name)) return null;
+  if (STORE_ID.test(name)) return null;
+  return name;
+}
+
+/**
+ * Header mark for setup. Prefer the branding display name, then the store
+ * name. A blank value, the platform wordmark, a shop domain, and a store id
+ * are not used.
+ */
+export function wizardHeaderMark(...values: Array<string | null | undefined>): string {
+  for (const value of values) {
+    const name = acceptableHeaderMark(value);
+    if (name) return name;
+  }
+  return WIZARD_HEADER_FALLBACK;
+}
+
 interface WizardChromeProps {
   step: OnboardingStep;
   wide?: boolean;
+  /** Branding app display name, including an unsaved draft. */
+  appName?: string | null;
+  /** Session or profile store name. Used when the app name is not a mark. */
+  storeName?: string | null;
   children: ReactNode;
 }
 
-export function WizardChrome({ step, wide = false, children }: WizardChromeProps) {
+export function WizardChrome({
+  step,
+  wide = false,
+  appName = null,
+  storeName = null,
+  children,
+}: WizardChromeProps) {
   const currentIndex = ONBOARDING_STEPS.indexOf(step);
+  const mark = wizardHeaderMark(appName, storeName);
 
   return (
     <div className="min-h-screen bg-[#f5f5f6] text-slate-900">
-      <header className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-5 sm:px-8">
-        <p className="font-heading text-[15px] font-semibold tracking-tight text-slate-950">Cartaisy</p>
+      <header className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-5 sm:px-8">
+        <p className="min-w-0 truncate font-heading text-[15px] font-semibold tracking-tight text-slate-950">
+          {mark}
+        </p>
         <Link
           href="/dashboard"
-          className="text-sm text-slate-600 transition-colors hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
+          className="shrink-0 text-sm text-slate-600 transition-colors hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
         >
           Exit setup
         </Link>

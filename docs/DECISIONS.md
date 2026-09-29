@@ -139,7 +139,7 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 ### The onboarding phone is a white-label shopper home
 
 - Date: 2026-09-24.
-- Decision: The brand step and the preview step share `SmartHomePreview`. It draws the branding draft held in the wizard, so name, logo, icon, primary color, secondary color, and splash update in that render without a save or a reload. Inside the device there is no Cartaisy wordmark, logo, or marketing chrome. The wizard header outside the phone may still say Cartaisy. Synced products stay on the shelf when catalog sync has succeeded. The preview does not call Shopify and does not receive an Admin token.
+- Decision: The brand step and the preview step share `SmartHomePreview`. It draws the branding draft held in the wizard, so name, logo, icon, primary color, secondary color, and splash update in that render without a save or a reload. Inside the device there is no Cartaisy wordmark, logo, or marketing chrome. As of dashboard #108, the wizard header shows the app display name, or Setup when that name is not known, and does not say Cartaisy. Synced products stay on the shelf when catalog sync has succeeded. The preview does not call Shopify and does not receive an Admin token.
 - Reason: Dashboard #30. Merchants should see their own app while they edit the brand, not a second product brand inside the frame.
 - Impact: Onboarding and branding presentation. Build my app and connect are unchanged. Icon and splash now persist with the brand; see the decision below.
 - Related docs: `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/STATUS.md`, `docs/ARCHITECTURE.md`. GitHub issue: `#30`.
@@ -407,6 +407,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Reason: Dashboard #102. A published home had no merchant way to return the installable app to its smart default without losing the editor draft.
 - Impact: App Builder, `GET /api/public/home-feed`, and the publish status shown on connected Home and Build my app. If the dashboard and backend share `homelayouts`, this write is the empty live snapshot backend #199 already treats as not live. Human review is required because this is home-module publishing.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/HOME_MODULE_EDITOR_CONTRACT.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#102`.
+
+### The wizard header does not say Cartaisy
+
+- Date: 2026-09-29.
+- Decision: The onboarding header mark is the branding app display name when that name is already known, then the store name. A blank value, a name that is only Cartaisy, a shop domain, and a store id are not used. The header then says Setup. Exit setup, the step rail, and the footer stay. Brand and Preview panels are unchanged, and the header does not mount a phone. Go live brand support names the installable app on the device.
+- Reason: Dashboard #108. A Cartaisy wordmark in setup fought the white-label launch bar.
+- Impact: Onboarding presentation and the Go live brand support line. Connect, brand save, preview, publish, and Build my app behavior are unchanged. No Shopify token is rendered.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`. GitHub issue: `#108`.
 
 ### High-risk auth/store ownership/publishing changes require human review
 

@@ -470,7 +470,12 @@ export function OnboardingWizard() {
       };
 
   return (
-    <WizardChrome step={step} wide={step === 'brand' || step === 'preview'}>
+    <WizardChrome
+      step={step}
+      wide={step === 'brand' || step === 'preview'}
+      appName={draft.appName}
+      storeName={session?.user?.storeName}
+    >
       <AnimatePresence mode="wait">
         <motion.div key={loading ? 'loading' : step} {...motionProps}>
           {loading ? (
