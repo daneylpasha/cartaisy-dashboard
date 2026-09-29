@@ -15,7 +15,7 @@ import {
 } from '@/components/app-builder/preview';
 import { ComponentOrderSidebar } from '@/components/app-builder/preview/ComponentOrderSidebar';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, Loader2, RefreshCw, Smartphone } from 'lucide-react';
+import { AlertCircle, Layers, Loader2, RefreshCw, Smartphone } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 function renderPreviewSection(type: string, data: HomescreenPreviewData): ReactNode {
@@ -45,7 +45,7 @@ function previewLead(
   live: boolean
 ): string {
   const base =
-    'Module stack for this home. Publish home, then the install code on Build my app is the app on a phone.';
+    'Module stack for this home. Publish home, then the install code on Build my app is the real app.';
   if (!status || !sections) return base;
   return `${base} ${publishStatusCopy(status, sections, live).detail}`;
 }
@@ -141,8 +141,8 @@ export default function HomescreenPreviewPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-            <Smartphone className="w-8 h-8 text-blue-600" />
-            Homescreen Preview
+            <Layers className="w-8 h-8 text-blue-600" />
+            Module stack
           </h1>
           <p className="text-slate-600 mt-1">
             {previewLead(publishStatus, layoutSections, layoutLive)}
