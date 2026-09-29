@@ -492,6 +492,23 @@ assert.equal(launcherDisplayName('   '), null);
 assert.equal(launcherDisplayName(''), null);
 assert.equal(launcherDisplayName(null), null);
 assert.equal(launcherDisplayName(undefined), null);
+assert.equal(launcherDisplayName('Cartaisy'), null);
+assert.equal(launcherDisplayName('  cartaisy  '), null);
+assert.equal(launcherDisplayName('CARTAISY'), null);
+assert.equal(launcherDisplayName('Cartaisy & Co'), 'Cartaisy & Co');
+
+const wordmarkName = html({
+  appName: '  Cartaisy  ',
+  iconUrl: 'https://cdn.example/icon.png',
+  splashUrl: 'https://cdn.example/splash.png',
+});
+assert.equal(isDisabled(buttonTag(wordmarkName, 'Build my app')), false);
+assert.ok(wordmarkName.includes('Add an app name in'));
+assert.ok(wordmarkName.includes('Not added'));
+assert.equal((wordmarkName.match(/Not added/g) ?? []).length, 1);
+assert.doesNotMatch(wordmarkName, /cartaisy/i);
+assert.equal(wordmarkName.includes('APP_NAME'), false);
+assertCalm(wordmarkName);
 
 const unpublishedLayout = homeLayoutOverviewFromPayload({
   data: { status: 'not_published', sections: [], publishedSections: [] },

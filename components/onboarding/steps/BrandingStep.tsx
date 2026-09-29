@@ -8,6 +8,7 @@ import { BrandInstallPreview } from '@/components/onboarding/BrandInstallPreview
 import { LockedShopifyDetails } from '@/components/onboarding/LockedShopifyDetails';
 import { brandStepLead, type InstallPreviewModel } from '@/lib/build/installPreview';
 import { SetupNotice, WizardFooter } from '@/components/onboarding/WizardChrome';
+import { APP_NAME_WORDMARK_MESSAGE, isPlatformWordmark } from '@/lib/onboarding/appName';
 import {
   DEFAULT_PRIMARY_COLOR,
   brandColorUsesPlatformDefault,
@@ -75,7 +76,8 @@ export function BrandingStep({
   onRetry,
   installPreview,
 }: BrandingStepProps) {
-  const nameReady = draft.appName.trim().length >= 2;
+  const trimmedName = draft.appName.trim();
+  const nameReady = trimmedName.length >= 2 && !isPlatformWordmark(trimmedName);
   const uploadsBusy = logoUploading || iconUploading || splashUploading;
   const blocked =
     Boolean(loadError) || !nameReady || !primaryValid || !secondaryValid || uploadsBusy;
@@ -131,9 +133,11 @@ export function BrandingStep({
                   autoComplete="organization"
                 />
                 <p className="text-xs text-slate-500">
-                  {draft.appName.trim().length < 2
-                    ? 'Enter at least 2 characters. This is the name shoppers see.'
-                    : 'This is the name shoppers see on the app.'}
+                  {isPlatformWordmark(draft.appName)
+                    ? APP_NAME_WORDMARK_MESSAGE
+                    : trimmedName.length < 2
+                      ? 'Enter at least 2 characters. This is the name shoppers see.'
+                      : 'This is the name shoppers see on the app.'}
                 </p>
               </div>
 

@@ -25,7 +25,11 @@ const settingsPageSource = source('../../app/dashboard/settings/page.tsx');
 const buildViewSource = source('../../components/onboarding/BuildMyAppView.tsx');
 
 assert.doesNotMatch(brandSource, /HomeScreenLauncherMock|SmartHomePreview|SplashBootMock/);
-assert.match(brandSource, /const nameReady = draft\.appName\.trim\(\)\.length >= 2;/);
+assert.match(brandSource, /const trimmedName = draft\.appName\.trim\(\);/);
+assert.match(
+  brandSource,
+  /const nameReady = trimmedName\.length >= 2 && !isPlatformWordmark\(trimmedName\);/
+);
 assert.match(
   brandSource,
   /const uploadsBusy = logoUploading \|\| iconUploading \|\| splashUploading;\n\s*const blocked =\n\s*Boolean\(loadError\) \|\| !nameReady \|\| !primaryValid \|\| !secondaryValid \|\| uploadsBusy;/

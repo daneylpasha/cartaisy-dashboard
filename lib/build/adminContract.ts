@@ -1,3 +1,4 @@
+import { merchantDisplayName } from '@/lib/onboarding/appName';
 import { persistedBrandImageUrl } from '@/lib/onboarding/brandAssets';
 import {
   PLATFORM_STATUSES,
@@ -158,13 +159,11 @@ function envAssignment(key: string, value: string): string {
 }
 
 /**
- * Merchant display name for the ops queue. Blank and whitespace-only values
- * stay null. Does not invent a name.
+ * Merchant display name for the ops queue. Blank, whitespace-only, and the
+ * platform wordmark stay null. Does not invent a name.
  */
 export function opsAppName(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
-  const name = value.trim();
-  return name || null;
+  return merchantDisplayName(value);
 }
 
 /** Clipboard text for the EAS app name. Pass an already trimmed non-empty name. */

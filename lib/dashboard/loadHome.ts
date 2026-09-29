@@ -5,6 +5,7 @@ import { listStoreSubmits } from '@/lib/storeSubmit/client';
 import { homeSubmitNotices, type HomeSubmitNotice } from '@/lib/storeSubmit/contract';
 import { fetchCollectionsCatalogBlock } from '@/lib/api/shopifyConnection';
 import { API_URL, tokenStorage } from '@/lib/api/mutator/custom-instance';
+import { merchantDisplayName } from '@/lib/onboarding/appName';
 import { fetchBranding } from '@/lib/onboarding/branding';
 import { persistedBrandImageUrl } from '@/lib/onboarding/brandAssets';
 import { normalizeCatalog, UNAVAILABLE_SYNC } from '@/lib/onboarding/normalizers';
@@ -99,7 +100,6 @@ export async function loadBrandRead(storeId: string | undefined): Promise<GoLive
   if (!storeId || !token) return { ...UNKNOWN_BRAND, saved: null };
   const draft = await fetchBranding(storeId, token);
   if (!draft) return { ...UNKNOWN_BRAND, saved: null };
-  const displayName = draft.appName.trim();
   return {
     saved: brandingLooksSaved({
       logoUrl: draft.logoUrl,
@@ -107,7 +107,7 @@ export async function loadBrandRead(storeId: string | undefined): Promise<GoLive
       secondaryColor: draft.secondaryColor,
     }),
     known: true,
-    displayName: displayName.length > 0 ? displayName : null,
+    displayName: merchantDisplayName(draft.appName),
     hasIcon: persistedBrandImageUrl(draft.iconUrl) != null,
   };
 }

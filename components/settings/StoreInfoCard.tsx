@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AlertCircle, CheckCircle2, Copy, Loader2, Pencil, X } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import { APP_NAME_WORDMARK_MESSAGE, isPlatformWordmark } from '@/lib/onboarding/appName';
 import { canManageSettings } from '@/lib/utils/permissions';
 
 interface StoreInfoCardProps {
@@ -30,10 +31,15 @@ export function StoreInfoCard({ store, onStoreUpdated }: StoreInfoCardProps) {
   const [copiedId, setCopiedId] = useState(false);
 
   const canEdit = canManageSettings(session?.user?.role);
+  const wordmarkName = isPlatformWordmark(editName);
 
   const handleSave = async () => {
     if (!editName.trim()) {
       setError('Store name cannot be empty');
+      return;
+    }
+    if (isPlatformWordmark(editName)) {
+      setError(APP_NAME_WORDMARK_MESSAGE);
       return;
     }
 
@@ -94,6 +100,9 @@ export function StoreInfoCard({ store, onStoreUpdated }: StoreInfoCardProps) {
                 disabled={isSaving}
                 placeholder="Store name"
               />
+              {wordmarkName ? (
+                <p className="text-xs text-slate-500">{APP_NAME_WORDMARK_MESSAGE}</p>
+              ) : null}
             </div>
 
             {error && (
@@ -119,7 +128,7 @@ export function StoreInfoCard({ store, onStoreUpdated }: StoreInfoCardProps) {
               <Button
                 size="sm"
                 onClick={handleSave}
-                disabled={isSaving || editName === store.name}
+                disabled={isSaving || editName === store.name || wordmarkName}
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 {isSaving ? (

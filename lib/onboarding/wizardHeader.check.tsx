@@ -17,6 +17,8 @@ assert.equal(wizardHeaderMark('northwind.myshopify.com', 'Harbor'), 'Harbor');
 assert.equal(wizardHeaderMark('https://northwind.myshopify.com', 'Harbor'), 'Harbor');
 assert.equal(wizardHeaderMark('66f1c2e0a1b2c3d4e5f60710', 'Harbor'), 'Harbor');
 assert.equal(wizardHeaderMark('Cartaisy', 'Harbor'), 'Harbor');
+assert.equal(wizardHeaderMark('  Cartaisy  '), 'Setup');
+assert.equal(wizardHeaderMark('CARTAISY', 'Harbor'), 'Harbor');
 assert.equal(wizardHeaderMark('cartaisy'), 'Setup');
 assert.equal(wizardHeaderMark('northwind.myshopify.com', '66f1c2e0a1b2c3d4e5f60710'), 'Setup');
 assert.equal(wizardHeaderMark('', 'Northwind'), 'Northwind');

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useSession } from '@/lib/auth';
 import { tokenStorage } from '@/lib/api/mutator/custom-instance';
+import { APP_NAME_WORDMARK_MESSAGE, isPlatformWordmark } from '@/lib/onboarding/appName';
 import { mergeStoredBrandAssets } from '@/lib/onboarding/brandAssets';
 import {
   brandColorPatch,
@@ -426,6 +427,10 @@ export function OnboardingWizard() {
     const name = draft.appName.trim();
     if (name.length < 2) {
       setFieldError('Enter an app name with at least 2 characters.');
+      return;
+    }
+    if (isPlatformWordmark(name)) {
+      setFieldError(APP_NAME_WORDMARK_MESSAGE);
       return;
     }
 

@@ -432,6 +432,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Onboarding brand step and Settings Store Branding. No backend contract change. No Shopify token is rendered or sent. Human review is required because this is the brand image save path.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`. GitHub issue: `#114`.
 
+### A Cartaisy-only name is not a saveable app name
+
+- Date: 2026-09-29.
+- Decision: `lib/onboarding/appName.ts` holds the platform wordmark rule the wizard header already used (`PLATFORM_WORDMARK` via `merchantDisplayName`). An app name that is only Cartaisy after trim, in any case, is rejected on the Brand step and on Settings store name before the request. `PATCH /api/store` `{ name }` still returns 400 with "Choose the name shoppers see on the app." An already-saved Cartaisy-only name is missing for the wizard header (Setup), Build my app readiness and handoff, Home brand readiness, and the ops `APP_NAME` clipboard, which does not copy `APP_NAME=Cartaisy`. A merchant name of at least 2 characters that is not only that wordmark still saves and displays as itself. Shop domains and store ids stay filtered only on marks that already dropped them. Build submit is not gated on the name.
+- Reason: Dashboard #116. The header hid the wordmark, and the saved store name could still ship as the app name.
+- Impact: Brand save, Settings store name, Build readiness, Home brand readiness, and the ops clipboard. No Shopify token is rendered. Human review is required because this is branding and the release handoff name.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#116`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

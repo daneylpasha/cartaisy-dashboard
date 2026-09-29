@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { merchantDisplayName } from '@/lib/onboarding/appName';
 import { safeImageUrl } from '@/lib/onboarding/normalizers';
 import type { BrandingDraft } from '@/lib/onboarding/types';
 
 export function BrandHandoff({ draft }: { draft: BrandingDraft }) {
-  const name = draft.appName.trim() || 'Your app';
+  const name = merchantDisplayName(draft.appName) ?? 'Your app';
   const iconUrl = safeImageUrl(draft.iconUrl);
   const initial = name.charAt(0).toUpperCase();
   const [brokenFor, setBrokenFor] = useState<string | null>(null);
