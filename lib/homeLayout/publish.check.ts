@@ -9,6 +9,7 @@ import {
   legacyPublishedAt,
   needsLegacyPublishBackfill,
   publishedFeedSections,
+  homeLayoutOverviewFromPayload,
   publishStatusCopy,
   publishSuccessCopy,
   resolveHomeLayoutView,
@@ -140,6 +141,56 @@ assert.doesNotMatch(preview, /cartaisy/i);
 const builder = readFileSync(join(here, '../../app/dashboard/app-builder/page.tsx'), 'utf8');
 assert.match(builder, /HomePublishBar/);
 assert.match(builder, /\/api\/home-layout\/publish/);
+
+const publishBar = readFileSync(join(here, '../../components/app-builder/HomePublishBar.tsx'), 'utf8');
+assert.match(publishBar, /id="publish-home"/);
+assert.match(publishBar, /#publish-home/);
+
+const unpublished = homeLayoutOverviewFromPayload({
+  data: { status: 'not_published', sections: [], publishedSections: [] },
+});
+assert.equal(unpublished?.status, 'not_published');
+assert.equal(unpublished?.label, 'Not published yet');
+assert.equal(unpublished?.needsPublish, true);
+
+const liveOverview = homeLayoutOverviewFromPayload({
+  data: {
+    status: 'published',
+    sections: [{ type: 'carousel', isVisible: true, position: 0 }],
+    publishedSections: [{ type: 'carousel', isVisible: true, position: 0 }],
+  },
+});
+assert.equal(liveOverview?.status, 'published');
+assert.equal(liveOverview?.label, 'Published');
+assert.equal(liveOverview?.needsPublish, false);
+assert.match(liveOverview?.detail ?? '', /home header/);
+
+const hiddenOverview = homeLayoutOverviewFromPayload({
+  data: {
+    status: 'published',
+    sections: [{ type: 'carousel', isVisible: false, position: 0 }],
+    publishedSections: [{ type: 'carousel', isVisible: false, position: 0 }],
+  },
+});
+assert.match(hiddenOverview?.detail ?? '', /default home/);
+assert.equal(hiddenOverview?.needsPublish, false);
+
+const draftOverview = homeLayoutOverviewFromPayload({
+  data: {
+    status: 'draft',
+    sections: [{ type: 'carousel', isVisible: false, position: 0 }],
+    publishedSections: [{ type: 'carousel', isVisible: true, position: 0 }],
+  },
+});
+assert.equal(draftOverview?.status, 'draft');
+assert.equal(draftOverview?.label, 'Draft');
+assert.equal(draftOverview?.needsPublish, true);
+assert.match(draftOverview?.detail ?? '', /last published layout/);
+
+assert.equal(homeLayoutOverviewFromPayload(null), null);
+assert.equal(homeLayoutOverviewFromPayload({ success: true }), null);
+assert.equal(homeLayoutOverviewFromPayload({ data: { status: 'unknown' } }), null);
+assert.equal(homeLayoutOverviewFromPayload({ data: {} }), null);
 assert.match(builder, /HOME_PUBLISH_COPY\.saveDraft/);
 assert.doesNotMatch(builder, /Hide from app/);
 assert.doesNotMatch(builder, /Saved successfully/);

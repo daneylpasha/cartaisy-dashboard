@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,8 +34,20 @@ export function HomePublishBar({
 }: HomePublishBarProps) {
   const copy = publishStatusCopy(status, sections);
 
+  useEffect(() => {
+    if (window.location.hash !== '#publish-home') return;
+    const node = document.getElementById('publish-home');
+    if (!(node instanceof HTMLElement)) return;
+    node.scrollIntoView({ block: 'center' });
+    node.focus({ preventScroll: true });
+  }, []);
+
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
+    <div
+      id="publish-home"
+      tabIndex={-1}
+      className="flex scroll-mt-8 flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 outline-none focus-visible:ring-2 focus-visible:ring-slate-300 sm:flex-row sm:items-center sm:justify-between"
+    >
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${PILL[status]}`}>

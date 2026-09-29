@@ -1,3 +1,4 @@
+import { INSTALLABLE_HOME_CAPTION } from '../onboarding/shopperChrome.ts';
 import { merchantInstallHref, type BuildRequest, type PlatformKind, type PlatformStatus } from './contract.ts';
 
 export interface ReadyInstall {
@@ -127,7 +128,7 @@ export function brandStepLead(model: InstallPreviewModel | undefined): string {
   if (model && model.phase === 'ready' && model.installs.length > 0) {
     return 'We filled this in from your store where we could. Scan the code to open the app on your phone. Shopify details stay locked.';
   }
-  return 'We filled this in from your store where we could. The phone uses this draft and updates as you edit. Shopify details stay locked.';
+  return `We filled this in from your store where we could. The phone uses this draft and updates as you edit. ${INSTALLABLE_HOME_CAPTION} Shopify details stay locked.`;
 }
 
 export function settingsBrandLead(model: InstallPreviewModel | undefined): string {
@@ -147,5 +148,5 @@ export function previewStepLead(model: InstallPreviewModel | undefined): string 
   if (model && model.phase === 'ready' && model.installs.length > 0) {
     return 'The installable app is ready. Scan the code, or open Build to install it.';
   }
-  return 'These screens follow the shopper app. Opening is the splash. Home is the default home until you publish a layout. Product and cart use the same chrome.';
+  return `These screens follow the shopper app. Opening is the splash. ${INSTALLABLE_HOME_CAPTION} Product and cart use the same chrome.`;
 }

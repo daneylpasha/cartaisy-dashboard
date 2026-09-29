@@ -196,3 +196,56 @@ export function publishSuccessCopy(sections: readonly { isVisible: boolean }[]):
     ? HOME_PUBLISH_COPY.success
     : HOME_PUBLISH_COPY.successEmpty;
 }
+
+/** App Builder with the Publish home control in view. */
+export const APP_BUILDER_PUBLISH_HREF = '/dashboard/app-builder#publish-home';
+
+export function isHomePublishStatus(value: unknown): value is HomePublishStatus {
+  return value === 'not_published' || value === 'published' || value === 'draft';
+}
+
+export interface HomeLayoutOverview {
+  status: HomePublishStatus;
+  label: string;
+  detail: string;
+  /** True when the installable app is not yet showing this editor layout. */
+  needsPublish: boolean;
+}
+
+function sectionVisibility(value: unknown): { isVisible: boolean }[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== 'object') return [];
+    const record = item as { isVisible?: unknown };
+    return [{ isVisible: record.isVisible !== false }];
+  });
+}
+
+/**
+ * Read the same `GET /api/home-layout` body App Builder uses.
+ * Null when the status is missing or unrecognized, so a failed read is not a status.
+ */
+export function homeLayoutOverviewFromPayload(payload: unknown): HomeLayoutOverview | null {
+  if (!payload || typeof payload !== 'object') return null;
+  const data = (payload as { data?: unknown }).data;
+  if (!data || typeof data !== 'object') return null;
+  const record = data as {
+    status?: unknown;
+    sections?: unknown;
+    publishedSections?: unknown;
+  };
+  if (!isHomePublishStatus(record.status)) return null;
+
+  const sections =
+    record.status === 'published' && Array.isArray(record.publishedSections)
+      ? sectionVisibility(record.publishedSections)
+      : sectionVisibility(record.sections);
+  const copy = publishStatusCopy(record.status, sections);
+
+  return {
+    status: record.status,
+    label: copy.label,
+    detail: copy.detail,
+    needsPublish: record.status !== 'published',
+  };
+}

@@ -85,12 +85,19 @@ export function shopperSubtotalLabel(count: number): string {
 }
 
 /**
- * Honest limits for the still preview. The installable build is the Expo
- * link on Build my app. Published home modules replace this default home.
+ * What the installable app shows for home. The phone on Brand and Preview is
+ * the smart default until Publish. Module-stack edits stay off the device.
+ */
+export const INSTALLABLE_HOME_CAPTION =
+  'The installable app shows the published home, or this smart default until you publish. Module-stack edits stay off the device until Publish.';
+
+/**
+ * Honest limits for the still preview. The installable app shows the published
+ * home, or this smart default until Publish.
  */
 export function shopperPreviewLimits(hasProduct: boolean): string {
   const cartLine = hasProduct
     ? ' The cart row is the first synced product at quantity one. A shopper cart starts empty.'
     : '';
-  return `This follows the shopper app's opening screen, default home, product, and cart. The installable build is the link on Build my app. A published home replaces this default home. Collection cards use names only. Favorites, wishlist, account, and checkout open in the installed app.${cartLine}`;
+  return `This follows the shopper app's opening screen, default home, product, and cart. ${INSTALLABLE_HOME_CAPTION} Collection cards use names only. Favorites, wishlist, account, and checkout open in the installed app.${cartLine}`;
 }

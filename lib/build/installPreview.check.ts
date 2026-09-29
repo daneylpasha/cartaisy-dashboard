@@ -140,13 +140,21 @@ assert.equal(loaded.installs.length, 1);
 assert.equal(showsBrandMock(loaded), false);
 
 assert.match(brandStepLead(undefined), /The phone uses this draft/);
+assert.match(brandStepLead(undefined), /installable app shows the published home/);
+assert.match(brandStepLead(undefined), /Module-stack edits stay off the device until Publish/);
 assert.doesNotMatch(brandStepLead({ phase: 'loading', installs: [] }), /The phone uses this draft/);
+assert.doesNotMatch(brandStepLead({ phase: 'loading', installs: [] }), /smart default/);
 assert.match(brandStepLead(known), /Scan the code/);
+assert.doesNotMatch(brandStepLead(known), /smart default/);
 assert.match(settingsBrandLead(undefined), /under the phone/);
 assert.doesNotMatch(settingsBrandLead(known), /under the phone/);
 assert.match(previewStepLead(undefined), /These screens follow the shopper app/);
+assert.match(previewStepLead(undefined), /installable app shows the published home/);
+assert.match(previewStepLead(undefined), /Module-stack edits stay off the device until Publish/);
 assert.match(previewStepLead({ phase: 'loading', installs: [] }), /Checking whether an installable build is ready/);
+assert.doesNotMatch(previewStepLead({ phase: 'loading', installs: [] }), /smart default/);
 assert.match(previewStepLead(known), /open Build/);
 assert.doesNotMatch(previewStepLead(known), /These screens follow the shopper app/);
+assert.doesNotMatch(previewStepLead(known), /smart default/);
 
 console.log('install preview ok');
