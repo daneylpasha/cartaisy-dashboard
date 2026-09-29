@@ -56,6 +56,15 @@ assert.doesNotMatch(sidebarSource, /\/admin\/stores\/\$\{storeId\}\/branding/);
 assert.doesNotMatch(sidebarSource, /console\.(log|debug|info|error|warn)/);
 assert.match(brandingHelperSource, /inflightBranding/);
 assert.match(brandingHelperSource, /if \(pending\) return pending/);
+assert.match(brandingHelperSource, /globalThis/);
+assert.match(brandingHelperSource, /__cartaisyInflightBranding/);
+assert.match(brandingHelperSource, /inflightBranding\.get\(storeId\)/);
+assert.doesNotMatch(brandingHelperSource, /\$\{storeId\}\\n\$\{token\}/);
+
+const sharedBrandingRegistry = (
+  globalThis as { __cartaisyInflightBranding?: Map<string, Promise<unknown>> }
+).__cartaisyInflightBranding;
+assert.ok(sharedBrandingRegistry instanceof Map);
 
 const quiet: SyncGate = {
   state: 'not_started',
@@ -288,6 +297,34 @@ async function checkSharedNetworkGet() {
 
     await Promise.all([fetchBranding('store-2', 'session-token'), fetchBranding('store-1', 'other-token')]);
     assert.equal(brandingGets, 4);
+
+    const registry = (
+      globalThis as { __cartaisyInflightBranding?: Map<string, Promise<BrandingDraft | null>> }
+    ).__cartaisyInflightBranding;
+    assert.ok(registry instanceof Map);
+    assert.equal(registry, sharedBrandingRegistry);
+
+    const beforeSplit = brandingGets;
+    const sidebarCall = fetchBranding('store-split', 'sidebar-getToken');
+    assert.equal(brandingGets, beforeSplit + 1);
+    assert.equal(registry.has('store-split'), true);
+    assert.equal(registry.has('store-split\nsidebar-getToken'), false);
+    const settingsCall = fetchBranding('store-split', 'settings-tokenStorage');
+    assert.equal(brandingGets, beforeSplit + 1);
+    const [sidebarDraft, settingsDraft] = await Promise.all([sidebarCall, settingsCall]);
+    assert.equal(settingsDraft?.logoUrl, sidebarDraft?.logoUrl);
+    assert.equal(settingsDraft?.iconUrl, 'https://cdn.example/icon.png');
+    assert.equal(settingsDraft?.splashUrl, null);
+    assert.equal(settingsDraft?.primaryExplicit, '#0F766E');
+    assert.equal(registry.has('store-split'), false);
+
+    const otherChunk = Promise.resolve<BrandingDraft | null>(null);
+    registry.set('store-from-other-chunk', otherChunk);
+    const beforeOtherChunk = brandingGets;
+    const shared = fetchBranding('store-from-other-chunk', 'settings-tokenStorage');
+    assert.equal(shared, otherChunk);
+    assert.equal(brandingGets, beforeOtherChunk);
+    registry.delete('store-from-other-chunk');
   } finally {
     globalThis.fetch = realFetch;
   }
