@@ -6,6 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { createElement } from 'react';
 import { BuildMyAppView, type BuildMyAppViewProps } from '../../components/onboarding/BuildMyAppView.tsx';
 import { launcherDisplayName, launcherThumbUrl } from '../../components/onboarding/LauncherReadinessStrip.tsx';
+import { APP_BUILDER_PUBLISH_HREF, homeLayoutOverviewFromPayload } from '../homeLayout/publish.ts';
 import type { BuildRequest } from './contract.ts';
 import { INSTALL_QR_WAIT_COPY } from './installPreview.ts';
 
@@ -492,6 +493,67 @@ assert.equal(launcherDisplayName(''), null);
 assert.equal(launcherDisplayName(null), null);
 assert.equal(launcherDisplayName(undefined), null);
 
+const unpublishedLayout = homeLayoutOverviewFromPayload({
+  data: { status: 'not_published', sections: [], publishedSections: [] },
+});
+const draftLayout = homeLayoutOverviewFromPayload({
+  data: {
+    status: 'draft',
+    sections: [{ type: 'carousel', isVisible: false, position: 0 }],
+    publishedSections: [{ type: 'carousel', isVisible: true, position: 0 }],
+  },
+});
+const publishedLayout = homeLayoutOverviewFromPayload({
+  data: {
+    status: 'published',
+    sections: [{ type: 'carousel', isVisible: true, position: 0 }],
+    publishedSections: [{ type: 'carousel', isVisible: true, position: 0 }],
+  },
+});
+assert.equal(unpublishedLayout?.needsPublish, true);
+assert.equal(draftLayout?.needsPublish, true);
+assert.equal(publishedLayout?.needsPublish, false);
+
+const unpublishedBuild = html({ homeLayout: unpublishedLayout });
+assert.ok(unpublishedBuild.includes('data-home-publish="not_published"'));
+assert.ok(unpublishedBuild.includes('Not published yet'));
+assert.ok(unpublishedBuild.includes('Nothing is saved'));
+assert.ok(unpublishedBuild.includes(`href="${APP_BUILDER_PUBLISH_HREF}"`));
+assert.ok(unpublishedBuild.includes('Publish home'));
+assert.ok(unpublishedBuild.includes('You can request a build, install, and submit either way.'));
+assert.equal(isDisabled(buttonTag(unpublishedBuild, 'Build my app')), false);
+assertCalm(unpublishedBuild);
+
+const draftBuild = html({
+  mode: 'status',
+  request: request('ready', 'ready', { android: ANDROID_INSTALL, ios: IOS_INSTALL }),
+  homeLayout: draftLayout,
+});
+assert.ok(draftBuild.includes('data-home-publish="draft"'));
+assert.ok(draftBuild.includes('>Draft<'));
+assert.ok(draftBuild.includes('last published layout'));
+assert.ok(draftBuild.includes(`href="${APP_BUILDER_PUBLISH_HREF}"`));
+assert.ok(draftBuild.includes('Install Android build'));
+assert.ok(draftBuild.includes('Install iOS build'));
+assert.ok(draftBuild.includes(`href="${ANDROID_INSTALL}"`));
+assertCalm(draftBuild);
+
+const publishedBuild = html({ homeLayout: publishedLayout });
+assert.equal(publishedBuild.includes('data-home-publish'), false);
+assert.equal(publishedBuild.includes('Publish home'), false);
+assert.equal(isDisabled(buttonTag(publishedBuild, 'Build my app')), false);
+assertCalm(publishedBuild);
+
+const missingLayout = html({ homeLayout: null });
+assert.equal(missingLayout.includes('data-home-publish'), false);
+assert.equal(missingLayout.includes('Publish home'), false);
+assert.equal(isDisabled(buttonTag(missingLayout, 'Build my app')), false);
+
+const loadingWithDraft = html({ phase: 'loading', homeLayout: draftLayout });
+assert.ok(loadingWithDraft.includes('data-home-publish="draft"'));
+assert.ok(loadingWithDraft.includes('Loading your build...'));
+assert.equal(loadingWithDraft.includes('>Build my app<'), false);
+
 const viewSource = readFileSync(join(here, '../../components/onboarding/BuildMyAppView.tsx'), 'utf8');
 const panelSource = readFileSync(join(here, '../../components/onboarding/BuildMyAppPanel.tsx'), 'utf8');
 const readySource = readFileSync(join(here, '../../components/onboarding/steps/ReadyStep.tsx'), 'utf8');
@@ -508,6 +570,11 @@ assert.match(readySource, /appName: draft\.appName/);
 assert.match(readySource, /iconUrl: draft\.iconUrl/);
 assert.match(readySource, /splashUrl: draft\.splashUrl/);
 assert.match(panelSource, /buildRequestAvailability/);
+assert.match(panelSource, /homeLayoutOverviewFromPayload/);
+assert.match(panelSource, /\/api\/home-layout/);
+assert.match(viewSource, /HomePublishNudge/);
+assert.doesNotMatch(viewSource, /disabled=\{[\s\S]{0,80}homeLayout/);
+assert.doesNotMatch(panelSource, /console\.(log|debug|info|error|warn)/);
 assert.match(panelSource, /launcherDisplayName\(branding\?\.appName\)/);
 assert.match(panelSource, /launcherDisplayName\(profile\.name\)/);
 assert.match(panelSource, /launcherDisplayName\(session\?\.user\?\.storeName\)/);

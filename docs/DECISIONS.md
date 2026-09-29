@@ -368,6 +368,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Connected Home, and the phone caption on Brand, Preview, and Settings. No new module type, no Unpublish control, and no Shopify token. Human review is required because this is home-module publishing.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/HOME_MODULE_EDITOR_CONTRACT.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#92`.
 
+### Build my app nudges Publish home and does not gate on it
+
+- Date: 2026-09-29.
+- Decision: Build my app reads `GET /api/home-layout` with the same helper Connected Home uses. Not published yet and Draft show a quiet strip, in the same visual language as the app name, icon, and splash strip, with that status and a link to `/dashboard/app-builder#publish-home`. Published leaves the strip off. A failed or unrecognized read leaves the strip off and does not invent a status. The strip does not disable Build, install codes, or Submit. Settings → Build setup is the store-credential and submit panel. It does not render the Build panel, so it does not show this strip.
+- Reason: Dashboard #94. Merchants could request a build and install while the app still showed the smart default or the last published layout.
+- Impact: Merchant Build my app on `/dashboard/onboarding?step=ready`. No eligibility change, no Unpublish, and no Shopify token. Human review is required because this sits on the release handoff next to home-module publishing.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/HOME_MODULE_EDITOR_CONTRACT.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#94`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

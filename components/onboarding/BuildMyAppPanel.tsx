@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { homeLayoutOverviewFromPayload, type HomeLayoutOverview } from '@/lib/homeLayout/publish';
 import { tokenStorage } from '@/lib/api/mutator/custom-instance';
 import { useSession } from '@/lib/auth';
 import { mergeStoredBrandAssets } from '@/lib/onboarding/brandAssets';
@@ -78,6 +79,7 @@ export function BuildMyAppPanel({
   const [noteSaving, setNoteSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [fetchedAccounts, setFetchedAccounts] = useState<StoreAccountSnapshot | null>(null);
+  const [homeLayout, setHomeLayout] = useState<HomeLayoutOverview | null>(null);
 
   const gate = buildRequestAvailability(sync, {
     isConnected: connection.isConnected,
@@ -100,6 +102,29 @@ export function BuildMyAppPanel({
   const polling = Boolean(request && shouldPollBuildRequest(request));
   const accounts = storeAccounts ?? fetchedAccounts;
   const storeSubmits = useStoreSubmits(mode === 'status' ? requestId : null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadHomeLayout() {
+      try {
+        const response = await fetch('/api/home-layout');
+        if (!response.ok) {
+          if (!cancelled) setHomeLayout(null);
+          return;
+        }
+        const payload: unknown = await response.json();
+        if (!cancelled) setHomeLayout(homeLayoutOverviewFromPayload(payload));
+      } catch {
+        if (!cancelled) setHomeLayout(null);
+      }
+    }
+
+    void loadHomeLayout();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (storeAccounts) return;
@@ -411,6 +436,7 @@ export function BuildMyAppPanel({
       iconUrl={launcher ? launcher.iconUrl : fetchedLauncher?.iconUrl}
       splashUrl={launcher ? launcher.splashUrl : fetchedLauncher?.splashUrl}
       launcherPending={launcher === undefined && fetchedLauncher === null}
+      homeLayout={homeLayout}
       storeSubmit={
         mode === 'status' && request
           ? {
