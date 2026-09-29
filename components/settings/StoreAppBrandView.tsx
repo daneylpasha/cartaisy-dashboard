@@ -222,7 +222,7 @@ function ImageField({
   const showImage = Boolean(safeUrl) && !broken;
 
   return (
-    <div className="min-w-0">
+    <div className="relative min-w-0">
       <Label htmlFor={id}>{label}</Label>
       <button
         type="button"
@@ -259,12 +259,15 @@ function ImageField({
           </span>
         ) : null}
       </button>
+      {/* top/left stay 0. sr-only is position:absolute with auto offsets, and
+          those offsets follow the static position down the settings scrollport,
+          which stretches the document onto the black html background. */}
       <input
         ref={inputRef}
         id={id}
         type="file"
         accept="image/jpeg,image/png,image/webp"
-        className="sr-only"
+        className="sr-only top-0 left-0"
         onChange={(event) => {
           const file = event.target.files?.[0];
           if (file) onFile(file);

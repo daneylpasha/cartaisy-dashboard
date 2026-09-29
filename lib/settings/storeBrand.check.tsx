@@ -115,6 +115,7 @@ assert.doesNotMatch(markup, /cartaisy/i);
 assert.match(markup, /Replace App icon/);
 assert.match(markup, /Replace Splash/);
 assert.match(markup, /Live preview/);
+assert.equal(markup.match(/class="sr-only top-0 left-0"/g)?.length, 2);
 
 const hidden = renderToStaticMarkup(
   createElement(StoreAppBrandView, {
