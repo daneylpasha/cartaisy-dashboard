@@ -1,10 +1,11 @@
 /**
  * Draft vs published home layout.
  *
- * The editor works on a draft. Publish copies that draft into the stored
- * section list (`sections`), which is the snapshot a reader should treat as
- * live. Until `publishedAt` is set, the public home feed returns no layout
- * so the installed app can keep its default home.
+ * The editor works on a draft. Publish copies that draft into `sections`,
+ * which is the list the installed app can read. A draft save does not
+ * overwrite `sections`. A document that already has sections but no
+ * `publishedAt` was live under the old save-writes-sections model and stays
+ * published. Only a store with no saved sections is "not published yet".
  */
 
 export type HomePublishStatus = 'not_published' | 'published' | 'draft';
@@ -19,30 +20,30 @@ export const HOME_PUBLISH_COPY = {
   notPublished: {
     label: 'Not published yet',
     detail:
-      'The installed app keeps the default home under its header until you publish this layout.',
+      'Nothing is saved as the section order yet. Publish home writes the order the installed app reads under its header.',
   },
   published: {
     label: 'Published',
-    detail: 'This layout is what the installed app should show under the home header.',
+    detail: 'The installed app reads this section order under the home header.',
   },
   publishedEmpty: {
     label: 'Published',
     detail:
-      'No modules are visible, so the installed app keeps the default home under its header.',
+      'No modules are visible in the saved section order, so the installed app keeps the default home under its header.',
   },
   draft: {
     label: 'Draft',
     detail:
-      'These edits are not on the installed app. It should still show the last published layout.',
+      'These edits are not in the section order the installed app reads. It still uses the last published layout.',
   },
   success:
-    'Published. This layout is what the installed app should show under the home header. The default home stays until a layout is published.',
+    'Published. The installed app reads this section order under the home header. A later draft does not replace it until you publish again.',
   successEmpty:
     'Published. No modules are visible, so the installed app keeps the default home under its header.',
   action: 'Publish home',
   publishing: 'Publishing...',
   saveDraft: 'Save draft',
-  draftSaved: 'Draft saved. It is not on the installed app.',
+  draftSaved: 'Draft saved. This does not change the section order the installed app reads.',
 } as const;
 
 export function normalizeLayoutSections(
@@ -85,9 +86,42 @@ export function isPublishedAt(value: string | Date | null | undefined): boolean 
 }
 
 /**
- * Editor draft plus the snapshot that is allowed to go live.
- * A saved layout with no `publishedAt` stays a draft, including older
- * documents that were written before publish existed.
+ * A non-empty `sections` list with no `publishedAt` was already the live
+ * order under the old model. It stays published. An empty list with no
+ * `publishedAt` has never been saved for the app.
+ */
+export function homeLayoutIsLive(
+  publishedAt: string | Date | null | undefined,
+  storedSections: readonly HomeLayoutSectionSnapshot[] | null | undefined
+): boolean {
+  if (isPublishedAt(publishedAt)) return true;
+  return sortByPosition(storedSections).length > 0;
+}
+
+/** True when a one-time backfill should set `publishedAt` and leave `sections` alone. */
+export function needsLegacyPublishBackfill(
+  publishedAt: string | Date | null | undefined,
+  storedSections: readonly HomeLayoutSectionSnapshot[] | null | undefined
+): boolean {
+  return !isPublishedAt(publishedAt) && sortByPosition(storedSections).length > 0;
+}
+
+/** Prefer the document's last save time so the backfill is not "published just now". */
+export function legacyPublishedAt(
+  updatedAt: Date | string | null | undefined,
+  now: Date = new Date()
+): Date {
+  if (updatedAt instanceof Date && !Number.isNaN(updatedAt.getTime())) return updatedAt;
+  if (typeof updatedAt === 'string' && updatedAt.trim().length > 0) {
+    const parsed = new Date(updatedAt);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+  return now;
+}
+
+/**
+ * Editor draft plus the snapshot the installed app can read from `sections`.
+ * Legacy documents with saved sections and no `publishedAt` count as published.
  */
 export function resolveHomeLayoutView(input: {
   storedSections?: readonly HomeLayoutSectionSnapshot[] | null;
@@ -99,23 +133,21 @@ export function resolveHomeLayoutView(input: {
   published: HomeLayoutSectionSnapshot[];
   status: HomePublishStatus;
 } {
-  const publishedAt = isPublishedAt(input.publishedAt);
-  const published = publishedAt ? sortByPosition(input.storedSections) : [];
-  const savedDraft = sortByPosition(input.draftSections);
   const stored = sortByPosition(input.storedSections);
+  const savedDraft = sortByPosition(input.draftSections);
+  const live = homeLayoutIsLive(input.publishedAt, stored);
+  const published = live ? stored : [];
 
   let draft: HomeLayoutSectionSnapshot[];
   if (savedDraft.length > 0) {
     draft = savedDraft;
-  } else if (publishedAt) {
-    draft = stored;
-  } else if (stored.length > 0) {
+  } else if (live) {
     draft = stored;
   } else {
     draft = normalizeLayoutSections(input.fallback);
   }
 
-  const status: HomePublishStatus = !isPublishedAt(input.publishedAt)
+  const status: HomePublishStatus = !live
     ? 'not_published'
     : layoutsEqual(draft, published)
       ? 'published'
@@ -124,12 +156,15 @@ export function resolveHomeLayoutView(input: {
   return { draft, published, status };
 }
 
-/** Sections the public home feed may return. Empty until a layout is published. */
+/**
+ * Sections the public home feed may return.
+ * Empty only when nothing has been saved in `sections` and nothing is published.
+ */
 export function publishedFeedSections(
   publishedAt: string | Date | null | undefined,
   storedSections: readonly HomeLayoutSectionSnapshot[] | null | undefined
 ): HomeLayoutSectionSnapshot[] {
-  if (!isPublishedAt(publishedAt)) return [];
+  if (!homeLayoutIsLive(publishedAt, storedSections)) return [];
   return sortByPosition(storedSections);
 }
 

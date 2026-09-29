@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
 import { HomeLayout } from '@/models/HomeLayout';
-import { publishedFeedSections } from '@/lib/homeLayout/publish';
+import { homeLayoutIsLive, publishedFeedSections } from '@/lib/homeLayout/publish';
 import { CarouselItem } from '@/models/CarouselItem';
 import { PromoBanner } from '@/models/PromoBanner';
 import { CalloutBanner } from '@/models/CalloutBanner';
@@ -28,11 +28,12 @@ export async function GET(request: NextRequest) {
 
     await connectToDatabase();
 
-    // Only a published snapshot is live. A missing publish keeps the default home.
+    // `sections` is the order a reader can treat as live, including a layout
+    // saved before `publishedAt` existed. An empty list with no publish is not live.
     const layout = await HomeLayout.findOne({ storeId }).lean();
     const sortedSections = publishedFeedSections(layout?.publishedAt, layout?.sections);
 
-    if (!layout?.publishedAt) {
+    if (!layout || !homeLayoutIsLive(layout.publishedAt, layout.sections)) {
       return NextResponse.json({
         success: true,
         data: {

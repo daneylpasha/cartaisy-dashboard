@@ -561,7 +561,7 @@ export default function AppBuilderPage() {
                 Design Your App Experience
               </h1>
               <p className="text-slate-400 text-sm max-w-xl">
-                Drag to reorder modules and choose which ones are included. The installed app keeps the default home until you publish.
+                Drag to reorder modules and choose which ones are included. Publish home writes the section order the installed app reads under its header.
               </p>
             </div>
 
@@ -681,7 +681,7 @@ export default function AppBuilderPage() {
         <div>
           <h2 className="text-sm font-semibold tracking-tight text-slate-900">Component Layout</h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Drag to reorder the draft. Publish home is what the installed app uses under its header.
+            Drag to reorder the draft. The installed app keeps reading the last published section order until you publish again.
           </p>
         </div>
       </div>
@@ -746,7 +746,7 @@ export default function AppBuilderPage() {
               <li>• <span className="font-medium text-slate-700">Drag</span> the grip handle to reorder sections</li>
               <li>• <span className="font-medium text-slate-700">Toggle visibility</span> with the eye icon to show/hide sections</li>
               <li>• <span className="font-medium text-slate-700">Click "Manage"</span> to add or edit items within each section</li>
-              <li>• <span className="font-medium text-slate-700">Preview</span> the module stack before you publish. Saving a draft does not put it on the installed app.</li>
+              <li>• <span className="font-medium text-slate-700">Preview</span> the module stack before you publish. Saving a draft does not change the section order the installed app reads.</li>
             </ul>
           </div>
           <Link

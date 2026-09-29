@@ -1,6 +1,8 @@
 import { connectToDatabase } from '@/lib/db';
 import { HomeLayout, IHomeLayoutSection, DEFAULT_SECTIONS } from '@/models/HomeLayout';
 import {
+  legacyPublishedAt,
+  needsLegacyPublishBackfill,
   normalizeLayoutSections,
   resolveHomeLayoutView,
   type HomePublishStatus,
@@ -49,14 +51,40 @@ function toResponse(doc: {
   };
 }
 
+type LayoutDoc = {
+  sections?: unknown;
+  draftSections?: unknown;
+  publishedAt?: Date | null;
+  updatedAt?: Date | null;
+} | null;
+
 /**
- * Editor view for a store. Does not create a document, so opening App Builder
- * does not write a layout the public feed or a shared reader could treat as live.
+ * One-time backfill for layouts saved before publish existed.
+ * Sets `publishedAt` from `updatedAt` and does not write `sections`.
+ */
+async function backfillLegacyPublishedAt(storeId: string, layout: LayoutDoc): Promise<LayoutDoc> {
+  if (!layout || !needsLegacyPublishBackfill(layout.publishedAt, asSections(layout.sections))) {
+    return layout;
+  }
+
+  const publishedAt = legacyPublishedAt(layout.updatedAt);
+  const updated = await HomeLayout.findOneAndUpdate(
+    { storeId, publishedAt: null, 'sections.0': { $exists: true } },
+    { $set: { publishedAt } },
+    { new: true }
+  ).lean();
+
+  return updated ?? layout;
+}
+
+/**
+ * Editor view for a store. Does not create a document. A legacy saved
+ * `sections` list is marked published without being cleared.
  */
 export async function getHomeLayout(storeId: string): Promise<HomeLayoutResponse> {
   await connectToDatabase();
   const layout = await HomeLayout.findOne({ storeId }).lean();
-  return toResponse(layout);
+  return toResponse(await backfillLegacyPublishedAt(storeId, layout));
 }
 
 /**
@@ -69,10 +97,18 @@ export async function updateHomeLayout(
 ): Promise<HomeLayoutResponse> {
   await connectToDatabase();
   const draftSections = normalizeLayoutSections(asSections(sections));
+  const existing = await HomeLayout.findOne({ storeId }).lean();
+  const set: { draftSections: ReturnType<typeof normalizeLayoutSections>; publishedAt?: Date } = {
+    draftSections,
+  };
+
+  if (existing && needsLegacyPublishBackfill(existing.publishedAt, asSections(existing.sections))) {
+    set.publishedAt = legacyPublishedAt(existing.updatedAt);
+  }
 
   const layout = await HomeLayout.findOneAndUpdate(
     { storeId },
-    { $set: { draftSections } },
+    { $set: set },
     { new: true, upsert: true, setDefaultsOnInsert: true }
   ).lean();
 

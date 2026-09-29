@@ -19,7 +19,7 @@ function render(status: 'not_published' | 'published' | 'draft', canPublish: boo
 
 const fresh = render('not_published', true);
 assert.match(fresh, /Not published yet/);
-assert.match(fresh, /default home/);
+assert.match(fresh, /Nothing is saved/);
 assert.match(fresh, new RegExp(HOME_PUBLISH_COPY.action));
 assert.doesNotMatch(fresh, /disabled=""/);
 
@@ -27,16 +27,17 @@ const live = render('published', false);
 assert.match(live, /Published/);
 assert.match(live, /home header/);
 assert.match(live, /disabled=""/);
-assert.doesNotMatch(live, /These edits are not on the installed app/);
+assert.doesNotMatch(live, /These edits are not in the section order/);
 
 const draft = render('draft', true);
 assert.match(draft, /Draft/);
-assert.match(draft, /not on the installed app/);
+assert.match(draft, /not in the section order/);
 assert.match(draft, /last published layout/);
 assert.match(draft, new RegExp(HOME_PUBLISH_COPY.action));
 
 const confirmed = render('published', false, HOME_PUBLISH_COPY.success);
-assert.match(confirmed, /should show under the home header/);
+assert.match(confirmed, /reads this section order under the home header/);
+assert.doesNotMatch(confirmed, /publishedAt/);
 assert.doesNotMatch(confirmed, /cartaisy/i);
 assert.doesNotMatch(confirmed, /shpat_|access token|api key/i);
 
