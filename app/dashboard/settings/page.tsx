@@ -200,8 +200,6 @@ function SettingsContent() {
             }}
           />
           <StoreBrandingColors
-            currentPrimaryColor={store?.primaryColor}
-            currentSecondaryColor={store?.secondaryColor}
             onColorsChange={(colors) => {
               setStore((currentStore: typeof store) => ({
                 ...currentStore,

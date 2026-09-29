@@ -7,6 +7,8 @@ import { useSession } from '@/lib/auth';
 import { tokenStorage } from '@/lib/api/mutator/custom-instance';
 import { mergeStoredBrandAssets } from '@/lib/onboarding/brandAssets';
 import {
+  brandColorPatch,
+  brandColorSelection,
   emptyBrandingDraft,
   fetchBranding,
   fetchStoreProfile,
@@ -79,8 +81,8 @@ export function OnboardingWizard() {
   const [catalog, setCatalog] = useState<LockedCatalog>(EMPTY_CATALOG);
   const [draft, setDraft] = useState<BrandingDraft>(emptyBrandingDraft(''));
   const [savedName, setSavedName] = useState('');
-  const [savedPrimary, setSavedPrimary] = useState(draft.primaryColor);
-  const [savedSecondary, setSavedSecondary] = useState('');
+  const [savedPrimary, setSavedPrimary] = useState<string | null>(null);
+  const [savedSecondary, setSavedSecondary] = useState<string | null>(null);
   const [brandingError, setBrandingError] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [startError, setStartError] = useState<string | null>(null);
@@ -188,8 +190,9 @@ export function OnboardingWizard() {
         persistedIconRef.current = next.iconUrl;
         persistedSplashRef.current = next.splashUrl;
         setSavedName(next.appName);
-        setSavedPrimary(next.primaryColor);
-        setSavedSecondary(next.secondaryColor);
+        const loadedColors = brandColorSelection(next);
+        setSavedPrimary(loadedColors.primary);
+        setSavedSecondary(loadedColors.secondary);
         setBrandingError(null);
       }
       setLoading(false);
@@ -439,23 +442,36 @@ export function OnboardingWizard() {
       setSavedName(name);
     }
 
-    const colors: { primaryColor?: string; secondaryColor?: string } = {};
-    if (draft.primaryColor !== savedPrimary) colors.primaryColor = draft.primaryColor;
-    if (draft.secondaryColor && draft.secondaryColor !== savedSecondary) {
-      colors.secondaryColor = draft.secondaryColor;
-    }
+    const colors = brandColorPatch(brandColorSelection(draft), {
+      primary: savedPrimary,
+      secondary: savedSecondary,
+    });
+    let savedColors: Awaited<ReturnType<typeof saveBrandColors>> | null = null;
     if (Object.keys(colors).length > 0) {
-      const saved = await saveBrandColors(storeId, token, colors);
-      if (!saved.ok) {
-        setFieldError(saved.error);
+      savedColors = await saveBrandColors(storeId, token, colors);
+      if (!savedColors.ok || !savedColors.draft) {
+        setFieldError(savedColors.error);
         setSaving(false);
         return;
       }
-      setSavedPrimary(saved.draft?.primaryColor ?? draft.primaryColor);
-      setSavedSecondary(saved.draft?.secondaryColor ?? draft.secondaryColor);
+      const nextColors = brandColorSelection(savedColors.draft);
+      setSavedPrimary(nextColors.primary);
+      setSavedSecondary(nextColors.secondary);
     }
 
-    setDraft((current) => ({ ...current, appName: name }));
+    const savedDraft = savedColors?.draft ?? null;
+    setDraft((current) => ({
+      ...current,
+      appName: name,
+      ...(savedDraft
+        ? {
+            primaryColor: savedDraft.primaryColor,
+            secondaryColor: savedDraft.secondaryColor,
+            primaryExplicit: savedDraft.primaryExplicit ?? null,
+            secondaryExplicit: savedDraft.secondaryExplicit ?? null,
+          }
+        : {}),
+    }));
     setSaving(false);
     go('preview');
   };

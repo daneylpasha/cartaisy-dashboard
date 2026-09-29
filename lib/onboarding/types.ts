@@ -89,8 +89,17 @@ export interface ShopifySnapshot {
 export interface BrandingDraft {
   appName: string;
   logoUrl: string | null;
+  /** Display swatch. The platform default when `primaryExplicit` is null. */
   primaryColor: string;
+  /** Display swatch. Empty when `secondaryExplicit` is null. */
   secondaryColor: string;
+  /**
+   * Hex the merchant saved or chose. Null means the platform default.
+   * Omitted only on older in-memory drafts that predate clear.
+   */
+  primaryExplicit?: string | null;
+  /** Hex the merchant saved or chose. Null means the platform default. */
+  secondaryExplicit?: string | null;
   splashUrl: string | null;
   iconUrl: string | null;
   /** False while a chosen splash is still a local preview. */
