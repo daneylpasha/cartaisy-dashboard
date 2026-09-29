@@ -68,6 +68,8 @@ assert.ok(missing.includes('Preview, Build my app, and install links stay availa
 assert.ok(missing.includes('href="/dashboard/settings#build-setup"'));
 assert.ok(missing.includes('Connect Apple'));
 assert.ok(missing.includes('Connect Google Play'));
+assert.ok(missing.includes('id="apple-store-account"'));
+assert.ok(missing.includes('id="google-store-account"'));
 assert.ok(missing.includes('id="apple-private-key"'));
 assert.ok(missing.includes('accept=".p8"'));
 assert.ok(missing.includes('id="google-service-account"'));

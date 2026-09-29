@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import {
+  CONNECT_APPLE_DEVELOPER,
+  CONNECT_GOOGLE_PLAY,
   EMPTY_STORE_SUBMITS,
   SUBMIT_ACCOUNTS_UNAVAILABLE_MESSAGE,
   SUBMIT_ATTENTION_APPLE,
@@ -124,6 +126,8 @@ assert.equal(readyConnected.label, 'Submit to App Store');
 assert.equal(readyConnected.disabled, false);
 assert.equal(readyConnected.state, 'idle');
 assert.equal(readyConnected.showConnect, false);
+assert.equal(readyConnected.connectTitle, null);
+assert.equal(readyConnected.connectHref, null);
 
 const play = presentStoreSubmit({
   platform: 'android',
@@ -150,6 +154,9 @@ assert.equal(missing.disabled, true);
 assert.equal(missing.detail, SUBMIT_MISSING_GOOGLE);
 assert.equal(missing.showConnect, true);
 assert.equal(missing.state, 'blocked');
+assert.equal(missing.connectTitle, CONNECT_GOOGLE_PLAY);
+assert.equal(missing.connectLabel, CONNECT_GOOGLE_PLAY);
+assert.equal(missing.connectHref, '#google-store-account');
 
 const attention = presentStoreSubmit({
   platform: 'ios',
@@ -163,6 +170,8 @@ const attention = presentStoreSubmit({
 assert.equal(attention.disabled, true);
 assert.equal(attention.detail, SUBMIT_ATTENTION_APPLE);
 assert.equal(attention.showConnect, true);
+assert.equal(attention.connectTitle, CONNECT_APPLE_DEVELOPER);
+assert.equal(attention.connectHref, '#apple-store-account');
 
 const unfinished = presentStoreSubmit({
   platform: 'ios',
@@ -176,6 +185,7 @@ const unfinished = presentStoreSubmit({
 assert.equal(unfinished.disabled, true);
 assert.equal(unfinished.detail, SUBMIT_NOT_READY_MESSAGE);
 assert.equal(unfinished.showConnect, false);
+assert.equal(unfinished.connectHref, null);
 
 const accountsDown = presentStoreSubmit({
   platform: 'ios',
@@ -188,6 +198,8 @@ const accountsDown = presentStoreSubmit({
 });
 assert.equal(accountsDown.disabled, true);
 assert.equal(accountsDown.detail, SUBMIT_ACCOUNTS_UNAVAILABLE_MESSAGE);
+assert.equal(accountsDown.showConnect, false);
+assert.equal(accountsDown.connectTitle, null);
 
 const reviewing = presentStoreSubmit({
   platform: 'ios',
@@ -208,6 +220,8 @@ assert.equal(reviewing.label, 'Submit again');
 assert.equal(reviewing.disabled, false);
 assert.equal(reviewing.quiet, true);
 assert.equal(reviewing.statusLabel, 'Submitted');
+assert.equal(reviewing.showConnect, false);
+assert.equal(reviewing.connectLabel, null);
 
 const playReview = presentStoreSubmit({
   platform: 'android',
@@ -254,6 +268,36 @@ assert.equal(sending.state, 'submitting');
 assert.equal(sending.disabled, true);
 assert.equal(sending.statusLabel, 'Submitting');
 assert.equal(sending.headline, null);
+assert.equal(sending.showConnect, false);
+
+const sendingMissing = presentStoreSubmit({
+  platform: 'android',
+  buildStatus: 'ready',
+  credential: 'missing',
+  accountsUnavailable: false,
+  job: normalizeStoreSubmit({ data: job({ platform: 'android', status: 'submitting' }) }),
+  busy: false,
+  error: null,
+});
+assert.equal(sendingMissing.state, 'submitting');
+assert.equal(sendingMissing.showConnect, false);
+assert.equal(sendingMissing.connectHref, null);
+
+const submittedMissing = presentStoreSubmit({
+  platform: 'ios',
+  buildStatus: 'ready',
+  credential: 'missing',
+  accountsUnavailable: false,
+  job: normalizeStoreSubmit({ data: job({ status: 'submitted' }) }),
+  busy: false,
+  error: null,
+});
+assert.equal(submittedMissing.state, 'submitted');
+assert.equal(submittedMissing.headline, SUBMIT_SENT_IOS_TITLE);
+assert.equal(submittedMissing.nextStep, SUBMIT_REVIEW_IOS);
+assert.equal(submittedMissing.showConnect, true);
+assert.equal(submittedMissing.connectLabel, CONNECT_APPLE_DEVELOPER);
+assert.equal(submittedMissing.connectHref, '#apple-store-account');
 
 const waiting = presentStoreSubmit({
   platform: 'ios',

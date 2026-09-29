@@ -26,6 +26,10 @@ export const CREDENTIALS_HELPER =
 export const BUILD_SETUP_SETTINGS_HREF = '/dashboard/settings#build-setup';
 export const BUILD_MY_APP_HREF = '/dashboard/onboarding?step=ready';
 
+/** In-page targets for the existing Apple and Google connect cards. */
+export const APPLE_STORE_ACCOUNT_ID = 'apple-store-account';
+export const GOOGLE_STORE_ACCOUNT_ID = 'google-store-account';
+
 const APPLE_KEY_ID = /^[A-Za-z0-9]{10}$/;
 const APPLE_ISSUER_ID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 const LAST4 = /^[A-Za-z0-9_-]{4}$/;

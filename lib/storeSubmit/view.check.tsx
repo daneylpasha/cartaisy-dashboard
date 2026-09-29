@@ -146,11 +146,15 @@ const missingAccounts = html({
     },
   }),
 });
-assert.equal(isDisabled(buttonTag(missingAccounts, 'Submit to Play')), true);
-assert.equal(isDisabled(buttonTag(missingAccounts, 'Submit to App Store')), true);
+assert.equal(missingAccounts.includes('>Submit to Play<'), false);
+assert.equal(missingAccounts.includes('>Submit to App Store<'), false);
+assert.equal(missingAccounts.includes('Connect account'), false);
+assert.ok(missingAccounts.includes('Connect Apple Developer'));
+assert.ok(missingAccounts.includes('Connect Google Play'));
+assert.ok(missingAccounts.includes('href="#apple-store-account"'));
+assert.ok(missingAccounts.includes('href="#google-store-account"'));
 assert.ok(missingAccounts.includes('Upload the Google Play service account JSON again before submitting.'));
 assert.ok(missingAccounts.includes('Connect an App Store Connect API key before submitting to the App Store.'));
-assert.ok(missingAccounts.includes('href="#store-accounts-heading"'));
 assert.ok(missingAccounts.includes('Install Android build'));
 assert.ok(missingAccounts.includes(`href="${INSTALL}"`));
 assert.equal(missingAccounts.includes('>Build my app<'), false);
@@ -169,6 +173,8 @@ const composeStillBuilds = html({
 assert.equal(isDisabled(buttonTag(composeStillBuilds, 'Build my app')), false);
 assert.equal(composeStillBuilds.includes('Submit to App Store'), false);
 assert.equal(composeStillBuilds.includes('Submit to Play'), false);
+assert.equal(composeStillBuilds.includes('Connect Apple Developer'), false);
+assert.equal(composeStillBuilds.includes('Connect Google Play'), false);
 assert.equal(composeStillBuilds.includes('Install Android build'), false);
 assertCalm(composeStillBuilds);
 
@@ -193,6 +199,7 @@ assert.ok(submitted.includes('day or two'));
 assert.ok(submitted.includes('data-submit-outcome="submitted"'));
 assert.equal(submitted.includes('https://'), false);
 assert.equal(isDisabled(buttonTag(submitted, 'Submit again')), false);
+assert.equal(submitted.includes('Connect Apple Developer'), false);
 assert.ok(submitted.includes('data-submit-state="submitted"'));
 assert.equal(submitted.includes('Submit to Play'), false);
 assertCalm(submitted);
@@ -235,7 +242,45 @@ assert.ok(submitting.includes('This page updates on its own.'));
 assert.equal(isDisabled(buttonTag(submitting, 'Submitting...')), true);
 assert.ok(submitting.includes('aria-busy="true"'));
 assert.ok(submitting.includes('Install Android build') === false);
+assert.equal(submitting.includes('Connect Google Play'), false);
 assertCalm(submitting);
+
+const submittingMissing = html({
+  request: request('ready', 'not_requested'),
+  storeSubmit: bindings({
+    credentials: {
+      ...connected,
+      google: { ...connected.google, status: 'missing' },
+    },
+    jobs: { android: submitJob('android', 'submitting'), ios: null },
+  }),
+});
+assert.equal(isDisabled(buttonTag(submittingMissing, 'Submitting...')), true);
+assert.ok(submittingMissing.includes('data-submit-outcome="progress"'));
+assert.equal(submittingMissing.includes('Connect Google Play'), false);
+assertCalm(submittingMissing);
+
+const failedNeedsAccount = html({
+  request: request('ready', 'not_requested'),
+  storeSubmit: bindings({
+    credentials: {
+      ...connected,
+      google: { ...connected.google, status: 'needsAttention' },
+    },
+    jobs: {
+      android: submitJob('android', 'failed', 'The store did not accept this build. Check the store listing, then try again.'),
+      ios: null,
+    },
+  }),
+});
+assert.ok(failedNeedsAccount.includes('This submit did not finish'));
+assert.ok(failedNeedsAccount.includes('The store did not accept this build. Check the store listing, then try again.'));
+assert.ok(failedNeedsAccount.includes('data-submit-outcome="failed"'));
+assert.equal(failedNeedsAccount.includes('>Submit again<'), false);
+assert.ok(failedNeedsAccount.includes('Connect Google Play'));
+assert.ok(failedNeedsAccount.includes('href="#google-store-account"'));
+assert.ok(failedNeedsAccount.includes('Upload the Google Play service account JSON again before submitting.'));
+assertCalm(failedNeedsAccount);
 
 const settingsBase: StoreSubmitSettingsViewProps = {
   phase: 'ready',
@@ -266,8 +311,11 @@ const settingsReady = settings({
     google: { ...connected.google, status: 'missing' },
   },
 });
-assert.equal(isDisabled(buttonTag(settingsReady, 'Submit to Play')), true);
+assert.equal(settingsReady.includes('>Submit to Play<'), false);
 assert.equal(isDisabled(buttonTag(settingsReady, 'Submit to App Store')), true);
+assert.ok(settingsReady.includes('Connect Google Play'));
+assert.ok(settingsReady.includes('href="#google-store-account"'));
+assert.equal(settingsReady.includes('Connect Apple Developer'), false);
 assert.ok(settingsReady.includes('Connect a Google Play service account before submitting to Play.'));
 assert.ok(settingsReady.includes('This build needs to finish before it can be submitted.'));
 assert.ok(settingsReady.includes('data-store-submit="settings"'));
@@ -283,6 +331,7 @@ assert.ok(settingsSubmitted.includes('internal testing track'));
 assert.ok(settingsSubmitted.includes('data-submit-outcome="submitted"'));
 assert.equal(settingsSubmitted.includes('https://'), false);
 assert.equal(isDisabled(buttonTag(settingsSubmitted, 'Submit again')), false);
+assert.equal(settingsSubmitted.includes('Connect Google Play'), false);
 assertCalm(settingsSubmitted);
 
 const viewSource = readFileSync(join(here, '../../components/onboarding/BuildMyAppView.tsx'), 'utf8');
