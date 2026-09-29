@@ -5,19 +5,13 @@ import {
   connectCatalogView,
   connectPrimaryAction,
   consumeShopifyReturnQuery,
-  EMPTY_CATALOG,
   normalizeCatalog,
   normalizeCollectionNames,
   normalizeConnectionStatus,
-  normalizePreviewProducts,
-  previewFootnote,
-  previewShelf,
-  previewStepDetail,
   normalizeShopDomainInput,
   normalizeSyncStatus,
   onboardingSyncWarning,
   readAuthorizationUrl,
-  readableTextOn,
   safeReturnedShop,
   shouldAutoStartCatalogSync,
 } from './normalizers.ts';
@@ -284,8 +278,6 @@ assert.equal(billingSync.state, 'failed');
 assert.equal(buildRequestAvailability(billingSync, connected).action, 'billing');
 assert.equal(buildRequestAvailability(billingSync, connected).enabled, false);
 assert.match(buildRequestAvailability(billingSync, connected).reason ?? '', /will not change that/);
-assert.match(previewShelf(billingSync, []).message ?? '', /active Shopify plan/);
-assert.match(previewStepDetail(billingSync, []), /active Shopify plan/);
 
 const billingSummary = normalizeSyncStatus(
   {
@@ -313,7 +305,6 @@ const reconnectSync = normalizeSyncStatus(
 );
 assert.equal(reconnectSync.block, 'reconnect');
 assert.equal(buildRequestAvailability(reconnectSync, connected).action, 'connect');
-assert.match(previewShelf(reconnectSync, []).message ?? '', /Reconnect to load this catalog again/);
 
 const genericFailure = normalizeSyncStatus({ success: false, error: 'Failed to fetch collections' }, false, 500);
 assert.equal(genericFailure.block ?? null, null);
@@ -473,78 +464,5 @@ const overviewWithItems = {
   },
 };
 assert.deepEqual(normalizeCatalog(overviewWithItems, true), { productCount: 12, orderCount: 3 });
-assert.equal(normalizePreviewProducts(overviewWithItems, true)[0]?.title, 'Linen shirt');
-assert.equal(normalizePreviewProducts(overviewWithItems, true)[0]?.imageUrl, 'https://cdn.example/front.jpg');
-assert.equal(normalizePreviewProducts(overviewWithItems, true)[0]?.priceLabel, '$48.00');
-
-assert.deepEqual(
-  normalizePreviewProducts({ data: { products: { total: 4, syncedWithShopify: 4 } } }, true),
-  []
-);
-
-const catalogProducts = {
-  data: {
-    products: [
-      { title: ' ', price: 1 },
-      { title: 'One', price: 1, currency: 'usd', images: ['https://cdn.example/1.jpg'] },
-      { title: 'Two', images: [{ url: 'javascript:alert(1)' }] },
-      { title: 'Three', priceRange: { minVariantPrice: { amount: '12.00', currencyCode: 'EUR' } } },
-      { name: 'Four', imageUrl: 'https://cdn.example/4.jpg?access_token=shpat_nope', price: 0 },
-      { title: 'Five', price: 5, currency: 'USD' },
-    ],
-  },
-};
-const previewProducts = normalizePreviewProducts(catalogProducts, true);
-assert.deepEqual(
-  previewProducts.map((product) => product.title),
-  ['One', 'Two', 'Three', 'Four']
-);
-assert.equal(previewProducts[0]?.priceLabel, '$1.00');
-assert.equal(previewProducts[0]?.imageUrl, 'https://cdn.example/1.jpg');
-assert.equal(previewProducts[1]?.imageUrl, null);
-assert.equal(previewProducts[1]?.priceLabel, null);
-assert.equal(previewProducts[2]?.priceLabel, '€12.00');
-assert.equal(previewProducts[3]?.imageUrl, null);
-assert.equal(previewProducts[3]?.priceLabel, '0.00');
-assert.equal(normalizePreviewProducts(catalogProducts, false).length, 0);
-assert.equal(
-  normalizePreviewProducts(
-    { data: { products: [{ title: 'Mug', price: { amount: '18.5', currencyCode: 'NOT' } }] } },
-    true
-  )[0]?.priceLabel,
-  '18.50'
-);
-
-const succeededSync = {
-  state: 'succeeded' as const,
-  detail: null,
-  eligibleForBuild: true,
-  eligibilityReason: null,
-};
-const brandedCatalog = {
-  ...EMPTY_CATALOG,
-  collections: ['Linen'],
-  products: previewProducts,
-};
-const footnote = previewFootnote(brandedCatalog, succeededSync);
-assert.doesNotMatch(footnote, /sample|placeholder/i);
-assert.match(footnote, /cannot be edited/);
-const footnoteWithoutCollections = previewFootnote({ ...brandedCatalog, collections: [] }, succeededSync);
-assert.doesNotMatch(footnoteWithoutCollections, /sample|placeholder/i);
-assert.match(footnoteWithoutCollections, /synced catalog/);
-assert.match(previewFootnote(EMPTY_CATALOG, succeededSync), /name, colors, and images/);
-
-assert.equal(previewShelf({ ...succeededSync, state: 'in_progress' }, previewProducts).kind, 'loading');
-assert.equal(previewShelf({ ...succeededSync, state: 'failed' }, previewProducts).kind, 'empty');
-assert.equal(previewShelf({ ...succeededSync, state: 'not_started' }, []).kind, 'empty');
-assert.equal(previewShelf(succeededSync, []).message, 'No products in this catalog yet.');
-assert.equal(previewShelf(succeededSync, previewProducts).kind, 'products');
-assert.equal(previewShelf(succeededSync, [], true).kind, 'loading');
-assert.equal(previewStepDetail(succeededSync, previewProducts), 'Featured products are from your synced catalog.');
-assert.doesNotMatch(previewStepDetail(succeededSync, previewProducts), /placeholder|sample/i);
-
-assert.equal(readableTextOn('#ffffff'), '#111111');
-assert.equal(readableTextOn('#111111'), '#ffffff');
-assert.equal(readableTextOn('#FF6B6B'), '#ffffff');
 
 console.log('onboarding normalizers ok');

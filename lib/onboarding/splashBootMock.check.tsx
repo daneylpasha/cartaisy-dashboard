@@ -18,7 +18,6 @@ function source(relativePath: string): string {
 
 const mockSource = source('../../components/onboarding/SplashBootMock.tsx');
 const launcherSource = source('../../components/onboarding/HomeScreenLauncherMock.tsx');
-const previewSource = source('../../components/onboarding/SmartHomePreview.tsx');
 const brandSource = source('../../components/onboarding/steps/BrandingStep.tsx');
 const previewStepSource = source('../../components/onboarding/steps/PreviewStep.tsx');
 const settingsViewSource = source('../../components/settings/StoreAppBrandView.tsx');
@@ -37,7 +36,7 @@ assert.match(
 assert.doesNotMatch(settingsViewSource, /HomeScreenLauncherMock|SplashBootMock|SmartHomePreview/);
 assert.doesNotMatch(previewStepSource, /SplashBootMock/);
 assert.doesNotMatch(buildViewSource, /SplashBootMock/);
-assert.doesNotMatch(previewSource, /SplashBootMock/);
+assert.doesNotMatch(previewStepSource, /SmartHomePreview|data-shopper-screen/);
 assert.doesNotMatch(launcherSource, /SplashBootMock/);
 assert.doesNotMatch(mockSource, /cartaisy/i);
 assert.doesNotMatch(mockSource, /console\.(log|debug|info|error|warn)/);

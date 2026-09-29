@@ -60,24 +60,10 @@ export interface ShopifyConnectionSnapshot {
   webhookRegistrationError: string | null;
 }
 
-/** A synced product safe to draw on the preview phone. */
-export interface CatalogPreviewProduct {
-  id: string;
-  title: string;
-  imageUrl: string | null;
-  /** Present when the payload included a usable price. */
-  priceLabel: string | null;
-}
-
 export interface LockedCatalog {
   productCount: number | null;
   orderCount: number | null;
   collections: string[];
-  /**
-   * Up to four products for the preview shelf.
-   * Empty unless catalog sync succeeded.
-   */
-  products: CatalogPreviewProduct[];
 }
 
 export interface ShopifySnapshot {

@@ -87,7 +87,7 @@ export function StoreAppBrand({
 
     async function loadSnapshot() {
       if (!storeId || !token) return;
-      const snapshot = await loadShopifySnapshot(token, storeId).catch(() => null);
+      const snapshot = await loadShopifySnapshot(token).catch(() => null);
       if (cancelled || !snapshot) return;
       setCatalog(snapshot.catalog);
       setSync(snapshot.sync);
