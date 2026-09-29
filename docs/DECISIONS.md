@@ -304,6 +304,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Shopify catalog presentation and the build gate while a live catalog read is blocked. Backend eligibility fields are unchanged. Human review is required because this is Shopify recovery and it keeps Build my app off during the block.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`, `docs/HOME_MODULE_EDITOR_CONTRACT.md`. GitHub issue: `#75`. Backend issue: cartaisy-backend `#194`.
 
+### A ready Expo install is the preview
+
+- Date: 2026-09-29.
+- Decision: Once a platform is `ready` and `installUrl` is a public https URL with no credentials and no token-shaped text, that URL is the authentic preview. Build my app draws a large QR in the browser from that URL only (`qrcode`), above the platform cards, and keeps Install, the URL as text, and Copy link. Building, missing, and unsafe URLs get no QR. The page does not call a QR image host and does not add an Expo token. On Brand, Preview, and Settings, the light phone (and the home-screen and splash mocks on Brand and Settings) stays only while no ready install URL exists, including when the build list fails. While that list is loading, the phone is not shown, including over an install already on screen. When at least one ready install URL exists, those screens show a compact QR for each and Open Build instead of the phone. Branding editors stay. `/dashboard/app-builder/preview` stays a module stack.
+- Reason: Product decision on 2026-09-29 (Daniyal): an Expo/EAS install QR is the real app once a build is ready. The phone mock is a wait state for colors, icon, and splash. Dashboard #76 and #77.
+- Impact: Merchant Build my app, the brand step, the preview step, and Settings Store Branding. No new backend field. No Shopify token and no Expo token is rendered or sent. Human review is required because this is the merchant-facing install handoff and the branding preview.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issues: `#76`, `#77`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

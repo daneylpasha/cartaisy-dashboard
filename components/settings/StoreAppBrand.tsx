@@ -7,6 +7,7 @@ import { fetchBranding, fetchStoreProfile, planBrandAssetSave, saveStoredBrandAs
 import { mergeStoredBrandAssets } from '@/lib/onboarding/brandAssets';
 import { EMPTY_CATALOG } from '@/lib/onboarding/normalizers';
 import { loadShopifySnapshot } from '@/lib/onboarding/shopifyConnect';
+import { useReadyInstallPreview } from '@/hooks/useReadyInstallPreview';
 import type { BrandingDraft, LockedCatalog, SyncGate } from '@/lib/onboarding/types';
 import {
   applySettingsBrandProps,
@@ -45,6 +46,7 @@ export function StoreAppBrand({
   primaryColor = null,
   secondaryColor = null,
 }: StoreAppBrandProps) {
+  const installPreview = useReadyInstallPreview('settings');
   const { data: session, status } = useSession();
   const storeId = session?.user?.storeId?.trim() || null;
   const propsRef = useRef(brandProps({ appName, logoUrl, primaryColor, secondaryColor }));
@@ -249,6 +251,7 @@ export function StoreAppBrand({
       onIconFile={(file) => void handleBrandAsset('icon', file)}
       onSplashFile={(file) => void handleBrandAsset('splash', file)}
       onImageError={setFieldError}
+      installPreview={installPreview}
     />
   );
 }

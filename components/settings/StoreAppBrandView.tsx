@@ -3,9 +3,11 @@
 import { useRef, useState } from 'react';
 import { ImagePlus, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
+import { BrandInstallPreview } from '@/components/onboarding/BrandInstallPreview';
 import { HomeScreenLauncherMock } from '@/components/onboarding/HomeScreenLauncherMock';
 import { SplashBootMock } from '@/components/onboarding/SplashBootMock';
 import { SmartHomePreview } from '@/components/onboarding/SmartHomePreview';
+import { settingsBrandLead, type InstallPreviewModel } from '@/lib/build/installPreview';
 import { HEX_COLOR_REGEX, validateBrandImage } from '@/lib/onboarding/branding';
 import { displayBrandImageUrl } from '@/lib/onboarding/brandAssets';
 import type { BrandingDraft, LockedCatalog, SyncGate } from '@/lib/onboarding/types';
@@ -72,6 +74,8 @@ interface StoreAppBrandViewProps {
   onIconFile: (file: File) => void;
   onSplashFile: (file: File) => void;
   onImageError: (message: string | null) => void;
+  /** Build list for this store. Omitted renders the light phone mock. */
+  installPreview?: InstallPreviewModel;
 }
 
 export function StoreAppBrandView({
@@ -87,6 +91,7 @@ export function StoreAppBrandView({
   onIconFile,
   onSplashFile,
   onImageError,
+  installPreview,
 }: StoreAppBrandViewProps) {
   if (!draft) {
     return (
@@ -110,18 +115,15 @@ export function StoreAppBrandView({
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start lg:gap-x-12">
         <div className="min-w-0 lg:col-start-1">
           <h3 className="font-heading text-xl font-semibold tracking-tight text-slate-950">Icon and splash</h3>
-          <p className="mt-2 max-w-lg text-sm leading-6 text-slate-600">
-            Replace the home screen icon and the image shoppers see when the app opens. The preview updates as soon as you choose a file. The icon is the home-screen mark under the phone. The splash is the opening screen.
-          </p>
+          <p className="mt-2 max-w-lg text-sm leading-6 text-slate-600">{settingsBrandLead(installPreview)}</p>
         </div>
 
         <div className="mt-8 lg:sticky lg:top-6 lg:col-start-2 lg:row-span-2 lg:mt-0 lg:self-start">
-          <p className="mb-3 text-center text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500">
-            Live preview
-          </p>
-          <SmartHomePreview draft={shown} catalog={catalog} sync={sync} />
-          <HomeScreenLauncherMock appName={shown.appName} iconUrl={shown.iconUrl} />
-          <SplashBootMock appName={shown.appName} splashUrl={shown.splashUrl} />
+          <BrandInstallPreview model={installPreview}>
+            <SmartHomePreview draft={shown} catalog={catalog} sync={sync} />
+            <HomeScreenLauncherMock appName={shown.appName} iconUrl={shown.iconUrl} />
+            <SplashBootMock appName={shown.appName} splashUrl={shown.splashUrl} />
+          </BrandInstallPreview>
         </div>
 
         <div className="min-w-0 lg:col-start-1">

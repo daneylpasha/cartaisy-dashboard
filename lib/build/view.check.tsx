@@ -192,6 +192,8 @@ assert.equal(readyWithoutLink.includes('Install Android build'), false);
 assert.equal(readyWithoutLink.includes('Install iOS build'), false);
 assert.equal(readyWithoutLink.includes('href="http'), false);
 assert.equal(readyWithoutLink.includes('href="https'), false);
+assert.equal(readyWithoutLink.includes('data-install-qr'), false);
+assert.equal(readyWithoutLink.includes('Copy link'), false);
 assertCalm(readyWithoutLink);
 
 const ANDROID_INSTALL = 'https://expo.dev/accounts/northwind/builds/android';
@@ -206,8 +208,19 @@ assert.ok(readyWithLinks.includes('Ready to install.'));
 assert.ok(readyWithLinks.includes('Ready'));
 assert.ok(readyWithLinks.includes(`href="${ANDROID_INSTALL}"`));
 assert.ok(readyWithLinks.includes(`href="${IOS_INSTALL}"`));
-assert.equal((readyWithLinks.match(/target="_blank"/g) ?? []).length, 2);
-assert.equal((readyWithLinks.match(/rel="noopener noreferrer"/g) ?? []).length, 2);
+assert.equal((readyWithLinks.match(/target="_blank"/g) ?? []).length, 4);
+assert.equal((readyWithLinks.match(/rel="noopener noreferrer"/g) ?? []).length, 4);
+assert.equal((readyWithLinks.match(/data-install-qr/g) ?? []).length, 2);
+assert.equal((readyWithLinks.match(/Copy link/g) ?? []).length, 2);
+assert.ok(readyWithLinks.includes('Scan to install on your phone.'));
+const scanAt = readyWithLinks.indexOf('Scan to install on your phone.');
+const androidCardAt = readyWithLinks.indexOf('data-platform="android"');
+assert.ok(scanAt >= 0 && androidCardAt > scanAt);
+for (const svg of readyWithLinks.match(/<svg[\s\S]*?<\/svg>/g) ?? []) {
+  assert.equal(svg.includes(ANDROID_INSTALL), false);
+  assert.equal(svg.includes(IOS_INSTALL), false);
+  assert.equal(svg.includes('expo.dev'), false);
+}
 assert.doesNotMatch(readyWithLinks, /cartaisy/i);
 assert.equal(readyWithLinks.includes('EAS'), false);
 assertCalm(readyWithLinks);
@@ -219,6 +232,8 @@ const readyHttp = html({
 assert.ok(readyHttp.includes('Ready'));
 assert.equal(readyHttp.includes('Install Android build'), false);
 assert.equal(readyHttp.includes('http://expo.dev'), false);
+assert.equal(readyHttp.includes('data-install-qr'), false);
+assert.equal(readyHttp.includes('Copy link'), false);
 assertCalm(readyHttp);
 
 const readySecret = html({
@@ -229,6 +244,8 @@ const readySecret = html({
 });
 assert.equal(readySecret.includes('Install Android build'), false);
 assert.equal(readySecret.includes('shpat_'), false);
+assert.equal(readySecret.includes('data-install-qr'), false);
+assert.equal(readySecret.includes('Copy link'), false);
 assertCalm(readySecret);
 
 const buildingWithLink = html({
@@ -238,7 +255,22 @@ const buildingWithLink = html({
 assert.ok(buildingWithLink.includes('Building'));
 assert.equal(buildingWithLink.includes('Install Android build'), false);
 assert.equal(buildingWithLink.includes(ANDROID_INSTALL), false);
+assert.equal(buildingWithLink.includes('data-install-qr'), false);
+assert.equal(buildingWithLink.includes('Copy link'), false);
 assertCalm(buildingWithLink);
+
+const oneReady = html({
+  mode: 'status',
+  request: request('ready', 'building', { android: ANDROID_INSTALL, ios: IOS_INSTALL }),
+});
+assert.equal((oneReady.match(/data-install-qr/g) ?? []).length, 1);
+assert.equal((oneReady.match(/Copy link/g) ?? []).length, 1);
+assert.ok(oneReady.includes(ANDROID_INSTALL));
+assert.equal(oneReady.includes(IOS_INSTALL), false);
+assert.ok(oneReady.includes('Install Android build'));
+assert.equal(oneReady.includes('Install iOS build'), false);
+assert.ok(oneReady.indexOf('Scan to install on your phone.') < oneReady.indexOf('data-platform="android"'));
+assertCalm(oneReady);
 
 const composeIgnoresLink = html({
   mode: 'compose',
@@ -246,6 +278,8 @@ const composeIgnoresLink = html({
 });
 assert.equal(composeIgnoresLink.includes('Install Android build'), false);
 assert.equal(composeIgnoresLink.includes(ANDROID_INSTALL), false);
+assert.equal(composeIgnoresLink.includes('data-install-qr'), false);
+assert.equal(composeIgnoresLink.includes('Copy link'), false);
 assert.ok(composeIgnoresLink.includes('>Build my app<'));
 assertCalm(composeIgnoresLink);
 

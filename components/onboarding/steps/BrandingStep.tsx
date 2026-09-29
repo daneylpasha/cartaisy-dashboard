@@ -5,10 +5,12 @@ import { ImagePlus, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ColorPicker } from '@/components/ui/color-picker';
+import { BrandInstallPreview } from '@/components/onboarding/BrandInstallPreview';
 import { LockedShopifyDetails } from '@/components/onboarding/LockedShopifyDetails';
 import { HomeScreenLauncherMock } from '@/components/onboarding/HomeScreenLauncherMock';
 import { SplashBootMock } from '@/components/onboarding/SplashBootMock';
 import { SmartHomePreview } from '@/components/onboarding/SmartHomePreview';
+import { brandStepLead, type InstallPreviewModel } from '@/lib/build/installPreview';
 import { SetupNotice, WizardFooter } from '@/components/onboarding/WizardChrome';
 import { validateBrandImage } from '@/lib/onboarding/branding';
 import { safeImageUrl } from '@/lib/onboarding/normalizers';
@@ -41,6 +43,8 @@ interface BrandingStepProps {
   onBack: () => void;
   onContinue: () => void;
   onRetry: () => void;
+  /** Build list for this store. Omitted renders the light phone mock. */
+  installPreview?: InstallPreviewModel;
 }
 
 export function BrandingStep({
@@ -68,6 +72,7 @@ export function BrandingStep({
   onBack,
   onContinue,
   onRetry,
+  installPreview,
 }: BrandingStepProps) {
   const nameReady = draft.appName.trim().length >= 2;
   const blocked =
@@ -81,9 +86,7 @@ export function BrandingStep({
           <h1 className="font-heading mt-3 text-[1.75rem] font-semibold tracking-tight text-slate-950">
             Confirm your brand
           </h1>
-          <p className="mt-3 max-w-lg text-[15px] leading-7 text-slate-600">
-            We filled this in from your store where we could. The phone uses this draft and updates as you edit. Shopify details stay locked.
-          </p>
+          <p className="mt-3 max-w-lg text-[15px] leading-7 text-slate-600">{brandStepLead(installPreview)}</p>
           {warning && (
             <div className="mt-8">
               <SetupNotice>{warning}</SetupNotice>
@@ -92,12 +95,11 @@ export function BrandingStep({
         </div>
 
         <div className="mt-8 lg:sticky lg:top-6 lg:col-start-2 lg:row-span-2 lg:mt-0 lg:self-start">
-          <p className="mb-3 text-center text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500">
-            Live preview
-          </p>
-          <SmartHomePreview draft={draft} catalog={catalog} sync={sync} pending={pending} />
-          <HomeScreenLauncherMock appName={draft.appName} iconUrl={draft.iconUrl} />
-          <SplashBootMock appName={draft.appName} splashUrl={draft.splashUrl} />
+          <BrandInstallPreview model={installPreview}>
+            <SmartHomePreview draft={draft} catalog={catalog} sync={sync} pending={pending} />
+            <HomeScreenLauncherMock appName={draft.appName} iconUrl={draft.iconUrl} />
+            <SplashBootMock appName={draft.appName} splashUrl={draft.splashUrl} />
+          </BrandInstallPreview>
         </div>
 
         <div className="min-w-0 lg:col-start-1">
