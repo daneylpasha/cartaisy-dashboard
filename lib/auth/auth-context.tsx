@@ -16,11 +16,21 @@ import type {
   LoginResult,
   AuthContextValue,
   UseSessionReturn,
+  StoreActionResult,
 } from './types';
 import type { LoginResponseData } from '@/lib/api/generated/cartaisyAPI.schemas';
 import { tokenStorage } from '@/lib/api/mutator/custom-instance';
 import { login as apiLogin, getProfile } from '@/lib/api/generated/authentication/authentication';
 import { googleAuthErrorMessage, postGoogleLogin, readGoogleError } from '@/lib/auth/googleSession';
+import {
+  NEW_APP_PATH,
+  SWITCH_APP_PATH,
+  createMerchantStore,
+  openAppDestination,
+  sessionWithActiveStore,
+  switchActiveStore,
+} from '@/lib/auth/stores';
+import { clearStoreScopedClientCaches } from '@/lib/dashboard/storeCaches';
 
 function sessionFromLoginData(
   payload: LoginResponseData | undefined,
@@ -70,6 +80,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
   // A fresh sign-in on this page chooses its own destination (dashboard vs onboarding).
   const signedInHere = useRef(false);
+  const userRef = useRef(state.user);
+  userRef.current = state.user;
 
   // Initialize auth state from storage on mount
   useEffect(() => {
@@ -144,6 +156,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     initAuth();
+  }, []);
+
+  // A restored back-forward page can still show the previous app. If the
+  // stored active store changed, reload so the screen matches that store.
+  useEffect(() => {
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (!event.persisted) return;
+      const storedId = tokenStorage.getUser<AuthUser>()?.storeId ?? '';
+      const visibleId = userRef.current?.storeId ?? '';
+      if (storedId !== visibleId) window.location.reload();
+    };
+    window.addEventListener('pageshow', onPageShow);
+    return () => window.removeEventListener('pageshow', onPageShow);
   }, []);
 
   // Redirect based on auth state - only for auth routes (login/signup)
@@ -389,6 +414,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return tokenStorage.getToken();
   }, []);
 
+  const adoptActiveStore = useCallback((active: { storeId: string; storeName: string }) => {
+    const current = tokenStorage.getUser<AuthUser>();
+    if (!current) return null;
+    const user = sessionWithActiveStore(current, active);
+    clearStoreScopedClientCaches();
+    tokenStorage.setUser(user);
+    setState((prev) => ({
+      ...prev,
+      user,
+      isAuthenticated: true,
+      isLoading: false,
+      error: null,
+    }));
+    return user;
+  }, []);
+
+  const switchApp = useCallback(
+    async (storeId: string, fallbackName?: string): Promise<StoreActionResult> => {
+      const current = tokenStorage.getUser<AuthUser>();
+      if (!current) return { success: false, error: 'Sign in to continue.' };
+      const result = await switchActiveStore(storeId, fallbackName || current.storeName || '');
+      if (!result.ok) return { success: false, error: result.message };
+      if (!adoptActiveStore(result.value)) return { success: false, error: 'Sign in to continue.' };
+      openAppDestination(SWITCH_APP_PATH);
+      return { success: true };
+    },
+    [adoptActiveStore],
+  );
+
+  const addApp = useCallback(
+    async (name: string): Promise<StoreActionResult> => {
+      const current = tokenStorage.getUser<AuthUser>();
+      if (!current?.storeId) return { success: false, error: 'Sign in to continue.' };
+      const result = await createMerchantStore(name);
+      if (!result.ok) {
+        return {
+          success: false,
+          error: result.message,
+          forbidden: result.status === 403,
+        };
+      }
+      if (!adoptActiveStore(result.value)) return { success: false, error: 'Sign in to continue.' };
+      openAppDestination(NEW_APP_PATH);
+      return { success: true };
+    },
+    [adoptActiveStore],
+  );
+
   return (
     <AuthContext.Provider
       value={{
@@ -399,6 +472,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         refreshUser,
         getToken,
+        switchApp,
+        addApp,
       }}
     >
       {children}

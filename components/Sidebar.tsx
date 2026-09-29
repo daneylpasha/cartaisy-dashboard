@@ -8,7 +8,6 @@ import {
   BarChart3,
   Bell,
   ChevronDown,
-  ChevronLeft,
   ClipboardList,
   FileText,
   FolderOpen,
@@ -25,9 +24,9 @@ import {
   Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { canManageTeam } from '@/lib/utils/permissions';
+import { AppSwitcher } from '@/components/dashboard/AppSwitcher';
 import { useDashboardBranding } from '@/components/dashboard/DashboardBrandingProvider';
 import { useDashboardShopify } from '@/components/dashboard/ShopifyStatusProvider';
 import { listAdminBuildRequests } from '@/lib/build/adminClient';
@@ -76,7 +75,6 @@ function SidebarContent({
 
   const storeName = session?.user?.storeName || 'Your store';
   const userName = session?.user?.name || session?.user?.email || 'Account';
-  const storeInitial = storeName.charAt(0).toUpperCase();
   const shopifyKnownDisconnected = !isLoading && status?.isConnected === false;
 
   const baseNavItems: NavItem[] = [
@@ -200,44 +198,14 @@ function SidebarContent({
 
   return (
     <div className="flex h-full flex-col bg-white">
-      <div
-        className={cn(
-          'flex h-14 shrink-0 items-center border-b border-slate-200',
-          collapsed ? 'justify-center px-2' : 'gap-2.5 px-3',
-          inSheet && 'pr-10'
-        )}
-      >
-        {collapsed ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggleCollapse}
-            className="size-8 rounded-lg p-0 hover:bg-slate-100"
-            aria-label="Expand sidebar"
-          >
-            <StoreMark logo={logoUrl} initial={storeInitial} />
-          </Button>
-        ) : (
-          <>
-            <StoreMark logo={logoUrl} initial={storeInitial} />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[13px] font-semibold text-slate-950">{storeName}</p>
-              <p className="truncate text-xs text-slate-500">{userName}</p>
-            </div>
-            {onToggleCollapse && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onToggleCollapse}
-                className="size-7 shrink-0 p-0 text-slate-500 hover:bg-slate-100 hover:text-slate-950"
-                aria-label="Collapse sidebar"
-              >
-                <ChevronLeft className="size-3.5" />
-              </Button>
-            )}
-          </>
-        )}
-      </div>
+      <AppSwitcher
+        collapsed={collapsed}
+        inSheet={inSheet}
+        storeName={storeName}
+        userName={userName}
+        logoUrl={logoUrl}
+        onToggleCollapse={onToggleCollapse}
+      />
 
       <nav className="min-h-0 flex-1 space-y-4 overflow-y-auto px-2 py-3" aria-label="Dashboard">
         {groups.map((group) => (
@@ -354,22 +322,6 @@ function visibleGroups(items: NavItem[], muteLater: boolean) {
   }
 
   return grouped;
-}
-
-function StoreMark({ logo, initial }: { logo: string | null; initial: string }) {
-  if (logo) {
-    // Store logos are merchant-hosted URLs, not files in this app.
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={logo} alt="" className="size-8 shrink-0 rounded-lg object-cover" />;
-  }
-  return (
-    <span
-      aria-hidden
-      className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-slate-950 text-xs font-semibold text-white"
-    >
-      {initial}
-    </span>
-  );
 }
 
 interface SidebarProps {

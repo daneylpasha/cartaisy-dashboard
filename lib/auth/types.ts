@@ -62,6 +62,16 @@ export interface LoginResult {
 }
 
 /**
+ * Switch or add an app. The access token is unchanged.
+ * `forbidden` means Add app should be hidden for this account.
+ */
+export interface StoreActionResult {
+  success: boolean;
+  error?: string;
+  forbidden?: boolean;
+}
+
+/**
  * Auth context value - what useAuth() returns
  */
 export interface AuthContextValue extends AuthState {
@@ -71,6 +81,8 @@ export interface AuthContextValue extends AuthState {
   logout: () => void;
   refreshUser: () => Promise<void>;
   getToken: () => string | null;
+  switchApp: (storeId: string, fallbackName?: string) => Promise<StoreActionResult>;
+  addApp: (name: string) => Promise<StoreActionResult>;
 }
 
 /**
