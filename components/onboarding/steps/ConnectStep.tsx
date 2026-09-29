@@ -8,6 +8,7 @@ import { SetupNotice, WizardFooter } from '@/components/onboarding/WizardChrome'
 import { connectPrimaryAction, normalizeShopDomainInput } from '@/lib/onboarding/normalizers';
 import { shopifyRecoveryView } from '@/lib/shopify/recovery';
 import { ShopifyRecoveryStatus } from '@/components/shopify/ShopifyRecoveryStatus';
+import { ShopifyStoreAddressHelp } from '@/components/shopify/ShopifyStoreAddressHelp';
 import { shopifyConnectContract } from '@/lib/onboarding/shopifyConnect';
 import type { ShopifyReturnCopy } from '@/lib/shopify/merchantCopy';
 import type { LockedCatalog, ShopifyConnectionSnapshot, SyncGate } from '@/lib/onboarding/types';
@@ -168,12 +169,12 @@ export function ConnectStep({
             autoComplete="off"
             className="h-11"
             aria-invalid={Boolean(fieldError)}
+            aria-describedby="shop-domain-help"
           />
-          <p className="text-xs leading-5 text-slate-500">
-            {returnError || unconfirmedReturn
-              ? 'Use the .myshopify.com address, then connect again.'
-              : 'Use the .myshopify.com address.'}
-          </p>
+          <ShopifyStoreAddressHelp
+            id="shop-domain-help"
+            retry={Boolean(returnError || unconfirmedReturn)}
+          />
         </div>
       )}
 

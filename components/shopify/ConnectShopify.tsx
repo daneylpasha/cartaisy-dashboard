@@ -13,6 +13,7 @@ import { withCatalogBlock } from '@/lib/shopify/catalogBlock';
 import { shopifyRecoveryView } from '@/lib/shopify/recovery';
 import * as shopifyService from '@/lib/services/shopify';
 import { ShopifyRecoveryStatus } from '@/components/shopify/ShopifyRecoveryStatus';
+import { ShopifyStoreAddressHelp } from '@/components/shopify/ShopifyStoreAddressHelp';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -251,10 +252,13 @@ export function ConnectShopify() {
                     disabled={pending === 'reconnect'}
                     autoComplete="off"
                     className="h-11"
+                    aria-describedby="shop-help"
                   />
-                  <p className="text-sm leading-6 text-slate-500">
-                    Use the address from your Shopify admin. This opens Shopify so you can approve access.
-                  </p>
+                  <ShopifyStoreAddressHelp
+                    id="shop-help"
+                    size="sm"
+                    note="This opens Shopify so you can approve access."
+                  />
                 </div>
               </ShopifyRecoveryStatus>
               {(error || actionError) && (
