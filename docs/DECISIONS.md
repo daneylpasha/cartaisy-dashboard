@@ -472,6 +472,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Dead preview code and the docs that described it. Install QR and first-build instructions are unchanged. The onboarding snapshot no longer calls `GET /products` for phone tiles. No Shopify Admin token is sent. Human review is required because this sits on the merchant-facing branding preview and drops a Shopify catalog read that existed only for that phone.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/HOME_MODULE_EDITOR_CONTRACT.md`, `docs/TESTING.md`. GitHub issue: `#126`.
 
+### The home-screen and splash boot mocks are removed
+
+- Date: 2026-09-29.
+- Decision: `HomeScreenLauncherMock` and `SplashBootMock` are deleted. Brand, Preview, and Settings do not mount a home-screen mock or a splash boot mock. They keep `BrandInstallPreview`. Build keeps `LauncherReadinessStrip` and its soft name, icon, and splash thumbs. The wizard header is unchanged. Use logo, Go live, Build, and Publish stay as they are.
+- Reason: Dashboard #128. After #126 removed the shopper phone, these two unmounted mocks were the remaining simulator chrome an agent could remount.
+- Impact: Dead preview components and the checks that rendered them. Live install preview, the Build readiness strip, and brand uploads are unchanged. No Shopify token is rendered. Human review is required because this sits on the merchant-facing branding preview.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`. GitHub issue: `#128`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

@@ -43,9 +43,18 @@ assert.match(wizardSource, /plan\.persist === 'dashboard'/);
 assert.match(brandSource, /imageUrl=\{draft\.iconUrl\}/);
 assert.match(brandSource, /imageUrl=\{draft\.splashUrl\}/);
 assert.doesNotMatch(wizardSource, /uploadOptionalBrandAsset/);
-assert.doesNotMatch(brandSource, /SmartHomePreview|HomeScreenLauncherMock|SplashBootMock|data-shopper-screen/);
-assert.doesNotMatch(previewStepSource, /SmartHomePreview|data-shopper-screen/);
-assert.doesNotMatch(settingsSource, /SmartHomePreview|data-shopper-screen/);
+assert.doesNotMatch(
+  brandSource,
+  /SmartHomePreview|HomeScreenLauncherMock|SplashBootMock|data-shopper-screen|data-launcher-mock|data-splash-boot-mock/
+);
+assert.doesNotMatch(
+  previewStepSource,
+  /SmartHomePreview|HomeScreenLauncherMock|SplashBootMock|data-shopper-screen|data-launcher-mock|data-splash-boot-mock/
+);
+assert.doesNotMatch(
+  settingsSource,
+  /SmartHomePreview|HomeScreenLauncherMock|SplashBootMock|data-shopper-screen|data-launcher-mock|data-splash-boot-mock/
+);
 assert.match(brandSource, /<BrandInstallPreview model=\{installPreview\} \/>/);
 assert.match(previewStepSource, /<BrandInstallPreview model=\{installPreview\} \/>/);
 assert.match(settingsSource, /<BrandInstallPreview model=\{installPreview\} \/>/);
@@ -54,7 +63,10 @@ assert.equal(previewStepSource.match(/<SmartHomePreview/g)?.length ?? 0, 0);
 
 for (const file of [...sourceFiles(join(repoRoot, 'app')), ...sourceFiles(join(repoRoot, 'components'))]) {
   const text = readFileSync(file, 'utf8');
-  assert.doesNotMatch(text, /SmartHomePreview|data-shopper-screen|shopperChrome/);
+  assert.doesNotMatch(
+    text,
+    /SmartHomePreview|HomeScreenLauncherMock|SplashBootMock|data-shopper-screen|data-launcher-mock|data-splash-boot-mock|shopperChrome/
+  );
 }
 
 const draft: BrandingDraft = {
