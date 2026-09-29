@@ -9,7 +9,11 @@ import { EMPTY_CATALOG } from '@/lib/onboarding/normalizers';
 import { DEFAULT_PRIMARY_COLOR } from '@/lib/onboarding/branding';
 import type { BrandingDraft, SyncGate } from '@/lib/onboarding/types';
 import { fetchBranding } from '@/lib/onboarding/branding';
-import { nextShellBrandingRequest } from '@/lib/dashboard/shellBranding';
+import {
+  ensureShellBrandingSession,
+  resetShellBrandingSessions,
+  shellBrandingSession,
+} from '@/lib/dashboard/shellBranding';
 import { applySettingsColors, applySettingsLogo, loadSettingsBrandingDraft } from '@/lib/settings/storeBranding';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -66,11 +70,13 @@ assert.match(sidebarSource, /useDashboardBranding/);
 assert.equal(sidebarSource.match(/<SidebarContent/g)?.length, 2);
 assert.match(sidebarSource, /\{mobileOpen \? \([\s\S]*<SidebarContent/);
 assert.match(shellSource, /<DashboardBrandingProvider>/);
-assert.match(providerSource, /nextShellBrandingRequest\([\s\S]*fetchBranding\)/);
+assert.match(providerSource, /ensureShellBrandingSession\([\s\S]*fetchBranding\)/);
 assert.equal(providerSource.match(/fetchBranding\(/g)?.length ?? 0, 0);
-assert.doesNotMatch(providerSource, /useEffect\(\(\) => \{[\s\S]*nextShellBrandingRequest/);
-assert.match(shellLoadSource, /current\.reloadKey === reloadKey\) return current/);
+assert.doesNotMatch(providerSource, /useEffect\(\(\) => \{[\s\S]*ensureShellBrandingSession/);
+assert.match(shellLoadSource, /reloadKey <= current\.reloadKey\) return current/);
 assert.match(shellLoadSource, /promise: load\(storeId, token\)/);
+assert.match(shellLoadSource, /session\.draft = draft/);
+assert.match(shellLoadSource, /session\.settled = true/);
 assert.match(brandingHelperSource, /inflightBranding/);
 assert.match(brandingHelperSource, /if \(pending\) return pending/);
 assert.match(brandingHelperSource, /globalThis/);
@@ -348,48 +354,75 @@ async function checkSharedNetworkGet() {
 }
 
 async function checkShellKeepsSettledLoad() {
+  resetShellBrandingSessions();
+  const realFetch = globalThis.fetch;
   let brandingGets = 0;
-  const load = async () => {
+  globalThis.fetch = async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (!url.endsWith('/branding')) throw new Error(`unexpected fetch ${url}`);
     brandingGets += 1;
-    return {
-      ...saved,
-      logoUrl: 'https://cdn.example/logo.png',
-      splashUrl: null,
-    };
+    return new Response(
+      JSON.stringify({
+        data: {
+          appName: 'Northwind',
+          logoUrl: 'https://cdn.example/logo.png',
+          primaryColor: '#0F766E',
+          secondaryColor: null,
+          iconUrl: 'https://cdn.example/icon.png',
+          splashUrl: null,
+        },
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
   };
 
-  const first = nextShellBrandingRequest(null, 'store-1', 'sidebar-token', 0, load);
-  assert.ok(first);
-  const joined = nextShellBrandingRequest(first, 'store-1', 'settings-token', 0, load);
-  assert.equal(joined, first);
-  await first.promise;
-  const afterSettle = nextShellBrandingRequest(joined, 'store-1', 'settings-token', 0, load);
-  assert.equal(afterSettle, first);
-  assert.equal(brandingGets, 1);
+  try {
+    const first = ensureShellBrandingSession('store-live', 'sidebar-token', 0, fetchBranding);
+    assert.ok(first);
+    const settledDraft = await first.promise;
+    assert.equal(first.settled, true);
+    assert.equal(first.draft?.logoUrl, 'https://cdn.example/logo.png');
+    assert.equal(settledDraft?.logoUrl, first.draft?.logoUrl);
 
-  const drafted = await loadSettingsBrandingDraft({
-    storeId: 'store-1',
-    token: 'settings-token',
-    appName: 'Harbor',
-    fallbackLogo: null,
-    loadBranding: () => afterSettle.promise,
-    loadProfile: async () => ({
-      name: 'Harbor',
-      brandAssets: { iconUrl: null, splashUrl: 'https://cdn.example/stored-splash.png' },
-    }),
-  });
-  assert.equal(brandingGets, 1);
-  assert.equal(drafted?.logoUrl, 'https://cdn.example/logo.png');
-  assert.equal(drafted?.splashUrl, 'https://cdn.example/stored-splash.png');
-  assert.equal(drafted?.appName, 'Northwind');
+    const registry = (
+      globalThis as { __cartaisyInflightBranding?: Map<string, Promise<unknown>> }
+    ).__cartaisyInflightBranding;
+    assert.ok(registry instanceof Map);
+    assert.equal(registry.has('store-live'), false);
 
-  const retried = nextShellBrandingRequest(afterSettle, 'store-1', 'settings-token', 1, load);
-  assert.notEqual(retried, first);
-  await retried?.promise;
-  assert.equal(brandingGets, 2);
+    const second = ensureShellBrandingSession('store-live', 'settings-token', 0, fetchBranding);
+    assert.equal(second, first);
+    assert.equal(brandingGets, 1);
 
-  assert.equal(nextShellBrandingRequest(first, null, 'settings-token', 0, load), null);
-  assert.equal(brandingGets, 2);
+    const drafted = await loadSettingsBrandingDraft({
+      storeId: 'store-live',
+      token: 'settings-token',
+      appName: 'Harbor',
+      fallbackLogo: null,
+      loadBranding: () => second.promise,
+      loadProfile: async () => ({
+        name: 'Harbor',
+        brandAssets: { iconUrl: null, splashUrl: 'https://cdn.example/stored-splash.png' },
+      }),
+    });
+    assert.equal(brandingGets, 1);
+    assert.equal(drafted?.logoUrl, 'https://cdn.example/logo.png');
+    assert.equal(drafted?.splashUrl, 'https://cdn.example/stored-splash.png');
+    assert.equal(drafted?.iconUrl, 'https://cdn.example/icon.png');
+
+    const retried = ensureShellBrandingSession('store-live', 'settings-token', 1, fetchBranding);
+    assert.notEqual(retried, first);
+    await retried?.promise;
+    assert.equal(brandingGets, 2);
+    assert.equal(retried?.settled, true);
+
+    assert.equal(ensureShellBrandingSession(null, 'settings-token', 2, fetchBranding), null);
+    assert.equal(brandingGets, 2);
+    assert.equal(shellBrandingSession('store-live'), retried);
+  } finally {
+    globalThis.fetch = realFetch;
+    resetShellBrandingSessions();
+  }
 }
 
 checkSingleLoad()

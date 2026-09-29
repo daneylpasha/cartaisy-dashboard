@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useSession, useAuth } from '@/lib/auth';
 import { fetchBranding } from '@/lib/onboarding/branding';
-import { nextShellBrandingRequest, type ShellBrandingRequest } from '@/lib/dashboard/shellBranding';
+import { ensureShellBrandingSession } from '@/lib/dashboard/shellBranding';
 import type { BrandingDraft } from '@/lib/onboarding/types';
 
 export interface DashboardBrandingValue {
@@ -24,52 +24,50 @@ export function DashboardBrandingProvider({ children }: { children: ReactNode })
   const { getToken } = useAuth();
   const storeId = session?.user?.storeId?.trim() || null;
   const [reloadKey, setReloadKey] = useState(0);
-  const [held, setHeld] = useState<ShellBrandingRequest | null>(null);
   const [draft, setDraft] = useState<BrandingDraft | null>(null);
+  const [draftStoreId, setDraftStoreId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const draftStoreId = useRef<string | null>(null);
+  const draftStoreRef = useRef<string | null>(null);
 
-  // Start the load during render so Sidebar and Settings observe the same
-  // promise in this commit, including after it has already settled.
-  // `nextShellBrandingRequest` returns the held promise until `reload` bumps the key.
+  // The session map keeps the settled draft. A Settings mount that runs after
+  // the GET has finished must read this record, not call fetchBranding again.
   const pendingSession = status === 'loading';
-  let active = held;
-  if (!pendingSession) {
-    const token = getToken();
-    const next = nextShellBrandingRequest(held, storeId, token, reloadKey, fetchBranding);
-    if (next !== held) setHeld(next);
-    active = next;
-  }
-
-  const request =
-    !pendingSession && active && active.storeId === storeId && active.reloadKey === reloadKey
-      ? active.promise
-      : null;
+  const branding = pendingSession
+    ? null
+    : ensureShellBrandingSession(storeId, getToken(), reloadKey, fetchBranding);
+  const request = branding && branding.storeId === storeId ? branding.promise : null;
+  const settledDraft = branding?.settled && branding.storeId === storeId ? branding.draft : null;
+  const visibleDraft = settledDraft ?? (draftStoreId === storeId ? draft : null);
 
   useEffect(() => {
     if (!request || !storeId) {
-      draftStoreId.current = null;
+      draftStoreRef.current = null;
       setDraft(null);
+      setDraftStoreId(null);
       setLoading(pendingSession);
       setError(null);
       return;
     }
 
     let cancelled = false;
-    if (draftStoreId.current !== storeId) setDraft(null);
-    setLoading(true);
+    if (draftStoreRef.current !== storeId) {
+      setDraft(null);
+      setDraftStoreId(null);
+    }
+    setLoading(!branding?.settled);
     request.then((result) => {
       if (cancelled) return;
-      draftStoreId.current = storeId;
+      draftStoreRef.current = storeId;
       setDraft(result);
+      setDraftStoreId(storeId);
       setError(result ? null : 'We could not load store branding.');
       setLoading(false);
     });
     return () => {
       cancelled = true;
     };
-  }, [request, storeId, pendingSession]);
+  }, [request, storeId, pendingSession, branding?.settled]);
 
   const reload = useCallback(() => {
     setReloadKey((key) => key + 1);
@@ -78,14 +76,14 @@ export function DashboardBrandingProvider({ children }: { children: ReactNode })
   const value = useMemo<DashboardBrandingValue>(
     () => ({
       storeId,
-      logoUrl: draft?.logoUrl ?? null,
-      draft,
+      logoUrl: visibleDraft?.logoUrl ?? null,
+      draft: visibleDraft,
       loading,
       error,
       request,
       reload,
     }),
-    [storeId, draft, loading, error, request, reload]
+    [storeId, visibleDraft, loading, error, request, reload]
   );
 
   return <DashboardBrandingContext.Provider value={value}>{children}</DashboardBrandingContext.Provider>;
