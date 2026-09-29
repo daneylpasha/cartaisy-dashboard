@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { HomescreenPreviewData } from '@/types';
-import { publishStatusCopy, type HomePublishStatus } from '@/lib/homeLayout/publish';
+import { publishedSnapshotIsLive, publishStatusCopy, type HomePublishStatus } from '@/lib/homeLayout/publish';
 import {
   MobileFrame,
   CarouselPreview,
@@ -41,12 +41,13 @@ function renderPreviewSection(type: string, data: HomescreenPreviewData): ReactN
 
 function previewLead(
   status: HomePublishStatus | null,
-  sections: { isVisible: boolean }[] | null
+  sections: { isVisible: boolean }[] | null,
+  live: boolean
 ): string {
   const base =
     'Module stack for this home. Publish home, then the install code on Build my app is the app on a phone.';
   if (!status || !sections) return base;
-  return `${base} ${publishStatusCopy(status, sections).detail}`;
+  return `${base} ${publishStatusCopy(status, sections, live).detail}`;
 }
 
 export default function HomescreenPreviewPage() {
@@ -56,6 +57,7 @@ export default function HomescreenPreviewPage() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [publishStatus, setPublishStatus] = useState<HomePublishStatus | null>(null);
   const [layoutSections, setLayoutSections] = useState<{ type: string; isVisible: boolean }[] | null>(null);
+  const [layoutLive, setLayoutLive] = useState(false);
 
   const fetchPreview = async (showRefreshIndicator = false) => {
     try {
@@ -87,6 +89,7 @@ export default function HomescreenPreviewPage() {
         if (Array.isArray(layout?.data?.sections)) {
           setLayoutSections(layout.data.sections);
         }
+        setLayoutLive(publishedSnapshotIsLive(layout?.data?.publishedAt, layout?.data?.publishedSections));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load preview');
@@ -142,7 +145,7 @@ export default function HomescreenPreviewPage() {
             Homescreen Preview
           </h1>
           <p className="text-slate-600 mt-1">
-            {previewLead(publishStatus, layoutSections)}
+            {previewLead(publishStatus, layoutSections, layoutLive)}
           </p>
         </div>
         <Button

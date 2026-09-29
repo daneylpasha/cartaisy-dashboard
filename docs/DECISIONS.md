@@ -400,6 +400,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Connected Home presentation. Reconnect stays available for a billing or reconnect block, and that block still does not offer Sync again. It does not change auth, store ownership, the publish write, or Build eligibility. Human review is required because this sits next to Shopify recovery.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#98`.
 
+### Unpublish clears the live home and keeps the draft
+
+- Date: 2026-09-29.
+- Decision: Unpublish home is an explicit action on the dashboard `HomeLayout` document. `POST /api/home-layout/unpublish` sets `sections` to `[]` and clears `publishedAt`. It does not delete module documents. A non-empty `draftSections` list stays as it is. When that draft is empty, the live list the editor was showing is copied into `draftSections` first, so a legacy layout is not dropped. The layout is then not live, under the same rule as a store that was never published and under cartaisy-backend #199. App Builder shows Draft when a saved draft remains, with a note that the installed app uses the smart default until Publish again. A store with no saved draft stays Not published yet. Unpublish is offered only while a live snapshot remains, after a plain confirmation. Build, install codes, and Submit stay available. Connected Home and Build my app keep the existing Not published yet / Draft / Published status and the Publish home link. No new mobile field. No Shopify token is rendered.
+- Reason: Dashboard #102. A published home had no merchant way to return the installable app to its smart default without losing the editor draft.
+- Impact: App Builder, `GET /api/public/home-feed`, and the publish status shown on connected Home and Build my app. If the dashboard and backend share `homelayouts`, this write is the empty live snapshot backend #199 already treats as not live. Human review is required because this is home-module publishing.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/HOME_MODULE_EDITOR_CONTRACT.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#102`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

@@ -56,10 +56,33 @@ import type { IHomeLayoutSection } from '@/models/HomeLayout';
 import { HomePublishBar } from '@/components/app-builder/HomePublishBar';
 import {
   HOME_PUBLISH_COPY,
+  isHomePublishStatus,
+  publishedSnapshotIsLive,
   publishSuccessCopy,
   visiblePublishStatus,
   type HomePublishStatus,
 } from '@/lib/homeLayout/publish';
+
+function readLayoutPayload(data: unknown): {
+  sections: IHomeLayoutSection[] | null;
+  status: HomePublishStatus | null;
+  live: boolean;
+} {
+  if (!data || typeof data !== 'object') {
+    return { sections: null, status: null, live: false };
+  }
+  const record = data as {
+    sections?: unknown;
+    status?: unknown;
+    publishedAt?: unknown;
+    publishedSections?: unknown;
+  };
+  return {
+    sections: Array.isArray(record.sections) ? (record.sections as IHomeLayoutSection[]) : null,
+    status: isHomePublishStatus(record.status) ? record.status : null,
+    live: publishedSnapshotIsLive(record.publishedAt, record.publishedSections),
+  };
+}
 
 interface ComponentStats {
   carouselCount: number;
@@ -347,6 +370,8 @@ export default function AppBuilderPage() {
   const [serverStatus, setServerStatus] = useState<HomePublishStatus>('not_published');
   const [publishSuccess, setPublishSuccess] = useState<string | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isUnpublishing, setIsUnpublishing] = useState(false);
+  const [layoutLive, setLayoutLive] = useState(false);
   const [error, setError] = useState('');
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -372,7 +397,8 @@ export default function AppBuilderPage() {
   }, [sections, originalSections]);
 
   const publishState = visiblePublishStatus(serverStatus, hasChanges);
-  const canPublish = publishState !== 'published' && sections.length > 0 && !isPublishing && !isSaving;
+  const canPublish =
+    publishState !== 'published' && sections.length > 0 && !isPublishing && !isUnpublishing && !isSaving;
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -400,16 +426,13 @@ export default function AppBuilderPage() {
 
         if (layoutRes.ok) {
           const layoutData = await layoutRes.json();
-          const loadedSections = layoutData.data.sections;
-          setSections(loadedSections);
-          setOriginalSections(loadedSections);
-          if (
-            layoutData.data.status === 'not_published' ||
-            layoutData.data.status === 'published' ||
-            layoutData.data.status === 'draft'
-          ) {
-            setServerStatus(layoutData.data.status);
+          const loaded = readLayoutPayload(layoutData.data);
+          if (loaded.sections) {
+            setSections(loaded.sections);
+            setOriginalSections(loaded.sections);
           }
+          if (loaded.status) setServerStatus(loaded.status);
+          setLayoutLive(loaded.live);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load data');
@@ -437,16 +460,12 @@ export default function AppBuilderPage() {
       }
 
       const saved = await response.json();
-      const nextSections = Array.isArray(saved?.data?.sections) ? saved.data.sections : sections;
+      const next = readLayoutPayload(saved?.data);
+      const nextSections = next.sections ?? sections;
       setSections(nextSections);
       setOriginalSections(nextSections);
-      if (
-        saved?.data?.status === 'not_published' ||
-        saved?.data?.status === 'published' ||
-        saved?.data?.status === 'draft'
-      ) {
-        setServerStatus(saved.data.status);
-      }
+      if (next.status) setServerStatus(next.status);
+      setLayoutLive(next.live);
       setPublishSuccess(null);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -474,10 +493,12 @@ export default function AppBuilderPage() {
       }
 
       const published = await response.json();
-      const nextSections = published?.data?.sections ?? sections;
+      const next = readLayoutPayload(published?.data);
+      const nextSections = next.sections ?? sections;
       setSections(nextSections);
       setOriginalSections(nextSections);
-      setServerStatus('published');
+      setServerStatus(next.status ?? 'published');
+      setLayoutLive(next.live);
       setPublishSuccess(publishSuccessCopy(nextSections));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to publish home');
@@ -485,6 +506,33 @@ export default function AppBuilderPage() {
       setIsPublishing(false);
     }
   }, [sections]);
+
+  const unpublishLayout = useCallback(async () => {
+    setIsUnpublishing(true);
+    setError('');
+    setSaveSuccess(false);
+    setPublishSuccess(null);
+    try {
+      const response = await fetch('/api/home-layout/unpublish', { method: 'POST' });
+
+      if (!response.ok) {
+        throw new Error('Failed to unpublish home');
+      }
+
+      const unpublished = await response.json();
+      const next = readLayoutPayload(unpublished?.data);
+      if (next.sections) {
+        if (!hasChanges) setSections(next.sections);
+        setOriginalSections(next.sections);
+      }
+      if (next.status) setServerStatus(next.status);
+      setLayoutLive(next.live);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to unpublish home');
+    } finally {
+      setIsUnpublishing(false);
+    }
+  }, [hasChanges]);
 
   const handleDiscardChanges = useCallback(() => {
     setSections(originalSections);
@@ -602,6 +650,9 @@ export default function AppBuilderPage() {
         isPublishing={isPublishing}
         canPublish={canPublish}
         onPublish={publishLayout}
+        live={layoutLive}
+        isUnpublishing={isUnpublishing}
+        onUnpublish={unpublishLayout}
       />
 
       {/* Action Bar */}
@@ -681,7 +732,7 @@ export default function AppBuilderPage() {
         <div>
           <h2 className="text-sm font-semibold tracking-tight text-slate-900">Component Layout</h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Drag to reorder the draft. The installed app keeps reading the last published section order until you publish again.
+            {layoutLive ? HOME_PUBLISH_COPY.reorderLive : HOME_PUBLISH_COPY.reorderOffline}
           </p>
         </div>
       </div>

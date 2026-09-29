@@ -1,6 +1,7 @@
 import { connectToDatabase } from '@/lib/db';
 import { HomeLayout, IHomeLayoutSection, DEFAULT_SECTIONS } from '@/models/HomeLayout';
 import {
+  draftToKeepOnUnpublish,
   legacyPublishedAt,
   needsLegacyPublishBackfill,
   normalizeLayoutSections,
@@ -144,6 +145,44 @@ export async function publishHomeLayout(
 
   if (!layout) {
     throw new Error('Failed to publish home layout');
+  }
+
+  return toResponse(layout);
+}
+
+/**
+ * Clear the live snapshot only. `draftSections` stays.
+ * When the draft is empty, the live list the editor was showing is saved as the draft first.
+ * Module documents are not deleted.
+ */
+export async function unpublishHomeLayout(storeId: string): Promise<HomeLayoutResponse> {
+  await connectToDatabase();
+  const existing = await HomeLayout.findOne({ storeId }).lean();
+  if (!existing) {
+    return toResponse(null);
+  }
+
+  const set: {
+    sections: IHomeLayoutSection[];
+    publishedAt: null;
+    draftSections?: IHomeLayoutSection[];
+  } = {
+    sections: [],
+    publishedAt: null,
+  };
+  const kept = draftToKeepOnUnpublish(asSections(existing.sections), asSections(existing.draftSections));
+  if (kept) {
+    set.draftSections = kept as IHomeLayoutSection[];
+  }
+
+  const layout = await HomeLayout.findOneAndUpdate(
+    { storeId },
+    { $set: set },
+    { new: true }
+  ).lean();
+
+  if (!layout) {
+    throw new Error('Failed to unpublish home layout');
   }
 
   return toResponse(layout);

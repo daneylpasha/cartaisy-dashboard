@@ -12,7 +12,7 @@ export interface IHomeLayout extends Document {
   sections: IHomeLayoutSection[];
   /** Saved editor draft. Order and visibility changes land here until publish. */
   draftSections: IHomeLayoutSection[];
-  /** Set only by an explicit publish. Absent or null means the layout is not published. */
+  /** Set by an explicit publish and cleared by unpublish. Absent or null means the layout is not published. */
   publishedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;

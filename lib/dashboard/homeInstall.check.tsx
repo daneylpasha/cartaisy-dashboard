@@ -10,6 +10,7 @@ import type { BuildRequest, PlatformStatus } from '@/lib/build/contract';
 import { readyInstallsFromList, type ReadyInstall } from '@/lib/build/installPreview';
 import type { ConnectedHomeFacts } from '@/lib/dashboard/loadHome';
 import { homePreviewBuilding } from '@/lib/dashboard/homeModel';
+import { homeLayoutOverviewFromPayload } from '@/lib/homeLayout/publish';
 import { BUILD_MY_APP_HREF } from '@/lib/storeCredentials/contract';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -369,6 +370,24 @@ assert.match(draftHome, /data-home-layout="draft"/);
 assert.match(draftHome, /Draft/);
 assert.match(draftHome, /last published layout/);
 assert.equal(draftHome.includes('href="/dashboard/app-builder#publish-home"'), true);
+
+const offlineOverview = homeLayoutOverviewFromPayload({
+  data: {
+    status: 'draft',
+    sections: [{ type: 'carousel', isVisible: true, position: 0 }],
+    publishedSections: [],
+    publishedAt: null,
+  },
+});
+assert.ok(offlineOverview);
+const offlineHome = home([], { homeLayout: offlineOverview });
+assert.match(offlineHome, /data-home-layout="draft"/);
+assert.match(offlineHome, /Draft/);
+assert.match(offlineHome, /smart default/);
+assert.equal(offlineHome.includes('href="/dashboard/app-builder#publish-home"'), true);
+assert.equal((offlineHome.match(/>Publish home</g) ?? []).length, 1);
+assert.equal(offlineHome.includes('shpat_'), false);
+assert.equal(offlineHome.includes('Cartaisy'), false);
 
 const publishedHome = home([], {
   homeLayout: {
