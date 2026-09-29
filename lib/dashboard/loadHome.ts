@@ -23,6 +23,7 @@ import {
   type ModuleSummary,
   type NextSetupAction,
 } from '@/lib/dashboard/homeModel';
+import { homeLayoutOverviewFromPayload, type HomeLayoutOverview } from '@/lib/homeLayout/publish';
 
 export interface HomeActivity {
   id: string;
@@ -51,6 +52,11 @@ export interface ConnectedHomeFacts {
   previewBuilding: boolean;
   /** Store submits for the focused build. Empty hides the submit card. */
   submitNotices: HomeSubmitNotice[];
+  /**
+   * Home layout publish state from GET /api/home-layout.
+   * Null when that read fails or the status is unrecognized. Do not invent one.
+   */
+  homeLayout: HomeLayoutOverview | null;
 }
 
 async function readJson(response: Response): Promise<unknown> {
@@ -107,6 +113,16 @@ async function loadModuleStats(): Promise<ModuleSummary> {
   }
 }
 
+async function loadHomeLayout(): Promise<HomeLayoutOverview | null> {
+  try {
+    const response = await fetch('/api/home-layout');
+    if (!response.ok) return null;
+    return homeLayoutOverviewFromPayload(await readJson(response));
+  } catch {
+    return null;
+  }
+}
+
 async function loadActivity(now: number): Promise<HomeActivity[] | null> {
   try {
     const response = await fetch('/api/activity?limit=4');
@@ -155,18 +171,21 @@ export async function loadConnectedHome(storeId: string | undefined): Promise<Co
       installs: [],
       previewBuilding: false,
       submitNotices: [],
+      homeLayout: null,
     };
   }
 
-  const [syncGate, builds, counts, collectionsBlock, brandingSaved, modules, activity] = await Promise.all([
-    fetchCatalogSync(token),
-    listBuildRequests(token),
-    loadOverviewCounts(token),
-    fetchCollectionsCatalogBlock(),
-    loadBrandingSaved(storeId),
-    loadModuleStats(),
-    loadActivity(now),
-  ]);
+  const [syncGate, builds, counts, collectionsBlock, brandingSaved, modules, activity, homeLayout] =
+    await Promise.all([
+      fetchCatalogSync(token),
+      listBuildRequests(token),
+      loadOverviewCounts(token),
+      fetchCollectionsCatalogBlock(),
+      loadBrandingSaved(storeId),
+      loadModuleStats(),
+      loadActivity(now),
+      loadHomeLayout(),
+    ]);
 
   const gated = withCatalogBlock(withCatalogBlock(syncGate, counts.block), collectionsBlock);
   const sync = catalogRow(
@@ -197,6 +216,7 @@ export async function loadConnectedHome(storeId: string | undefined): Promise<Co
     installs,
     previewBuilding,
     submitNotices,
+    homeLayout,
   };
 }
 

@@ -89,6 +89,7 @@ function facts(submitNotices: HomeSubmitNotice[], installs: ConnectedHomeFacts['
     installs,
     previewBuilding: false,
     submitNotices,
+    homeLayout: null,
   };
 }
 

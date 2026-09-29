@@ -78,6 +78,7 @@ function facts(installs: ReadyInstall[], extra?: Partial<ConnectedHomeFacts>): C
     installs,
     previewBuilding: false,
     submitNotices: [],
+    homeLayout: null,
     ...extra,
   };
 }
@@ -276,5 +277,58 @@ assert.match(mixed, />Android</);
 assert.equal(mixed.includes('>iOS<'), false);
 assert.equal(mixed.includes(ANDROID), false);
 assert.equal(mixed.includes('access_token'), false);
+
+assert.equal(quiet.includes('data-home-layout'), false);
+assert.equal(quiet.includes('Not published yet'), false);
+assert.equal(quiet.includes('Publish home'), false);
+assert.match(loadHomeSource, /\/api\/home-layout/);
+assert.match(loadHomeSource, /if \(!response\.ok\) return null/);
+assert.match(loadHomeSource, /homeLayoutOverviewFromPayload/);
+assert.doesNotMatch(homeSource, /Cartaisy/);
+
+const unpublishedHome = home([], {
+  homeLayout: {
+    status: 'not_published',
+    label: 'Not published yet',
+    detail: 'Nothing is saved as the section order yet. Publish home writes the order the installed app reads under its header.',
+    needsPublish: true,
+  },
+});
+assert.match(unpublishedHome, /data-home-layout="not_published"/);
+assert.match(unpublishedHome, /Not published yet/);
+assert.match(unpublishedHome, /Nothing is saved/);
+assert.equal(unpublishedHome.includes('href="/dashboard/app-builder#publish-home"'), true);
+assert.match(unpublishedHome, />Publish home</);
+assert.equal(unpublishedHome.includes('Cartaisy'), false);
+
+const draftHome = home([], {
+  modules: { kind: 'counts', total: 2, rows: [{ label: 'Carousels', count: 1 }] },
+  homeLayout: {
+    status: 'draft',
+    label: 'Draft',
+    detail: 'These edits are not in the section order the installed app reads. It still uses the last published layout.',
+    needsPublish: true,
+  },
+});
+assert.match(draftHome, /data-home-layout="draft"/);
+assert.match(draftHome, /Draft/);
+assert.match(draftHome, /last published layout/);
+assert.equal(draftHome.includes('href="/dashboard/app-builder#publish-home"'), true);
+
+const publishedHome = home([], {
+  homeLayout: {
+    status: 'published',
+    label: 'Published',
+    detail: 'The installed app reads this section order under the home header.',
+    needsPublish: false,
+  },
+});
+assert.match(publishedHome, /data-home-layout="published"/);
+assert.match(publishedHome, /Published/);
+assert.match(publishedHome, /home header/);
+assert.equal(publishedHome.includes('#publish-home'), false);
+assert.equal(publishedHome.includes('>Publish home<'), false);
+assert.equal(publishedHome.includes('Cartaisy'), false);
+assert.equal(publishedHome.includes('shpat_'), false);
 
 console.log('home install checks passed');

@@ -7,6 +7,12 @@ import { HomeInstallCard } from '@/components/dashboard/home/HomeInstallCard';
 import { HomePreviewBuildingCard } from '@/components/dashboard/home/HomePreviewBuildingCard';
 import { HomeSubmitCard } from '@/components/dashboard/home/HomeSubmitCard';
 import type { ConnectedHomeFacts } from '@/lib/dashboard/loadHome';
+import {
+  APP_BUILDER_PUBLISH_HREF,
+  HOME_PUBLISH_COPY,
+  type HomeLayoutOverview,
+  type HomePublishStatus,
+} from '@/lib/homeLayout/publish';
 
 export function ConnectedHome({
   storeName,
@@ -38,6 +44,7 @@ export function ConnectedHome({
         <HomePreviewBuildingCard />
       ) : null}
       <HomeSubmitCard notices={facts.submitNotices} />
+      {facts.homeLayout ? <HomeLayoutStatus layout={facts.homeLayout} /> : null}
 
       {facts.next && (
         <section className="mt-8 flex flex-col gap-4 rounded-xl border border-slate-200 bg-white px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
@@ -128,6 +135,38 @@ export function ConnectedHome({
         </section>
       )}
     </div>
+  );
+}
+
+const LAYOUT_PILL: Record<HomePublishStatus, string> = {
+  not_published: 'bg-slate-100 text-slate-700',
+  published: 'bg-emerald-50 text-emerald-800',
+  draft: 'bg-amber-50 text-amber-800',
+};
+
+function HomeLayoutStatus({ layout }: { layout: HomeLayoutOverview }) {
+  return (
+    <section
+      data-home-layout={layout.status}
+      className="mt-8 flex flex-col gap-4 rounded-xl border border-slate-200 bg-white px-5 py-5 sm:flex-row sm:items-center sm:justify-between"
+    >
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-sm font-semibold text-slate-950">Home layout</h2>
+          <span
+            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${LAYOUT_PILL[layout.status]}`}
+          >
+            {layout.label}
+          </span>
+        </div>
+        <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">{layout.detail}</p>
+      </div>
+      {layout.needsPublish ? (
+        <Button asChild className="h-11 w-full shrink-0 rounded-lg px-4 sm:w-auto">
+          <Link href={APP_BUILDER_PUBLISH_HREF}>{HOME_PUBLISH_COPY.action}</Link>
+        </Button>
+      ) : null}
+    </section>
   );
 }
 
