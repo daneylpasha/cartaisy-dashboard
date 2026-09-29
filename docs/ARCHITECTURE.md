@@ -32,7 +32,7 @@
 - Build/release/status handoff: the ready step submits a tracked request, shows live Android and iOS status, and can send a finished platform to App Store Connect or Google Play when that store's account is connected. The client does not choose a Play track. Android uses the backend's internal testing track. The homescreen page at `app/dashboard/app-builder/preview` is a module stack, not the shopper phone. Settings no longer renders the older admin sync-status card. Catalog recovery on that page uses `GET`/`POST /api/v1/shopify/sync`.
 - The settings page Shopify card still uses dashboard `/api/shopify/*` routes, which can store an access token. The new onboarding wizard does not call those routes.
 - `API_STRUCTURE.md` and `DEVELOPER_GUIDE.md` appear partly stale because they refer to older NextAuth/file names and do not reflect all current app-builder routes.
-- Branding: Settings → Store Branding uses one shared branding draft. Logo, colors, icon, and splash do not each call branding GET on mount. The shell owns one branding GET per store for that frame. The sidebar does not start another. Home's Go live strip reads that shell record for the brand step and does not start another branding GET.
+- Branding: Settings → Store Branding uses one shared branding draft. Logo, colors, icon, and splash do not each call branding GET on mount. The shell owns one branding GET per store for that frame. The sidebar does not start another. Home's Go live strip reads that shell record for the brand step and does not start another branding GET. Logo, app icon, and splash files are checked for type, the 2MB limit, and pixel size in the browser before upload.
 
 ## Related docs/issues:
 

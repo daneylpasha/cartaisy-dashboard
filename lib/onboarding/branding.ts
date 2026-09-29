@@ -32,10 +32,26 @@ export type BrandColorPatch = {
 const BRAND_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
 const BRAND_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
 
-export interface BrandImageValidation {
-  ok: boolean;
-  message: string | null;
+export type BrandImageKind = 'logo' | 'icon' | 'splash';
+
+export interface BrandImagePixels {
+  width: number;
+  height: number;
 }
+
+export type BrandImageValidation = { ok: true; message: null } | { ok: false; message: string };
+
+/** Shown under Logo, App icon, and Splash. Sizes are for Android and iOS store art. */
+export const BRAND_IMAGE_SIZE_GUIDE: Record<BrandImageKind, string> = {
+  logo: 'Use 1024×1024, or a wide wordmark up to 2048×1024. Android and iOS show this in the header.',
+  icon: 'App Store and Play need a square 1024×1024 icon.',
+  splash:
+    'Use 1284×2778 for a full-bleed opening screen on Android and iOS. A square from 256×256 to 2048×2048 also works.',
+};
+
+const LOGO_USE = 'Use 1024×1024, or a wide wordmark up to 2048×1024.';
+const SPLASH_USE = 'Use 1284×2778, or a square from 256×256 to 2048×2048.';
+const UNREADABLE_IMAGE = 'We could not read that image. Try another JPG, PNG, or WebP.';
 
 export function validateBrandImage(file: File): BrandImageValidation {
   if (!BRAND_IMAGE_TYPES.includes(file.type as (typeof BRAND_IMAGE_TYPES)[number])) {
@@ -45,6 +61,164 @@ export function validateBrandImage(file: File): BrandImageValidation {
     return { ok: false, message: 'Image must be under 2MB.' };
   }
   return { ok: true, message: null };
+}
+
+function pixelLabel(width: number, height: number): string {
+  return `${width}×${height}`;
+}
+
+function wholePixels(width: number, height: number): BrandImagePixels | null {
+  if (!Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1) return null;
+  return { width, height };
+}
+
+/**
+ * Pixel rules for one brand asset. Type and file size are checked separately.
+ * Splash accepts a portrait store size or a square logo-centered image.
+ */
+export function validateBrandImageDimensions(
+  kind: BrandImageKind,
+  size: BrandImagePixels
+): BrandImageValidation {
+  const pixels = wholePixels(size.width, size.height);
+  if (!pixels) return { ok: false, message: UNREADABLE_IMAGE };
+  const yours = pixelLabel(pixels.width, pixels.height);
+  if (kind === 'icon') return validateIconPixels(pixels, yours);
+  if (kind === 'splash') return validateSplashPixels(pixels, yours);
+  return validateLogoPixels(pixels, yours);
+}
+
+function validateIconPixels(size: BrandImagePixels, yours: string): BrandImageValidation {
+  if (size.width !== size.height) {
+    return { ok: false, message: `App icon must be square. Yours is ${yours}. Use 1024×1024.` };
+  }
+  if (size.width < 512 || size.width > 1024) {
+    return {
+      ok: false,
+      message: `App icon must be a square from 512×512 to 1024×1024. Yours is ${yours}. Use 1024×1024.`,
+    };
+  }
+  return { ok: true, message: null };
+}
+
+function validateSplashPixels(size: BrandImagePixels, yours: string): BrandImageValidation {
+  const { width, height } = size;
+  if (width > height) {
+    return { ok: false, message: `Splash must be portrait or square. Yours is ${yours}. ${SPLASH_USE}` };
+  }
+  if (width === height) {
+    if (width >= 256 && width <= 2048) return { ok: true, message: null };
+    return {
+      ok: false,
+      message: `A square splash must be from 256×256 to 2048×2048. Yours is ${yours}. ${SPLASH_USE}`,
+    };
+  }
+  if (width >= 1080 && width <= 1290 && height >= 1920 && height <= 2796) {
+    return { ok: true, message: null };
+  }
+  return {
+    ok: false,
+    message: `Splash must be 1080–1290 wide and 1920–2796 tall, or a square from 256×256 to 2048×2048. Yours is ${yours}. Use 1284×2778.`,
+  };
+}
+
+/** Inclusive 1:3 through 3:1, compared in integers. */
+function logoAspectOk(width: number, height: number): boolean {
+  return width * 3 >= height && height * 3 >= width;
+}
+
+function validateLogoPixels(size: BrandImagePixels, yours: string): BrandImageValidation {
+  const { width, height } = size;
+  const sidesOk = width >= 256 && width <= 2048 && height >= 256 && height <= 2048;
+  const aspectOk = logoAspectOk(width, height);
+  if (sidesOk && aspectOk) return { ok: true, message: null };
+  if (!sidesOk && !aspectOk) {
+    return {
+      ok: false,
+      message: `Logo must be between 256 and 2048 pixels on each side, and between 1:3 and 3:1. Yours is ${yours}. ${LOGO_USE}`,
+    };
+  }
+  if (!sidesOk) {
+    return {
+      ok: false,
+      message: `Logo must be between 256 and 2048 pixels on each side. Yours is ${yours}. ${LOGO_USE}`,
+    };
+  }
+  return {
+    ok: false,
+    message: `Logo must be between 1:3 and 3:1. Yours is ${yours}. ${LOGO_USE}`,
+  };
+}
+
+function readBrandImageSizeFromElement(file: Blob): Promise<BrandImagePixels | null> {
+  if (typeof document === 'undefined' || typeof URL === 'undefined') return Promise.resolve(null);
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    const finish = (size: BrandImagePixels | null) => {
+      URL.revokeObjectURL(url);
+      resolve(size);
+    };
+    image.onload = () => finish(wholePixels(image.naturalWidth, image.naturalHeight));
+    image.onerror = () => finish(null);
+    image.src = url;
+  });
+}
+
+/** Natural pixel size. A file that cannot be decoded returns null. */
+export function readBrandImageSize(file: Blob): Promise<BrandImagePixels | null> {
+  if (typeof createImageBitmap !== 'function') return readBrandImageSizeFromElement(file);
+  return createImageBitmap(file)
+    .then((bitmap) => {
+      const size = wholePixels(bitmap.width, bitmap.height);
+      bitmap.close();
+      return size;
+    })
+    .catch(() => readBrandImageSizeFromElement(file));
+}
+
+/**
+ * Type, 2MB, then pixel size for this asset. Nothing is uploaded from here.
+ * `readSize` is the decoder; tests pass a stub.
+ */
+export async function validateBrandImageFile(
+  file: File,
+  kind: BrandImageKind,
+  readSize: (file: Blob) => Promise<BrandImagePixels | null> = readBrandImageSize
+): Promise<BrandImageValidation> {
+  const typeCheck = validateBrandImage(file);
+  if (!typeCheck.ok) return typeCheck;
+  try {
+    const size = await readSize(file);
+    if (!size) return { ok: false, message: UNREADABLE_IMAGE };
+    return validateBrandImageDimensions(kind, size);
+  } catch {
+    return { ok: false, message: UNREADABLE_IMAGE };
+  }
+}
+
+/**
+ * Runs the pixel check, then hands a valid file to the existing upload.
+ * A failing file never reaches `onFile`, so the previous image stays.
+ * `isCurrent` drops a result when the merchant has already picked another file.
+ */
+export function acceptBrandImageFile(
+  file: File,
+  kind: BrandImageKind,
+  onImageError: (message: string | null) => void,
+  onFile: (file: File) => void,
+  isCurrent: () => boolean = () => true,
+  readSize?: (file: Blob) => Promise<BrandImagePixels | null>
+): Promise<void> {
+  return validateBrandImageFile(file, kind, readSize).then((check) => {
+    if (!isCurrent()) return;
+    if (!check.ok) {
+      onImageError(check.message);
+      return;
+    }
+    onImageError(null);
+    onFile(file);
+  });
 }
 
 function authHeaders(token: string, json = false): HeadersInit {

@@ -6,7 +6,13 @@ import { Label } from '@/components/ui/label';
 import { BrandInstallPreview } from '@/components/onboarding/BrandInstallPreview';
 import { settingsBrandLead, type InstallPreviewModel } from '@/lib/build/installPreview';
 import { useCopyLogoAsIcon, useCopyLogoAsSplash } from '@/components/brand/useCopyLogoAsIcon';
-import { DEFAULT_PRIMARY_COLOR, HEX_COLOR_REGEX, validateBrandImage } from '@/lib/onboarding/branding';
+import {
+  BRAND_IMAGE_SIZE_GUIDE,
+  DEFAULT_PRIMARY_COLOR,
+  HEX_COLOR_REGEX,
+  acceptBrandImageFile,
+  type BrandImageKind,
+} from '@/lib/onboarding/branding';
 import { drawableBrandImageUrl } from '@/lib/onboarding/brandAssets';
 import type { BrandingDraft, LockedCatalog, SyncGate } from '@/lib/onboarding/types';
 
@@ -136,8 +142,10 @@ export function StoreAppBrandView({
             <ImageField
               id="settings-brand-icon"
               label="App icon"
+              kind="icon"
               imageUrl={shown.iconUrl}
               hint={iconUploading ? 'Uploading...' : 'Home screen icon'}
+              sizeGuide={BRAND_IMAGE_SIZE_GUIDE.icon}
               shape="icon"
               busy={iconUploading}
               useLogo={
@@ -145,20 +153,24 @@ export function StoreAppBrandView({
                   ? { copying: iconLogo.copyingLogo, onUse: () => void iconLogo.onUseLogo() }
                   : null
               }
-              onFile={(file) => acceptImage(file, onImageError, onIconFile)}
+              onImageError={onImageError}
+              onFile={onIconFile}
             />
             <ImageField
               id="settings-brand-splash"
               label="Splash"
+              kind="splash"
               imageUrl={shown.splashUrl}
               hint={splashUploading ? 'Uploading...' : 'Opening screen'}
+              sizeGuide={BRAND_IMAGE_SIZE_GUIDE.splash}
               busy={splashUploading}
               useLogo={
                 splashLogo.offerUseLogo
                   ? { copying: splashLogo.copyingLogo, onUse: () => void splashLogo.onUseLogo() }
                   : null
               }
-              onFile={(file) => acceptImage(file, onImageError, onSplashFile)}
+              onImageError={onImageError}
+              onFile={onSplashFile}
             />
           </div>
 
@@ -171,16 +183,6 @@ export function StoreAppBrandView({
       </div>
     </section>
   );
-}
-
-function acceptImage(file: File, onImageError: (message: string | null) => void, onFile: (file: File) => void) {
-  const check = validateBrandImage(file);
-  if (!check.ok) {
-    onImageError(check.message);
-    return;
-  }
-  onImageError(null);
-  onFile(file);
 }
 
 function LoadError({
@@ -210,25 +212,32 @@ function LoadError({
 function ImageField({
   id,
   label,
+  kind,
   imageUrl,
   hint,
+  sizeGuide,
   fit = 'cover',
   shape = 'fill',
   busy = false,
   useLogo = null,
+  onImageError,
   onFile,
 }: {
   id: string;
   label: string;
+  kind: BrandImageKind;
   imageUrl: string | null;
   hint: string;
+  sizeGuide: string;
   fit?: 'cover' | 'contain';
   shape?: 'fill' | 'icon';
   busy?: boolean;
   useLogo?: { copying: boolean; onUse: () => void } | null;
+  onImageError: (message: string | null) => void;
   onFile: (file: File) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const pick = useRef(0);
   const safeUrl = settingsBrandImageUrl(imageUrl);
   const [brokenFor, setBrokenFor] = useState<string | null>(null);
   const broken = Boolean(safeUrl) && brokenFor === safeUrl;
@@ -284,11 +293,14 @@ function ImageField({
         className="sr-only top-0 left-0"
         onChange={(event) => {
           const file = event.target.files?.[0];
-          if (file) onFile(file);
           event.target.value = '';
+          if (!file) return;
+          const id = ++pick.current;
+          void acceptBrandImageFile(file, kind, onImageError, onFile, () => pick.current === id);
         }}
       />
       <p className="mt-2 text-xs leading-5 text-slate-500">{broken ? 'Add a new image.' : hint}</p>
+      <p className="mt-1 text-xs leading-5 text-slate-500">{sizeGuide}</p>
       {showUseLogo && useLogo ? (
         <button
           type="button"

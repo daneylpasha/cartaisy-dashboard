@@ -18,8 +18,10 @@ import {
   registerPayloadFromCloudinary,
 } from '@/lib/onboarding/brandAssets';
 import {
+  BRAND_IMAGE_SIZE_GUIDE,
   DEFAULT_PRIMARY_COLOR,
   PLATFORM_DEFAULT_COLOR_LABEL,
+  acceptBrandImageFile,
   brandColorPatch,
   brandColorSelection,
   brandColorUsesPlatformDefault,
@@ -27,6 +29,10 @@ import {
   brandingFromPayload,
   emptyBrandingDraft,
   planBrandAssetSave,
+  readBrandImageSize,
+  validateBrandImage,
+  validateBrandImageDimensions,
+  validateBrandImageFile,
 } from '@/lib/onboarding/branding';
 
 const parsed = brandingFromPayload(
@@ -382,7 +388,267 @@ async function checkLogoFile() {
   );
 }
 
+function pixels(width: number, height: number) {
+  return { width, height };
+}
+
+function expectReject(kind: 'logo' | 'icon' | 'splash', width: number, height: number, message: string) {
+  const result = validateBrandImageDimensions(kind, pixels(width, height));
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.equal(result.message, message);
+}
+
+function expectAllow(kind: 'logo' | 'icon' | 'splash', width: number, height: number) {
+  assert.deepEqual(validateBrandImageDimensions(kind, pixels(width, height)), { ok: true, message: null });
+}
+
+expectReject('icon', 1200, 800, 'App icon must be square. Yours is 1200×800. Use 1024×1024.');
+expectReject(
+  'icon',
+  256,
+  256,
+  'App icon must be a square from 512×512 to 1024×1024. Yours is 256×256. Use 1024×1024.'
+);
+expectReject(
+  'icon',
+  2048,
+  2048,
+  'App icon must be a square from 512×512 to 1024×1024. Yours is 2048×2048. Use 1024×1024.'
+);
+expectAllow('icon', 512, 512);
+expectAllow('icon', 1024, 1024);
+expectAllow('icon', 800, 800);
+
+expectAllow('splash', 1284, 2778);
+expectAllow('splash', 1080, 1920);
+expectAllow('splash', 1290, 2796);
+expectAllow('splash', 256, 256);
+expectAllow('splash', 1024, 1024);
+expectAllow('splash', 2048, 2048);
+expectReject('splash', 2000, 1000, 'Splash must be portrait or square. Yours is 2000×1000. Use 1284×2778, or a square from 256×256 to 2048×2048.');
+expectReject(
+  'splash',
+  800,
+  1600,
+  'Splash must be 1080–1290 wide and 1920–2796 tall, or a square from 256×256 to 2048×2048. Yours is 800×1600. Use 1284×2778.'
+);
+expectReject('splash', 1079, 1920, 'Splash must be 1080–1290 wide and 1920–2796 tall, or a square from 256×256 to 2048×2048. Yours is 1079×1920. Use 1284×2778.');
+expectReject('splash', 1080, 1919, 'Splash must be 1080–1290 wide and 1920–2796 tall, or a square from 256×256 to 2048×2048. Yours is 1080×1919. Use 1284×2778.');
+expectReject('splash', 1291, 2778, 'Splash must be 1080–1290 wide and 1920–2796 tall, or a square from 256×256 to 2048×2048. Yours is 1291×2778. Use 1284×2778.');
+expectReject('splash', 1284, 2797, 'Splash must be 1080–1290 wide and 1920–2796 tall, or a square from 256×256 to 2048×2048. Yours is 1284×2797. Use 1284×2778.');
+expectReject(
+  'splash',
+  128,
+  128,
+  'A square splash must be from 256×256 to 2048×2048. Yours is 128×128. Use 1284×2778, or a square from 256×256 to 2048×2048.'
+);
+expectReject(
+  'splash',
+  2049,
+  2049,
+  'A square splash must be from 256×256 to 2048×2048. Yours is 2049×2049. Use 1284×2778, or a square from 256×256 to 2048×2048.'
+);
+
+expectAllow('logo', 1024, 1024);
+expectAllow('logo', 2048, 1024);
+expectAllow('logo', 256, 256);
+expectAllow('logo', 2048, 2048);
+expectAllow('logo', 256, 768);
+expectAllow('logo', 768, 256);
+expectReject(
+  'logo',
+  100,
+  100,
+  'Logo must be between 256 and 2048 pixels on each side. Yours is 100×100. Use 1024×1024, or a wide wordmark up to 2048×1024.'
+);
+expectReject(
+  'logo',
+  2049,
+  1024,
+  'Logo must be between 256 and 2048 pixels on each side. Yours is 2049×1024. Use 1024×1024, or a wide wordmark up to 2048×1024.'
+);
+expectReject(
+  'logo',
+  2048,
+  400,
+  'Logo must be between 1:3 and 3:1. Yours is 2048×400. Use 1024×1024, or a wide wordmark up to 2048×1024.'
+);
+expectReject(
+  'logo',
+  400,
+  2048,
+  'Logo must be between 1:3 and 3:1. Yours is 400×2048. Use 1024×1024, or a wide wordmark up to 2048×1024.'
+);
+expectReject(
+  'logo',
+  100,
+  4000,
+  'Logo must be between 256 and 2048 pixels on each side, and between 1:3 and 3:1. Yours is 100×4000. Use 1024×1024, or a wide wordmark up to 2048×1024.'
+);
+expectReject('logo', 256, 769, 'Logo must be between 1:3 and 3:1. Yours is 256×769. Use 1024×1024, or a wide wordmark up to 2048×1024.');
+expectReject('logo', 769, 256, 'Logo must be between 1:3 and 3:1. Yours is 769×256. Use 1024×1024, or a wide wordmark up to 2048×1024.');
+assert.equal(
+  validateBrandImageDimensions('icon', pixels(1024.5, 1024.5)).message,
+  'We could not read that image. Try another JPG, PNG, or WebP.'
+);
+assert.equal(validateBrandImageDimensions('logo', pixels(0, 1024)).ok, false);
+
+assert.match(BRAND_IMAGE_SIZE_GUIDE.icon, /1024×1024/);
+assert.match(BRAND_IMAGE_SIZE_GUIDE.icon, /App Store and Play/);
+assert.match(BRAND_IMAGE_SIZE_GUIDE.splash, /1284×2778/);
+assert.match(BRAND_IMAGE_SIZE_GUIDE.splash, /Android and iOS/);
+assert.match(BRAND_IMAGE_SIZE_GUIDE.logo, /1024×1024/);
+assert.match(BRAND_IMAGE_SIZE_GUIDE.logo, /2048×1024/);
+assert.match(BRAND_IMAGE_SIZE_GUIDE.logo, /Android and iOS/);
+assert.doesNotMatch(`${BRAND_IMAGE_SIZE_GUIDE.logo} ${BRAND_IMAGE_SIZE_GUIDE.icon} ${BRAND_IMAGE_SIZE_GUIDE.splash}`, /expo|EXPO_|eas token/i);
+
+const brandingSource = readFileSync(join(here, 'branding.ts'), 'utf8');
+const acceptStart = brandingSource.indexOf('export function acceptBrandImageFile');
+const acceptBody = brandingSource.slice(acceptStart, brandingSource.indexOf('function authHeaders'));
+assert.ok(acceptStart >= 0);
+assert.ok(acceptBody.indexOf('validateBrandImageFile') < acceptBody.indexOf('onFile(file)'));
+assert.ok(acceptBody.indexOf('if (!check.ok)') < acceptBody.indexOf('onFile(file)'));
+
+const logoUploadSource = readFileSync(join(here, '../../components/settings/StoreLogoUpload.tsx'), 'utf8');
+const logoCheckAt = logoUploadSource.indexOf("validateBrandImageFile(file, 'logo')");
+const logoUploadAt = logoUploadSource.indexOf('uploadLogo(');
+assert.ok(logoCheckAt >= 0 && logoUploadAt > logoCheckAt);
+assert.match(logoUploadSource, /BRAND_IMAGE_SIZE_GUIDE\.logo/);
+assert.doesNotMatch(logoUploadSource, /200x200|at least 200/);
+
+async function checkBrandImageFileGate() {
+  const png = new File([Uint8Array.from([1, 2, 3, 4])], 'icon.png', { type: 'image/png' });
+  let reads = 0;
+  const gif = new File([Uint8Array.from([1])], 'icon.gif', { type: 'image/gif' });
+  const typed = await validateBrandImageFile(gif, 'icon', async () => {
+    reads += 1;
+    return pixels(1024, 1024);
+  });
+  assert.equal(typed.ok, false);
+  if (!typed.ok) assert.equal(typed.message, 'Use a JPG, PNG, or WebP image.');
+  assert.equal(reads, 0);
+  assert.equal(validateBrandImage(gif).ok, false);
+
+  const heavy = new File([new Uint8Array(2 * 1024 * 1024 + 1)], 'big.png', { type: 'image/png' });
+  const sized = await validateBrandImageFile(heavy, 'logo', async () => {
+    reads += 1;
+    return pixels(1024, 1024);
+  });
+  assert.equal(sized.ok, false);
+  if (!sized.ok) assert.equal(sized.message, 'Image must be under 2MB.');
+  assert.equal(reads, 0);
+
+  const unread = await validateBrandImageFile(png, 'splash', async () => null);
+  assert.equal(unread.ok, false);
+  if (!unread.ok) assert.equal(unread.message, 'We could not read that image. Try another JPG, PNG, or WebP.');
+
+  const thrown = await validateBrandImageFile(png, 'logo', async () => {
+    throw new Error('decode');
+  });
+  assert.equal(thrown.ok, false);
+
+  let uploads = 0;
+  await acceptBrandImageFile(
+    png,
+    'icon',
+    (message) => {
+      assert.equal(message, 'App icon must be square. Yours is 1200×800. Use 1024×1024.');
+    },
+    () => {
+      uploads += 1;
+    },
+    () => true,
+    async () => pixels(1200, 800)
+  );
+  assert.equal(uploads, 0);
+
+  await acceptBrandImageFile(
+    png,
+    'icon',
+    () => {
+      throw new Error('a stale pick must not set an error');
+    },
+    () => {
+      throw new Error('a stale pick must not upload');
+    },
+    () => false,
+    async () => pixels(1200, 800)
+  );
+
+  await acceptBrandImageFile(
+    png,
+    'splash',
+    (message) => {
+      if (message) throw new Error(`a square logo must pass splash: ${message}`);
+    },
+    (file) => {
+      assert.equal(file, png);
+      uploads += 1;
+    },
+    () => true,
+    async () => pixels(1024, 1024)
+  );
+  assert.equal(uploads, 1);
+
+  await acceptBrandImageFile(
+    png,
+    'icon',
+    (message) => {
+      if (message) throw new Error(`1024 icon must upload: ${message}`);
+    },
+    () => {
+      uploads += 1;
+    },
+    () => true,
+    async () => pixels(1024, 1024)
+  );
+  assert.equal(uploads, 2);
+
+  await acceptBrandImageFile(
+    png,
+    'logo',
+    (message) => {
+      if (message) throw new Error(`wide wordmark must upload: ${message}`);
+    },
+    () => {
+      uploads += 1;
+    },
+    () => true,
+    async () => pixels(2048, 1024)
+  );
+  assert.equal(uploads, 3);
+
+  const dot = new File(
+    [Uint8Array.from(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64'))],
+    'dot.png',
+    { type: 'image/png' }
+  );
+  const decoded = await readBrandImageSize(dot);
+  let decodedUploads = 0;
+  let decodedError: string | null = null;
+  await acceptBrandImageFile(
+    dot,
+    'icon',
+    (message) => {
+      decodedError = message;
+    },
+    () => {
+      decodedUploads += 1;
+    }
+  );
+  assert.equal(decodedUploads, 0);
+  if (decoded?.width === 1 && decoded.height === 1) {
+    assert.equal(
+      decodedError,
+      'App icon must be a square from 512×512 to 1024×1024. Yours is 1×1. Use 1024×1024.'
+    );
+  } else {
+    assert.equal(decodedError, 'We could not read that image. Try another JPG, PNG, or WebP.');
+  }
+}
+
 checkLogoFile()
+  .then(() => checkBrandImageFileGate())
   .then(() => {
     console.log('branding check ok');
   })
