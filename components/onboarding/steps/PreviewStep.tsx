@@ -1,10 +1,8 @@
 'use client';
 
-import { BrandInstallPreview, brandPreviewShowsMock } from '@/components/onboarding/BrandInstallPreview';
-import { SmartHomePreview } from '@/components/onboarding/SmartHomePreview';
+import { BrandInstallPreview } from '@/components/onboarding/BrandInstallPreview';
 import { WizardFooter } from '@/components/onboarding/WizardChrome';
 import { previewStepLead, type InstallPreviewModel } from '@/lib/build/installPreview';
-import { previewShelf, previewStepDetail } from '@/lib/onboarding/normalizers';
 import type { BrandingDraft, LockedCatalog, SyncGate } from '@/lib/onboarding/types';
 
 interface PreviewStepProps {
@@ -15,24 +13,15 @@ interface PreviewStepProps {
   onBack: () => void;
   onContinue: () => void;
   onRetry: () => void;
-  /** Build list for this store. Omitted renders the light phone mock. */
+  /** Build list for this store. Omitted shows how to get the first build. */
   installPreview?: InstallPreviewModel;
 }
 
 export function PreviewStep({
-  draft,
-  catalog,
-  sync,
-  pending = false,
   onBack,
   onContinue,
-  onRetry,
   installPreview,
 }: PreviewStepProps) {
-  const showMock = brandPreviewShowsMock(installPreview);
-  const shelf = previewShelf(sync, catalog.products, pending);
-  const productLine = previewStepDetail(sync, catalog.products, pending);
-
   return (
     <section className="rounded-2xl border border-slate-200/80 bg-white px-5 py-8 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-10 sm:py-10">
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start lg:gap-x-12">
@@ -42,29 +31,9 @@ export function PreviewStep({
             Preview your home
           </h1>
           <p className="mt-3 max-w-md text-[15px] leading-7 text-slate-600">{previewStepLead(installPreview)}</p>
-          {showMock ? (
-            <ul className="mt-6 space-y-2 text-sm leading-6 text-slate-600">
-              <li>Your name, colors, logo, icon, and splash are applied on the screens that use them.</li>
-              <li>{productLine}</li>
-              <li>Collection cards use names only. The app uses collection images when the catalog has them.</li>
-              <li>Favorites, wishlist, account, and checkout open in the installed app.</li>
-            </ul>
-          ) : null}
-          {showMock && shelf.kind !== 'products' ? (
-            <button
-              type="button"
-              onClick={onRetry}
-              disabled={pending}
-              className="mt-4 text-sm font-medium text-slate-700 underline-offset-4 hover:underline disabled:cursor-wait disabled:text-slate-400"
-            >
-              {pending ? 'Checking...' : 'Check again'}
-            </button>
-          ) : null}
         </div>
         <div className="mt-8 lg:col-start-2 lg:row-span-2 lg:mt-0 lg:self-start">
-          <BrandInstallPreview model={installPreview}>
-            <SmartHomePreview draft={draft} catalog={catalog} sync={sync} pending={pending} />
-          </BrandInstallPreview>
+          <BrandInstallPreview model={installPreview} />
         </div>
         <div className="lg:col-start-1">
           <WizardFooter onBack={onBack} primaryLabel="Continue" onPrimary={onContinue} />

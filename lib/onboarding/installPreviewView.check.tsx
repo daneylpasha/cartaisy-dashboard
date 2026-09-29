@@ -140,12 +140,25 @@ function renderSettings(model?: InstallPreviewModel): string {
   );
 }
 
-function assertMock(markup: string, editors: RegExp) {
-  assert.match(markup, /data-install-preview="mock"/);
-  assert.match(markup, /data-shopper-screen/);
-  assert.match(markup, /Live preview/);
+function assertInstructions(markup: string, editors: RegExp) {
+  assert.match(markup, /data-install-preview="instructions"/);
+  assert.match(markup, /data-first-build/);
+  assert.match(markup, /See it on your phone/);
+  assert.match(markup, /The install code is the real app/);
+  assert.match(markup, /Confirm your brand/);
+  assert.match(markup, /href="\/dashboard\/app-builder#publish-home"/);
+  assert.match(markup, /Publish home/);
+  assert.match(markup, /Open Build my app and start the build/);
+  assert.match(markup, /href="\/dashboard"/);
+  assert.match(markup, />Go live</);
+  assert.match(markup, /href="\/dashboard\/onboarding\?step=ready"/);
+  assert.match(markup, />Build my app</);
+  assert.doesNotMatch(markup, /data-shopper-screen/);
+  assert.doesNotMatch(markup, /data-launcher-mock/);
+  assert.doesNotMatch(markup, /data-splash-frame/);
   assert.doesNotMatch(markup, /data-install-qr/);
-  assert.doesNotMatch(markup, /Open Build/);
+  assert.doesNotMatch(markup, /Live preview/);
+  assert.doesNotMatch(markup, /cartaisy/i);
   assert.match(markup, editors);
 }
 
@@ -183,27 +196,31 @@ const brandEditors = /id="app-name"/;
 const previewEditors = />Continue</;
 const settingsEditors = /Replace App icon/;
 
-assertMock(renderBrand(undefined), brandEditors);
-assertMock(renderBrand(failed), brandEditors);
-assertMock(renderBrand(none), brandEditors);
+assertInstructions(renderBrand(undefined), brandEditors);
+assertInstructions(renderBrand(failed), brandEditors);
+assertInstructions(renderBrand(none), brandEditors);
 assertLoading(renderBrand(loading), brandEditors);
 assertInstall(renderBrand(installed), brandEditors);
 assert.match(renderBrand(installed), />Continue</);
-assert.match(renderBrand(undefined), /The phone uses this draft/);
-assert.doesNotMatch(renderBrand(installed), /The phone uses this draft/);
+assert.match(renderBrand(undefined), /Your first build is how you open this on a phone/);
+assert.doesNotMatch(renderBrand(installed), /Your first build/);
+assert.doesNotMatch(renderBrand(undefined), /The phone uses this draft/);
 
-assertMock(renderPreview(failed), previewEditors);
+assertInstructions(renderPreview(failed), previewEditors);
 assertLoading(renderPreview(loading), previewEditors);
 assertInstall(renderPreview(installed), previewEditors);
-assert.match(renderPreview(undefined), /These screens follow the shopper app/);
-assert.doesNotMatch(renderPreview(installed), /These screens follow the shopper app/);
+assert.match(renderPreview(undefined), /Publish your home, then start a build/);
+assert.doesNotMatch(renderPreview(installed), /Publish your home, then start a build/);
+assert.doesNotMatch(renderPreview(undefined), /These screens follow the shopper app/);
 assert.doesNotMatch(renderPreview(loading), /data-shopper-screen/);
+assert.doesNotMatch(renderPreview(loading), /data-first-build/);
 
-assertMock(renderSettings(undefined), settingsEditors);
-assertMock(renderSettings(failed), settingsEditors);
+assertInstructions(renderSettings(undefined), settingsEditors);
+assertInstructions(renderSettings(failed), settingsEditors);
 assertLoading(renderSettings(loading), settingsEditors);
 assertInstall(renderSettings(installed), settingsEditors);
-assert.match(renderSettings(undefined), /under the phone/);
+assert.match(renderSettings(undefined), /The next build uses these images/);
+assert.doesNotMatch(renderSettings(undefined), /under the phone/);
 assert.doesNotMatch(renderSettings(installed), /under the phone/);
 assert.match(renderSettings(installed), /Replace Splash/);
 
@@ -216,8 +233,9 @@ const poisoned = renderBrand({
   phase: 'ready',
   installs: [{ platform: 'android', label: 'Android', url: 'https://expo.dev/builds/shpat_secret' }],
 });
-assert.match(poisoned, /data-install-preview="mock"/);
-assert.match(poisoned, /data-shopper-screen/);
+assert.match(poisoned, /data-install-preview="instructions"/);
+assert.match(poisoned, /data-first-build/);
+assert.doesNotMatch(poisoned, /data-shopper-screen/);
 assert.doesNotMatch(poisoned, /shpat_/);
 assert.doesNotMatch(poisoned, /data-install-qr/);
 

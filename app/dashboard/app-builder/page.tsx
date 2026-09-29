@@ -615,7 +615,7 @@ export default function AppBuilderPage() {
             Preview App
           </Link>
           <span className="text-xs text-slate-500">
-            Module order only. Shopper chrome is on the setup preview.
+            Module order only. Publish home, then open Build my app for the install code.
           </span>
         </div>
 

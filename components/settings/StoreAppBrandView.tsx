@@ -4,9 +4,6 @@ import { useRef, useState } from 'react';
 import { ImagePlus, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { BrandInstallPreview } from '@/components/onboarding/BrandInstallPreview';
-import { HomeScreenLauncherMock } from '@/components/onboarding/HomeScreenLauncherMock';
-import { SplashBootMock } from '@/components/onboarding/SplashBootMock';
-import { SmartHomePreview } from '@/components/onboarding/SmartHomePreview';
 import { settingsBrandLead, type InstallPreviewModel } from '@/lib/build/installPreview';
 import { HEX_COLOR_REGEX, validateBrandImage } from '@/lib/onboarding/branding';
 import { displayBrandImageUrl } from '@/lib/onboarding/brandAssets';
@@ -74,14 +71,12 @@ interface StoreAppBrandViewProps {
   onIconFile: (file: File) => void;
   onSplashFile: (file: File) => void;
   onImageError: (message: string | null) => void;
-  /** Build list for this store. Omitted renders the light phone mock. */
+  /** Build list for this store. Omitted shows how to get the first build. */
   installPreview?: InstallPreviewModel;
 }
 
 export function StoreAppBrandView({
   draft,
-  catalog,
-  sync,
   loadError,
   fieldError,
   iconUploading,
@@ -119,11 +114,7 @@ export function StoreAppBrandView({
         </div>
 
         <div className="mt-8 lg:sticky lg:top-6 lg:col-start-2 lg:row-span-2 lg:mt-0 lg:self-start">
-          <BrandInstallPreview model={installPreview}>
-            <SmartHomePreview draft={shown} catalog={catalog} sync={sync} />
-            <HomeScreenLauncherMock appName={shown.appName} iconUrl={shown.iconUrl} />
-            <SplashBootMock appName={shown.appName} splashUrl={shown.splashUrl} />
-          </BrandInstallPreview>
+          <BrandInstallPreview model={installPreview} />
         </div>
 
         <div className="min-w-0 lg:col-start-1">
