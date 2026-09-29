@@ -7,6 +7,7 @@ import { fetchCollectionsCatalogBlock } from '@/lib/api/shopifyConnection';
 import { API_URL, tokenStorage } from '@/lib/api/mutator/custom-instance';
 import { merchantDisplayName } from '@/lib/onboarding/appName';
 import { fetchBranding } from '@/lib/onboarding/branding';
+import { readShellBranding } from '@/lib/dashboard/shellBranding';
 import { persistedBrandImageUrl } from '@/lib/onboarding/brandAssets';
 import { normalizeCatalog, UNAVAILABLE_SYNC } from '@/lib/onboarding/normalizers';
 import { catalogBlockFromPayload, withCatalogBlock } from '@/lib/shopify/catalogBlock';
@@ -98,7 +99,8 @@ export async function loadBrandingSaved(storeId: string | undefined): Promise<Br
 export async function loadBrandRead(storeId: string | undefined): Promise<GoLiveBrandRead & { saved: BrandingSaved }> {
   const token = tokenStorage.getToken();
   if (!storeId || !token) return { ...UNKNOWN_BRAND, saved: null };
-  const draft = await fetchBranding(storeId, token);
+  // The shell already owns this store's branding GET. Reuse that record.
+  const draft = await readShellBranding(storeId, token, fetchBranding);
   if (!draft) return { ...UNKNOWN_BRAND, saved: null };
   return {
     saved: brandingLooksSaved({

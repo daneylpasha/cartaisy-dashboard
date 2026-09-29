@@ -32,6 +32,8 @@ assert.match(loadHomeSource, /readyInstallsFromList/);
 assert.match(loadHomeSource, /homePreviewBuilding/);
 assert.match(loadHomeSource, /fetchStoreCredentials/);
 assert.match(loadHomeSource, /loadBrandRead/);
+assert.match(loadHomeSource, /readShellBranding\(storeId, token, fetchBranding\)/);
+assert.doesNotMatch(loadHomeSource, /await fetchBranding\(/);
 assert.match(homeSource, /GoLiveStrip/);
 assert.doesNotMatch(homeSource, /HomeInstallCard|HomePreviewBuildingCard|HomeSubmitCard|HomeLayoutStatus/);
 assert.match(stripSource, /HomeInstallCard/);

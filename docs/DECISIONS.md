@@ -445,7 +445,15 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Date: 2026-09-29.
 - Decision: `DashboardBrandingProvider` on the dashboard frame calls `fetchBranding` once per store id for the dashboard session and keeps the settled draft on that record. The sidebar reads `logoUrl` from that context and does not fetch. Settings awaits the same record, in flight or already settled, then still runs `presentSettingsBrand` and `mergeStoredBrandAssets` with the store profile. A retry calls shell `reload` and may fetch again. `fetchBranding` keeps its `globalThis` in-flight map as a safety net only. That map is empty after the response settles. Logo, color, icon, and splash saves are unchanged. The closed mobile sheet does not mount a second sidebar.
 - Reason: Live Settings reloads showed two sequential branding GETs, both 304, the second starting only after the first had finished. An in-flight coalesce cannot join those. Desktop and mobile sidebars were also callers.
-- Impact: Branding load on the dashboard frame. Save paths, onboarding (outside this frame), and Home's own branding read are unchanged. No Shopify token and no Expo token is rendered or sent. Human review is required because this is the branding read on the merchant frame.
+- Impact: Branding load on the dashboard frame. Save paths and onboarding (outside this frame) are unchanged. Home reuses this record; see the following decision. No Shopify token and no Expo token is rendered or sent. Human review is required because this is the branding read on the merchant frame.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`.
+
+### Home reuses the shell branding record
+
+- Date: 2026-09-29.
+- Decision: Connected Home and the disconnected setup checklist read branding through the shell session (`readShellBranding`). An in-flight or settled record for that store is reused, and Home does not call `fetchBranding` for it. When the session has not started that store, Home starts the same reload-key-0 record so the shell does not send a second GET. The session map is on `globalThis` (`__cartaisyShellBranding`) so a separate Home chunk sees it. `fetchBranding`'s in-flight map stays the safety net. Onboarding still calls `fetchBranding` and stays outside the provider. Logo, color, icon, and splash saves are unchanged. Go live copy and step rules are unchanged.
+- Reason: Live QA after the shell provider showed Settings as one branding GET, then Home navigation sent another 304. `loadBrandRead` called `fetchBranding` after the in-flight map had dropped the store.
+- Impact: Brand facts on the Go live strip and the setup checklist. No new backend field. No Shopify token is rendered or sent. Human review is required because this is the branding read on the merchant frame.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`.
 
 ### High-risk auth/store ownership/publishing changes require human review
