@@ -8,6 +8,7 @@ import { StoreAppBrandView } from '@/components/settings/StoreAppBrandView';
 import { EMPTY_CATALOG } from '@/lib/onboarding/normalizers';
 import { DEFAULT_PRIMARY_COLOR } from '@/lib/onboarding/branding';
 import type { BrandingDraft, SyncGate } from '@/lib/onboarding/types';
+import { fetchBranding } from '@/lib/onboarding/branding';
 import { applySettingsColors, applySettingsLogo, loadSettingsBrandingDraft } from '@/lib/settings/storeBranding';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -23,6 +24,8 @@ const sectionSource = source('../../components/settings/StoreBrandingSection.tsx
 const pageSource = source('../../app/dashboard/settings/page.tsx');
 const hookSource = source('../../hooks/useSettingsStoreBranding.ts');
 const loaderSource = source('./storeBranding.ts');
+const sidebarSource = source('../../components/Sidebar.tsx');
+const brandingHelperSource = source('../onboarding/branding.ts');
 
 for (const file of [logoSource, colorsSource, appBrandSource, pageSource]) {
   assert.doesNotMatch(file, /fetchBranding/);
@@ -48,6 +51,11 @@ assert.match(appBrandSource, /uploadBrandAsset/);
 assert.doesNotMatch(appBrandSource, /iconUrl:\s*logoUrl|splashUrl:\s*logoUrl/);
 assert.doesNotMatch(`${logoSource}\n${colorsSource}\n${appBrandSource}\n${sectionSource}\n${hookSource}`, /shpat_|accessToken|access_token/);
 assert.doesNotMatch(pageSource, /fetchBranding|\/admin\/stores\/\$\{storeId\}\/branding/);
+assert.match(sidebarSource, /fetchBranding\(storeId, token\)/);
+assert.doesNotMatch(sidebarSource, /\/admin\/stores\/\$\{storeId\}\/branding/);
+assert.doesNotMatch(sidebarSource, /console\.(log|debug|info|error|warn)/);
+assert.match(brandingHelperSource, /inflightBranding/);
+assert.match(brandingHelperSource, /if \(pending\) return pending/);
 
 const quiet: SyncGate = {
   state: 'not_started',
@@ -220,7 +228,73 @@ async function checkSingleLoad() {
   assert.equal(brandingGets, 4);
 }
 
+async function checkSharedNetworkGet() {
+  const realFetch = globalThis.fetch;
+  let brandingGets = 0;
+  globalThis.fetch = async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.endsWith('/branding')) {
+      brandingGets += 1;
+      await new Promise((resolve) => setTimeout(resolve, 15));
+      return new Response(
+        JSON.stringify({
+          data: {
+            appName: 'Northwind',
+            logoUrl: 'https://cdn.example/logo.png',
+            primaryColor: '#0F766E',
+            secondaryColor: null,
+            iconUrl: 'https://cdn.example/icon.png',
+            splashUrl: null,
+          },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+    if (url.endsWith('/api/store')) {
+      return new Response(JSON.stringify({ data: { name: 'Northwind', brandAssets: {} } }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    throw new Error(`unexpected fetch ${url}`);
+  };
+
+  try {
+    const [section, sidebar, secondMount] = await Promise.all([
+      loadSettingsBrandingDraft({
+        storeId: 'store-1',
+        token: 'session-token',
+        appName: 'Harbor',
+        fallbackLogo: null,
+      }),
+      fetchBranding('store-1', 'session-token'),
+      loadSettingsBrandingDraft({
+        storeId: 'store-1',
+        token: 'session-token',
+        appName: 'Harbor',
+        fallbackLogo: null,
+      }),
+    ]);
+    assert.equal(brandingGets, 1);
+    assert.equal(section?.logoUrl, 'https://cdn.example/logo.png');
+    assert.equal(section?.iconUrl, 'https://cdn.example/icon.png');
+    assert.equal(sidebar?.logoUrl, section?.logoUrl);
+    assert.equal(secondMount?.splashUrl, null);
+    assert.equal(secondMount?.primaryExplicit, '#0F766E');
+
+    const settled = await fetchBranding('store-1', 'session-token');
+    assert.equal(brandingGets, 2);
+    assert.equal(settled?.logoUrl, 'https://cdn.example/logo.png');
+
+    await Promise.all([fetchBranding('store-2', 'session-token'), fetchBranding('store-1', 'other-token')]);
+    assert.equal(brandingGets, 4);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+}
+
 checkSingleLoad()
+  .then(() => checkSharedNetworkGet())
   .then(() => {
     console.log('settings branding check ok');
   })
