@@ -7,6 +7,7 @@ import { createElement } from 'react';
 import { BuildMyAppView, type BuildMyAppViewProps } from '../../components/onboarding/BuildMyAppView.tsx';
 import { launcherDisplayName, launcherThumbUrl } from '../../components/onboarding/LauncherReadinessStrip.tsx';
 import type { BuildRequest } from './contract.ts';
+import { INSTALL_QR_WAIT_COPY } from './installPreview.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -148,6 +149,8 @@ assert.ok(waiting.includes('Waiting on Apple before this can continue.'));
 assert.equal((waiting.match(/type="checkbox"/g) ?? []).length, 0);
 assert.equal(waiting.includes('aria-label="Android progress"'), false);
 assert.ok(waiting.includes('This page updates on its own.'));
+assert.equal(waiting.includes(INSTALL_QR_WAIT_COPY), false);
+assert.equal(waiting.includes('data-install-wait'), false);
 assert.equal(waiting.includes('>Build my app<'), false);
 assert.ok(waiting.includes('Apple developer invite sent.'));
 assertCalm(waiting);
@@ -165,6 +168,10 @@ assert.ok(mixed.includes('aria-label="iOS progress"'));
 assert.ok(mixed.includes('data-progress="ready"'));
 assert.ok(mixed.includes('data-progress="building"'));
 assert.ok(mixed.includes('This page updates on its own.'));
+assert.ok(mixed.includes(INSTALL_QR_WAIT_COPY));
+assert.equal((mixed.match(/data-install-wait/g) ?? []).length, 2);
+assert.equal(mixed.includes('data-install-qr'), false);
+assert.equal(mixed.includes('Copy link'), false);
 assert.equal(mixed.includes('Request another build'), false);
 assertCalm(mixed);
 
@@ -175,6 +182,11 @@ const queuedLive = html({
 assert.ok(queuedLive.includes('In the queue.'));
 assert.ok(queuedLive.includes('Not included in this request.'));
 assert.ok(queuedLive.includes('This page updates on its own.'));
+assert.ok(queuedLive.includes(INSTALL_QR_WAIT_COPY));
+assert.ok(queuedLive.includes('When the preview is ready.'));
+assert.equal((queuedLive.match(/data-install-wait/g) ?? []).length, 1);
+assert.ok(queuedLive.includes('width:232px'));
+assert.equal(queuedLive.includes('data-install-qr'), false);
 assert.ok(queuedLive.includes('aria-busy="true"'));
 assert.equal((queuedLive.match(/data-state="current"/g) ?? []).length, 1);
 assert.equal(queuedLive.includes('Install Android build'), false);
@@ -193,6 +205,10 @@ assert.equal(readyWithoutLink.includes('Install iOS build'), false);
 assert.equal(readyWithoutLink.includes('href="http'), false);
 assert.equal(readyWithoutLink.includes('href="https'), false);
 assert.equal(readyWithoutLink.includes('data-install-qr'), false);
+assert.ok(readyWithoutLink.includes(INSTALL_QR_WAIT_COPY));
+assert.equal((readyWithoutLink.match(/data-install-wait/g) ?? []).length, 2);
+assert.ok(readyWithoutLink.includes('width:196px'));
+assert.equal(readyWithoutLink.includes('<svg'), false);
 assert.equal(readyWithoutLink.includes('Copy link'), false);
 assertCalm(readyWithoutLink);
 
@@ -212,6 +228,9 @@ assert.equal((readyWithLinks.match(/target="_blank"/g) ?? []).length, 4);
 assert.equal((readyWithLinks.match(/rel="noopener noreferrer"/g) ?? []).length, 4);
 assert.equal((readyWithLinks.match(/data-install-qr/g) ?? []).length, 2);
 assert.equal((readyWithLinks.match(/Copy link/g) ?? []).length, 2);
+assert.equal(readyWithLinks.includes(INSTALL_QR_WAIT_COPY), false);
+assert.equal(readyWithLinks.includes('When the preview is ready.'), false);
+assert.equal(readyWithLinks.includes('data-install-wait'), false);
 assert.ok(readyWithLinks.includes('Scan to install on your phone.'));
 const scanAt = readyWithLinks.indexOf('Scan to install on your phone.');
 const androidCardAt = readyWithLinks.indexOf('data-platform="android"');
@@ -233,6 +252,8 @@ assert.ok(readyHttp.includes('Ready'));
 assert.equal(readyHttp.includes('Install Android build'), false);
 assert.equal(readyHttp.includes('http://expo.dev'), false);
 assert.equal(readyHttp.includes('data-install-qr'), false);
+assert.ok(readyHttp.includes(INSTALL_QR_WAIT_COPY));
+assert.ok(readyHttp.includes('data-install-wait'));
 assert.equal(readyHttp.includes('Copy link'), false);
 assertCalm(readyHttp);
 
@@ -245,6 +266,8 @@ const readySecret = html({
 assert.equal(readySecret.includes('Install Android build'), false);
 assert.equal(readySecret.includes('shpat_'), false);
 assert.equal(readySecret.includes('data-install-qr'), false);
+assert.ok(readySecret.includes(INSTALL_QR_WAIT_COPY));
+assert.ok(readySecret.includes('data-install-wait'));
 assert.equal(readySecret.includes('Copy link'), false);
 assertCalm(readySecret);
 
@@ -256,6 +279,8 @@ assert.ok(buildingWithLink.includes('Building'));
 assert.equal(buildingWithLink.includes('Install Android build'), false);
 assert.equal(buildingWithLink.includes(ANDROID_INSTALL), false);
 assert.equal(buildingWithLink.includes('data-install-qr'), false);
+assert.ok(buildingWithLink.includes(INSTALL_QR_WAIT_COPY));
+assert.ok(buildingWithLink.includes('data-install-wait'));
 assert.equal(buildingWithLink.includes('Copy link'), false);
 assertCalm(buildingWithLink);
 
@@ -264,6 +289,10 @@ const oneReady = html({
   request: request('ready', 'building', { android: ANDROID_INSTALL, ios: IOS_INSTALL }),
 });
 assert.equal((oneReady.match(/data-install-qr/g) ?? []).length, 1);
+assert.equal((oneReady.match(/data-install-wait/g) ?? []).length, 1);
+assert.ok(oneReady.includes('width="196"'));
+assert.ok(oneReady.includes('width:196px'));
+assert.ok(oneReady.includes(INSTALL_QR_WAIT_COPY));
 assert.equal((oneReady.match(/Copy link/g) ?? []).length, 1);
 assert.ok(oneReady.includes(ANDROID_INSTALL));
 assert.equal(oneReady.includes(IOS_INSTALL), false);
@@ -279,6 +308,8 @@ const composeIgnoresLink = html({
 assert.equal(composeIgnoresLink.includes('Install Android build'), false);
 assert.equal(composeIgnoresLink.includes(ANDROID_INSTALL), false);
 assert.equal(composeIgnoresLink.includes('data-install-qr'), false);
+assert.equal(composeIgnoresLink.includes('data-install-wait'), false);
+assert.equal(composeIgnoresLink.includes(INSTALL_QR_WAIT_COPY), false);
 assert.equal(composeIgnoresLink.includes('Copy link'), false);
 assert.ok(composeIgnoresLink.includes('>Build my app<'));
 assertCalm(composeIgnoresLink);
@@ -287,6 +318,9 @@ const settled = html({
   mode: 'status',
   request: request('ready', 'failed'),
 });
+assert.ok(settled.includes(INSTALL_QR_WAIT_COPY));
+assert.equal((settled.match(/data-install-wait/g) ?? []).length, 1);
+assert.equal(settled.includes('data-install-qr'), false);
 assert.ok(settled.includes('One app is ready. The other did not finish.'));
 assert.ok(settled.includes('Request another build'));
 assert.ok(settled.includes('Failed'));
@@ -295,6 +329,16 @@ assert.ok(settled.includes('data-progress="failed"'));
 assert.equal(settled.includes('aria-label="iOS progress"'), false);
 assert.doesNotMatch(settled, /gradle|xcode|fastlane|expo\.dev/i);
 assertCalm(settled);
+
+const bothFailed = html({
+  mode: 'status',
+  request: request('failed', 'failed'),
+});
+assert.equal(bothFailed.includes(INSTALL_QR_WAIT_COPY), false);
+assert.equal(bothFailed.includes('data-install-wait'), false);
+assert.equal(bothFailed.includes('data-install-qr'), false);
+assert.ok(bothFailed.includes('The build did not finish. You can request it again.'));
+assertCalm(bothFailed);
 
 const recheck = html({
   availability: {

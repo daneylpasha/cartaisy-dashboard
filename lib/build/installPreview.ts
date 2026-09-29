@@ -1,4 +1,4 @@
-import { merchantInstallHref, type BuildRequest, type PlatformKind } from './contract.ts';
+import { merchantInstallHref, type BuildRequest, type PlatformKind, type PlatformStatus } from './contract.ts';
 
 export interface ReadyInstall {
   platform: PlatformKind;
@@ -42,6 +42,47 @@ export function readyInstallsFromList(requests: BuildRequest[]): ReadyInstall[] 
 export function readyInstallsFromRequest(request: BuildRequest | null): ReadyInstall[] {
   if (!request) return [];
   return readyInstallsFromList([request]);
+}
+
+export interface InstallQrSlot {
+  platform: PlatformKind;
+  label: 'Android' | 'iOS';
+  /** Public https install URL. Null while this platform is still waiting for one. */
+  url: string | null;
+}
+
+/** Shown above the progress cards until a public install URL exists. No code is drawn. */
+export const INSTALL_QR_WAIT_COPY =
+  'A scannable install code will appear here when the preview is ready.';
+
+const INSTALL_QR_WAIT_STATUSES = new Set<PlatformStatus | 'unknown'>([
+  'queued',
+  'building',
+  'ready',
+  'unknown',
+]);
+
+/**
+ * One slot per platform that is queued, building, ready, or unrecognized.
+ * A public https URL fills the slot. Anything else in those states keeps the
+ * slot empty so the code can replace it in place. Failed, skipped, and
+ * waiting-on-merchant platforms stay on the progress cards only.
+ */
+export function installQrSlots(request: BuildRequest | null): InstallQrSlot[] {
+  if (!request) return [];
+  const slots: InstallQrSlot[] = [];
+  for (const platform of ['android', 'ios'] as const) {
+    const progress = request.platforms[platform];
+    const url = merchantInstallHref(progress.status, progress.installUrl);
+    if (url) {
+      slots.push({ platform, label: PLATFORM_LABEL[platform], url });
+      continue;
+    }
+    if (INSTALL_QR_WAIT_STATUSES.has(progress.status)) {
+      slots.push({ platform, label: PLATFORM_LABEL[platform], url: null });
+    }
+  }
+  return slots;
 }
 
 /**
