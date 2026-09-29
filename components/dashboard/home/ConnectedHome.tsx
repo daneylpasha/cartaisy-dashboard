@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ShopifyCatalogBlockPanel } from '@/components/shopify/ShopifyCatalogBlockPanel';
+import { HomeInstallCard } from '@/components/dashboard/home/HomeInstallCard';
 import type { ConnectedHomeFacts } from '@/lib/dashboard/loadHome';
 
 export function ConnectedHome({
@@ -28,6 +29,8 @@ export function ConnectedHome({
       <p className="mt-2 text-sm leading-6 text-slate-600">
         {shop ? `Connected to ${shop}.` : 'Shopify is connected.'}
       </p>
+
+      <HomeInstallCard installs={facts.installs} />
 
       {facts.next && (
         <section className="mt-8 flex flex-col gap-4 rounded-xl border border-slate-200 bg-white px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
