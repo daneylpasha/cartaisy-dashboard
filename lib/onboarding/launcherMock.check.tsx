@@ -28,8 +28,15 @@ assert.doesNotMatch(brandSource, /HomeScreenLauncherMock|SmartHomePreview|Splash
 assert.match(brandSource, /const nameReady = draft\.appName\.trim\(\)\.length >= 2;/);
 assert.match(
   brandSource,
-  /const blocked =\n\s*Boolean\(loadError\) \|\| !nameReady \|\| !primaryValid \|\| !secondaryValid \|\| logoUploading \|\| iconUploading \|\| splashUploading;/
+  /const uploadsBusy = logoUploading \|\| iconUploading \|\| splashUploading;\n\s*const blocked =\n\s*Boolean\(loadError\) \|\| !nameReady \|\| !primaryValid \|\| !secondaryValid \|\| uploadsBusy;/
 );
+const copyLogoSource = source('../../components/brand/useCopyLogoAsIcon.ts');
+assert.match(brandSource, /useCopyLogoAsIcon/);
+assert.match(brandSource, /onIconFile\(file\)/);
+assert.match(copyLogoSource, /fileFromDrawableLogo/);
+assert.match(copyLogoSource, /onIconFile\(file\)/);
+assert.doesNotMatch(copyLogoSource, /iconUrl/);
+assert.match(brandSource, /showUseLogo = Boolean\(useLogo\) && !showImage && !busy/);
 assert.doesNotMatch(settingsViewSource, /HomeScreenLauncherMock|SmartHomePreview|SplashBootMock/);
 assert.doesNotMatch(previewStepSource, /HomeScreenLauncherMock/);
 assert.doesNotMatch(buildViewSource, /HomeScreenLauncherMock/);
@@ -107,7 +114,10 @@ function renderLauncher(next: BrandingDraft): string {
   );
 }
 
-function renderBrand(next: BrandingDraft): string {
+function renderBrand(
+  next: BrandingDraft,
+  flags?: { logoUploading?: boolean; iconUploading?: boolean; splashUploading?: boolean }
+): string {
   return renderToStaticMarkup(
     createElement(BrandingStep, {
       draft: next,
@@ -118,9 +128,9 @@ function renderBrand(next: BrandingDraft): string {
       loadError: null,
       fieldError: null,
       saving: false,
-      logoUploading: false,
-      iconUploading: false,
-      splashUploading: false,
+      logoUploading: flags?.logoUploading ?? false,
+      iconUploading: flags?.iconUploading ?? false,
+      splashUploading: flags?.splashUploading ?? false,
       primaryValid: true,
       secondaryValid: true,
       onDraftChange: () => undefined,
@@ -178,7 +188,44 @@ assert.equal(homeScreen(missingIcon).includes('<img'), false);
 assert.match(homeScreen(missingIcon), /Northwind/);
 assert.match(missingIconMock, /Add an app icon in/);
 assertSoftLinks(missingIconMock);
-assert.equal(isDisabled(continueButton(renderBrand({ ...draft, iconUrl: null }))), false);
+const emptyIcon = renderBrand({ ...draft, iconUrl: null });
+assert.match(emptyIcon, />Use logo</);
+assert.equal(isDisabled(continueButton(emptyIcon)), false);
+assert.doesNotMatch(emptyIcon, /data-launcher-mock|data-shopper-screen|data-splash-boot-mock/);
+
+const noLogo = renderBrand({ ...draft, logoUrl: null, iconUrl: null });
+assert.doesNotMatch(noLogo, /Use logo/);
+assert.equal(isDisabled(continueButton(noLogo)), false);
+
+assert.doesNotMatch(renderBrand(draft), /Use logo/);
+
+const httpLogo = renderBrand({ ...draft, logoUrl: 'http://cdn.example/logo.png', iconUrl: null });
+assert.doesNotMatch(httpLogo, /Use logo/);
+
+const tokenLogo = renderBrand({
+  ...draft,
+  logoUrl: 'https://cdn.example/logo.png?access_token=shpat_secret',
+  iconUrl: null,
+});
+assert.doesNotMatch(tokenLogo, /Use logo/);
+
+const blobLogo = renderBrand({ ...draft, logoUrl: 'blob:http://localhost/logo', iconUrl: null });
+assert.match(blobLogo, />Use logo</);
+
+const unsafeIcon = renderBrand({
+  ...draft,
+  iconUrl: 'https://cdn.example/icon.png?access_token=shpat_secret',
+});
+assert.match(unsafeIcon, />Use logo</);
+assert.doesNotMatch(unsafeIcon, /access_token=shpat_secret/);
+
+const httpIconField = renderBrand({ ...draft, iconUrl: 'http://cdn.example/icon.png' });
+assert.match(httpIconField, />Use logo</);
+assert.doesNotMatch(httpIconField, /http:\/\/cdn\.example\/icon\.png/);
+
+assert.doesNotMatch(renderBrand({ ...draft, iconUrl: null }, { logoUploading: true }), /Use logo/);
+assert.doesNotMatch(renderBrand({ ...draft, iconUrl: null }, { iconUploading: true }), /Use logo/);
+assert.doesNotMatch(renderBrand({ ...draft, iconUrl: null }, { splashUploading: true }), /Use logo/);
 
 const blankName = renderLauncher({ ...draft, appName: '   ' });
 const blankMock = launcher(blankName);

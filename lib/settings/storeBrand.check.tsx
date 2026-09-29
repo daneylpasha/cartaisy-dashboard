@@ -161,5 +161,49 @@ const localPreview = renderToStaticMarkup(
 assert.match(localPreview, /src="blob:http:\/\/localhost\/preview"/);
 assert.doesNotMatch(localPreview, /data-shopper-screen|data-home-screen/);
 assert.match(localPreview, /Uploading/);
+assert.doesNotMatch(localPreview, /Use logo/);
+assert.doesNotMatch(markup, /Use logo/);
+assert.doesNotMatch(hidden, /Use logo/);
+
+function renderSettings(next: BrandingDraft, flags?: { iconUploading?: boolean; splashUploading?: boolean }) {
+  return renderToStaticMarkup(
+    createElement(StoreAppBrandView, {
+      draft: next,
+      catalog: EMPTY_CATALOG,
+      sync: quiet,
+      loadError: null,
+      fieldError: null,
+      iconUploading: flags?.iconUploading ?? false,
+      splashUploading: flags?.splashUploading ?? false,
+      retrying: false,
+      onRetry: () => undefined,
+      onIconFile: () => undefined,
+      onSplashFile: () => undefined,
+      onImageError: () => undefined,
+    })
+  );
+}
+
+const copyable = renderSettings({ ...draft, iconUrl: null });
+assert.match(copyable, />Use logo</);
+assert.match(copyable, /Add App icon/);
+
+assert.doesNotMatch(renderSettings({ ...draft, logoUrl: null, iconUrl: null }), /Use logo/);
+assert.doesNotMatch(renderSettings({ ...draft, logoUrl: 'http://cdn.example/logo.png', iconUrl: null }), /Use logo/);
+assert.doesNotMatch(
+  renderSettings({ ...draft, logoUrl: 'https://cdn.example/logo.png?access_token=shpat_secret', iconUrl: null }),
+  /Use logo/
+);
+assert.match(renderSettings({ ...draft, logoUrl: 'blob:http://localhost/logo', iconUrl: null }), />Use logo</);
+assert.doesNotMatch(renderSettings({ ...draft, iconUrl: null }, { iconUploading: true }), /Use logo/);
+assert.doesNotMatch(renderSettings({ ...draft, iconUrl: null }, { splashUploading: true }), /Use logo/);
+
+const copyLogoSource = source('../../components/brand/useCopyLogoAsIcon.ts');
+assert.match(viewSource, /useCopyLogoAsIcon/);
+assert.match(viewSource, /onIconFile/);
+assert.match(copyLogoSource, /fileFromDrawableLogo/);
+assert.match(copyLogoSource, /onIconFile\(file\)/);
+assert.doesNotMatch(copyLogoSource, /iconUrl/);
+assert.doesNotMatch(viewSource, /iconUrl:\s*(shown\.logoUrl|draft\.logoUrl|logoUrl)/);
 
 console.log('settings brand check ok');

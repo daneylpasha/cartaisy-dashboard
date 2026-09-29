@@ -5,8 +5,9 @@ import { ImagePlus, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { BrandInstallPreview } from '@/components/onboarding/BrandInstallPreview';
 import { settingsBrandLead, type InstallPreviewModel } from '@/lib/build/installPreview';
+import { useCopyLogoAsIcon } from '@/components/brand/useCopyLogoAsIcon';
 import { DEFAULT_PRIMARY_COLOR, HEX_COLOR_REGEX, validateBrandImage } from '@/lib/onboarding/branding';
-import { displayBrandImageUrl } from '@/lib/onboarding/brandAssets';
+import { drawableBrandImageUrl } from '@/lib/onboarding/brandAssets';
 import type { BrandingDraft, LockedCatalog, SyncGate } from '@/lib/onboarding/types';
 
 export interface SettingsBrandProps {
@@ -18,11 +19,7 @@ export interface SettingsBrandProps {
 
 /** Blob previews and https images only. Token-shaped and other URLs are dropped. */
 export function settingsBrandImageUrl(value: string | null): string | null {
-  const url = displayBrandImageUrl(value);
-  if (!url) return null;
-  if (url.startsWith('blob:')) return url;
-  if (url.startsWith('https:')) return url;
-  return null;
+  return drawableBrandImageUrl(value);
 }
 
 export function presentSettingsBrand(draft: BrandingDraft): BrandingDraft {
@@ -95,6 +92,13 @@ export function StoreAppBrandView({
   onImageError,
   installPreview,
 }: StoreAppBrandViewProps) {
+  const { offerUseLogo, copyingLogo, onUseLogo } = useCopyLogoAsIcon(
+    draft?.logoUrl ?? null,
+    iconUploading || splashUploading,
+    onIconFile,
+    onImageError
+  );
+
   if (!draft) {
     return (
       <section className="mt-4 rounded-2xl border border-slate-200/80 bg-white px-5 py-8 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-8">
@@ -139,6 +143,7 @@ export function StoreAppBrandView({
               hint={iconUploading ? 'Uploading...' : 'Home screen icon'}
               shape="icon"
               busy={iconUploading}
+              useLogo={offerUseLogo ? { copying: copyingLogo, onUse: () => void onUseLogo() } : null}
               onFile={(file) => acceptImage(file, onImageError, onIconFile)}
             />
             <ImageField
@@ -204,6 +209,7 @@ function ImageField({
   fit = 'cover',
   shape = 'fill',
   busy = false,
+  useLogo = null,
   onFile,
 }: {
   id: string;
@@ -213,6 +219,7 @@ function ImageField({
   fit?: 'cover' | 'contain';
   shape?: 'fill' | 'icon';
   busy?: boolean;
+  useLogo?: { copying: boolean; onUse: () => void } | null;
   onFile: (file: File) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -220,6 +227,7 @@ function ImageField({
   const [brokenFor, setBrokenFor] = useState<string | null>(null);
   const broken = Boolean(safeUrl) && brokenFor === safeUrl;
   const showImage = Boolean(safeUrl) && !broken;
+  const showUseLogo = Boolean(useLogo) && !showImage && !busy;
 
   return (
     <div className="relative min-w-0">
@@ -275,6 +283,16 @@ function ImageField({
         }}
       />
       <p className="mt-2 text-xs leading-5 text-slate-500">{broken ? 'Add a new image.' : hint}</p>
+      {showUseLogo && useLogo ? (
+        <button
+          type="button"
+          onClick={useLogo.onUse}
+          disabled={useLogo.copying}
+          className="mt-1 text-left text-xs font-medium text-slate-600 underline-offset-4 hover:text-slate-950 hover:underline disabled:opacity-60"
+        >
+          {useLogo.copying ? 'Using logo...' : 'Use logo'}
+        </button>
+      ) : null}
     </div>
   );
 }

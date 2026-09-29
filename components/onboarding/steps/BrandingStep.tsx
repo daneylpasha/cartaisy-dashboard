@@ -14,6 +14,8 @@ import {
   validateBrandImage,
 } from '@/lib/onboarding/branding';
 import { BrandColorControl } from '@/components/brand/BrandColorControl';
+import { useCopyLogoAsIcon } from '@/components/brand/useCopyLogoAsIcon';
+import { drawableBrandImageUrl } from '@/lib/onboarding/brandAssets';
 import { safeImageUrl } from '@/lib/onboarding/normalizers';
 import type { BrandingDraft, LockedCatalog, ShopifyConnectionSnapshot, SyncGate } from '@/lib/onboarding/types';
 
@@ -74,8 +76,15 @@ export function BrandingStep({
   installPreview,
 }: BrandingStepProps) {
   const nameReady = draft.appName.trim().length >= 2;
+  const uploadsBusy = logoUploading || iconUploading || splashUploading;
   const blocked =
-    Boolean(loadError) || !nameReady || !primaryValid || !secondaryValid || logoUploading || iconUploading || splashUploading;
+    Boolean(loadError) || !nameReady || !primaryValid || !secondaryValid || uploadsBusy;
+  const { offerUseLogo, copyingLogo, onUseLogo } = useCopyLogoAsIcon(
+    draft.logoUrl,
+    uploadsBusy,
+    onIconFile,
+    onImageError
+  );
 
   return (
     <section className="rounded-2xl border border-slate-200/80 bg-white px-5 py-8 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-10 sm:py-10">
@@ -153,6 +162,7 @@ export function BrandingStep({
                   hint={iconUploading ? 'Uploading...' : 'Home screen icon'}
                   shape="icon"
                   busy={iconUploading}
+                  useLogo={offerUseLogo ? { copying: copyingLogo, onUse: () => void onUseLogo() } : null}
                   onFile={(file) => {
                     const check = validateBrandImage(file);
                     if (!check.ok) {
@@ -257,6 +267,7 @@ function ImageField({
   fit = 'cover',
   shape = 'fill',
   busy = false,
+  useLogo = null,
   onFile,
 }: {
   id: string;
@@ -266,13 +277,15 @@ function ImageField({
   fit?: 'cover' | 'contain';
   shape?: 'fill' | 'icon';
   busy?: boolean;
+  useLogo?: { copying: boolean; onUse: () => void } | null;
   onFile: (file: File) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const safeUrl = safeImageUrl(imageUrl);
+  const safeUrl = shape === 'icon' ? drawableBrandImageUrl(imageUrl) : safeImageUrl(imageUrl);
   const [brokenFor, setBrokenFor] = useState<string | null>(null);
   const broken = Boolean(safeUrl) && brokenFor === safeUrl;
   const showImage = Boolean(safeUrl) && !broken;
+  const showUseLogo = Boolean(useLogo) && !showImage && !busy;
 
   return (
     <div className="min-w-0">
@@ -327,6 +340,16 @@ function ImageField({
       <p className="mt-2 text-[11px] leading-4 text-slate-500 sm:text-xs sm:leading-5">
         {broken ? 'Add a new image.' : hint}
       </p>
+      {showUseLogo && useLogo ? (
+        <button
+          type="button"
+          onClick={useLogo.onUse}
+          disabled={useLogo.copying}
+          className="mt-1 text-left text-[11px] font-medium text-slate-600 underline-offset-4 hover:text-slate-950 hover:underline disabled:opacity-60 sm:text-xs"
+        >
+          {useLogo.copying ? 'Using logo...' : 'Use logo'}
+        </button>
+      ) : null}
     </div>
   );
 }

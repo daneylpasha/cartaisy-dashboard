@@ -81,7 +81,7 @@ assert.match(wizardSource, /logoUrl=\{draft\.logoUrl\}/);
 assert.doesNotMatch(wizardSource, /shopDomain=\{connection|appName=\{connection|storeName=\{storeId/);
 assert.doesNotMatch(chromeSource, />\s*Cartaisy\s*</);
 assert.doesNotMatch(chromeSource, /SmartHomePreview/);
-assert.match(chromeSource, /safeImageUrl/);
+assert.match(chromeSource, /drawableBrandImageUrl/);
 assert.match(chromeSource, /onError=\{\(\) => markBroken\(imageUrl\)\}/);
 assert.match(chromeSource, /node\?\.complete && node\.naturalWidth === 0/);
 assert.match(chromeSource, /brokenFor !== imageUrl/);

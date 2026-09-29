@@ -7,6 +7,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { BrandColorControl } from '@/components/brand/BrandColorControl';
 import {
   displayBrandImageUrl,
+  drawableBrandImageUrl,
+  fileFromDrawableLogo,
   IMAGE_LIMIT_MESSAGE,
   mergeStoredBrandAssets,
   persistedBrandImageUrl,
@@ -318,4 +320,67 @@ assert.doesNotMatch(settingsSource, /cartaisy/i);
 assert.doesNotMatch(brandStepSource, /cartaisy/i);
 assert.doesNotMatch(controlSource, /cartaisy/i);
 
-console.log('branding check ok');
+assert.equal(drawableBrandImageUrl('https://cdn.example/logo.png'), 'https://cdn.example/logo.png');
+assert.equal(drawableBrandImageUrl(' blob:http://localhost/logo '), 'blob:http://localhost/logo');
+assert.equal(drawableBrandImageUrl('http://cdn.example/logo.png'), null);
+assert.equal(drawableBrandImageUrl('https://cdn.example/logo.png?access_token=shpat_secret'), null);
+assert.equal(drawableBrandImageUrl('https://cdn.example/shpat_logo.png'), null);
+assert.equal(drawableBrandImageUrl('   '), null);
+assert.equal(drawableBrandImageUrl(null), null);
+
+const png = new Blob([Uint8Array.from([1, 2, 3, 4])], { type: 'image/png' });
+
+async function checkLogoFile() {
+  const copied = await fileFromDrawableLogo('https://cdn.example/logo.png', async () => new Response(png, { status: 200 }));
+  assert.equal(copied?.type, 'image/png');
+  assert.equal(copied?.name, 'logo.png');
+  assert.equal(copied?.size, 4);
+
+  const fromPath = await fileFromDrawableLogo(
+    'https://cdn.example/logo.webp',
+    async () => new Response(Uint8Array.from([9]), { status: 200, headers: { 'Content-Type': 'application/octet-stream' } })
+  );
+  assert.equal(fromPath?.type, 'image/webp');
+  assert.equal(fromPath?.name, 'logo.webp');
+
+  assert.equal(
+    await fileFromDrawableLogo('https://cdn.example/logo.png', async () => new Response(png, { status: 404 })),
+    null
+  );
+  assert.equal(
+    await fileFromDrawableLogo('https://cdn.example/logo.png', async () => {
+      throw new Error('cors');
+    }),
+    null
+  );
+  assert.equal(
+    await fileFromDrawableLogo(
+      'https://cdn.example/logo.png',
+      async () => new Response('<html></html>', { status: 200, headers: { 'Content-Type': 'text/html' } })
+    ),
+    null
+  );
+
+  let fetchedIneligible = false;
+  assert.equal(
+    await fileFromDrawableLogo('http://cdn.example/logo.png', async () => {
+      fetchedIneligible = true;
+      return new Response(png, { status: 200 });
+    }),
+    null
+  );
+  assert.equal(fetchedIneligible, false);
+  assert.equal(
+    await fileFromDrawableLogo('https://cdn.example/logo.png?access_token=shpat_secret', async () => new Response(png)),
+    null
+  );
+}
+
+checkLogoFile()
+  .then(() => {
+    console.log('branding check ok');
+  })
+  .catch((error: unknown) => {
+    console.error(error);
+    process.exit(1);
+  });

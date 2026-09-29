@@ -12,6 +12,83 @@ export function displayBrandImageUrl(value: string | null): string | null {
   return url;
 }
 
+const BRAND_MIME_EXT = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+} as const;
+
+type BrandMime = keyof typeof BRAND_MIME_EXT;
+
+/** Shown when a saved logo cannot be copied onto the app icon. */
+export const USE_LOGO_AS_ICON_ERROR = 'We could not use that logo. Add an image for the app icon.';
+
+/**
+ * Https or in-memory blob image that can be drawn or copied.
+ * Token-shaped and other URLs, including plain http, are not drawable.
+ */
+export function drawableBrandImageUrl(value: string | null): string | null {
+  if (typeof value !== 'string') return null;
+  const url = displayBrandImageUrl(value.trim());
+  if (!url) return null;
+  if (url.startsWith('https:') || url.startsWith('blob:')) return url;
+  return null;
+}
+
+function mimeFromHeader(value: string): BrandMime | null {
+  const normalized = value.split(';')[0]?.trim().toLowerCase() ?? '';
+  if (normalized === 'image/jpg' || normalized === 'image/pjpeg') return 'image/jpeg';
+  if (normalized === 'image/jpeg' || normalized === 'image/png' || normalized === 'image/webp') {
+    return normalized;
+  }
+  return null;
+}
+
+function mimeFromPath(url: string): BrandMime | null {
+  if (url.startsWith('blob:')) return null;
+  try {
+    const ext = new URL(url).pathname.split('.').pop()?.toLowerCase();
+    if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
+    if (ext === 'png') return 'image/png';
+    if (ext === 'webp') return 'image/webp';
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function brandMime(blobType: string, url: string): BrandMime | null {
+  const fromHeader = mimeFromHeader(blobType);
+  if (fromHeader) return fromHeader;
+  const bare = blobType.split(';')[0]?.trim().toLowerCase() ?? '';
+  if (bare && bare !== 'application/octet-stream' && bare !== 'binary/octet-stream') return null;
+  return mimeFromPath(url);
+}
+
+/**
+ * Reads a drawable logo into a file for the existing icon upload.
+ * A failed fetch, an empty body, or a non-image response returns null.
+ * This does not invent a URL.
+ */
+export async function fileFromDrawableLogo(
+  url: string,
+  fetchImpl: typeof fetch = fetch
+): Promise<File | null> {
+  const safe = drawableBrandImageUrl(url);
+  if (!safe) return null;
+  try {
+    const response = await fetchImpl(safe);
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    if (blob.size <= 0) return null;
+    const mime = brandMime(blob.type, safe);
+    if (!mime) return null;
+    return new File([blob], `logo.${BRAND_MIME_EXT[mime]}`, { type: mime });
+  } catch {
+    return null;
+  }
+}
+
 /** Https URL safe to store. Blob and token-shaped values are rejected. */
 export function persistedBrandImageUrl(value: unknown): string | null {
   if (typeof value !== 'string') return null;
