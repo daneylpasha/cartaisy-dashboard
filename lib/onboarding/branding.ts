@@ -299,6 +299,29 @@ export async function uploadLogo(
   }
 }
 
+export async function clearLogo(
+  storeId: string,
+  token: string
+): Promise<{ ok: boolean; error: string | null }> {
+  try {
+    const response = await fetch(`${API_URL}/admin/stores/${storeId}/branding/logo`, {
+      method: 'DELETE',
+      headers: authHeaders(token),
+    });
+    const body = await readJson(response);
+    const data = brandingRecord(body);
+    if (!response.ok) {
+      return {
+        ok: false,
+        error: readString(data?.error) ?? 'We could not remove the logo.',
+      };
+    }
+    return { ok: true, error: null };
+  } catch {
+    return { ok: false, error: 'We could not remove the logo.' };
+  }
+}
+
 export type OptionalBrandAsset = 'splash' | 'icon';
 
 const SIGNED_UPLOAD_TRANSFORMATION = 'c_limit,w_1024,h_1024,q_auto:good,f_auto';

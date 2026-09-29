@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useSession, useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { BrandColorControl } from '@/components/brand/BrandColorControl';
@@ -10,30 +10,35 @@ import {
   brandColorPatch,
   displayPrimaryColor,
   displaySecondaryColor,
-  fetchBranding,
   saveBrandColors,
 } from '@/lib/onboarding/branding';
 
 interface StoreBrandingColorsProps {
+  primaryExplicit?: string | null;
+  secondaryExplicit?: string | null;
+  loading?: boolean;
+  loadError?: string | null;
+  onRetry?: () => void;
   onColorsChange?: (colors: { primaryColor: string | null; secondaryColor: string | null }) => void;
 }
 
-export function StoreBrandingColors({ onColorsChange }: StoreBrandingColorsProps) {
+export function StoreBrandingColors({
+  primaryExplicit: primaryFromDraft = null,
+  secondaryExplicit: secondaryFromDraft = null,
+  loading = false,
+  loadError = null,
+  onRetry,
+  onColorsChange,
+}: StoreBrandingColorsProps) {
   const { data: session } = useSession();
   const { getToken } = useAuth();
 
-  const [primaryExplicit, setPrimaryExplicit] = useState<string | null>(null);
-  const [secondaryExplicit, setSecondaryExplicit] = useState<string | null>(null);
-  const [savedPrimary, setSavedPrimary] = useState<string | null>(null);
-  const [savedSecondary, setSavedSecondary] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  // Undefined means "show the shared draft". A string or null is an unsaved edit.
+  const [primaryEdit, setPrimaryEdit] = useState<string | null | undefined>(undefined);
+  const [secondaryEdit, setSecondaryEdit] = useState<string | null | undefined>(undefined);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  // Distinct from `error` (which is for save failures): tracks whether the
-  // initial branding fetch itself failed. A failed GET must not present the
-  // platform-default swatch as this store's colors. Save and Clear stay off.
-  const [loadError, setLoadError] = useState<string | null>(null);
   // ColorPicker reports validity only through onChange once the text is a
   // hex. While the field shows invalid text, the last committed color stays
   // valid. Save stays off until the visible field is valid too.
@@ -41,49 +46,10 @@ export function StoreBrandingColors({ onColorsChange }: StoreBrandingColorsProps
   const [isSecondaryPickerValid, setIsSecondaryPickerValid] = useState(true);
 
   const storeId = session?.user?.storeId;
-
-  const applyLoadedColors = (primary: string | null, secondary: string | null) => {
-    setPrimaryExplicit(primary);
-    setSecondaryExplicit(secondary);
-    setSavedPrimary(primary);
-    setSavedSecondary(secondary);
-  };
-
-  const fetchColors = async () => {
-    if (!storeId) {
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const token = getToken();
-      if (!token) {
-        setLoadError('Sign in again before changing brand colors.');
-        return;
-      }
-      const draft = await fetchBranding(storeId, token);
-      if (!draft) {
-        setLoadError(
-          'Failed to load current branding colors. Refresh or retry before saving, so changes aren’t based on the wrong starting colors.'
-        );
-        return;
-      }
-      applyLoadedColors(draft.primaryExplicit ?? null, draft.secondaryExplicit ?? null);
-      setLoadError(null);
-    } catch {
-      setLoadError(
-        'Failed to load current branding colors. Refresh or retry before saving, so changes aren’t based on the wrong starting colors.'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void fetchColors();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storeId]);
+  const savedPrimary = primaryFromDraft;
+  const savedSecondary = secondaryFromDraft;
+  const primaryExplicit = primaryEdit === undefined ? savedPrimary : primaryEdit;
+  const secondaryExplicit = secondaryEdit === undefined ? savedSecondary : secondaryEdit;
 
   const primaryDisplay = displayPrimaryColor(primaryExplicit);
   const secondaryDisplay = displaySecondaryColor(secondaryExplicit);
@@ -91,6 +57,9 @@ export function StoreBrandingColors({ onColorsChange }: StoreBrandingColorsProps
   const isSecondaryValid = secondaryExplicit === null || HEX_COLOR_REGEX.test(secondaryExplicit);
   const hasChanges = primaryExplicit !== savedPrimary || secondaryExplicit !== savedSecondary;
   const canWrite = !isSaving && !loadError;
+  const colorLoadMessage = loadError
+    ? 'Failed to load current branding colors. Refresh or retry before saving, so changes are not based on the wrong starting colors.'
+    : null;
 
   const persist = async (
     patch: { primaryColor?: string | null; secondaryColor?: string | null },
@@ -123,14 +92,8 @@ export function StoreBrandingColors({ onColorsChange }: StoreBrandingColorsProps
       }
       const nextPrimary = result.draft.primaryExplicit ?? null;
       const nextSecondary = result.draft.secondaryExplicit ?? null;
-      if ('primaryColor' in patch) {
-        setPrimaryExplicit(nextPrimary);
-        setSavedPrimary(nextPrimary);
-      }
-      if ('secondaryColor' in patch) {
-        setSecondaryExplicit(nextSecondary);
-        setSavedSecondary(nextSecondary);
-      }
+      if ('primaryColor' in patch) setPrimaryEdit(undefined);
+      if ('secondaryColor' in patch) setSecondaryEdit(undefined);
       onColorsChange?.({
         primaryColor: 'primaryColor' in patch ? nextPrimary : savedPrimary,
         secondaryColor: 'secondaryColor' in patch ? nextSecondary : savedSecondary,
@@ -177,7 +140,7 @@ export function StoreBrandingColors({ onColorsChange }: StoreBrandingColorsProps
     await persist(patch, message);
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-5 mt-4">
         <div className="flex items-center justify-center py-4">
@@ -197,7 +160,7 @@ export function StoreBrandingColors({ onColorsChange }: StoreBrandingColorsProps
       <div className="grid gap-4 sm:grid-cols-2">
         <BrandColorControl
           value={primaryDisplay}
-          onChange={setPrimaryExplicit}
+          onChange={setPrimaryEdit}
           onValidityChange={setIsPrimaryPickerValid}
           label="Primary Color"
           usingDefault={!loadError && primaryExplicit === null}
@@ -206,7 +169,7 @@ export function StoreBrandingColors({ onColorsChange }: StoreBrandingColorsProps
         />
         <BrandColorControl
           value={secondaryDisplay}
-          onChange={setSecondaryExplicit}
+          onChange={setSecondaryEdit}
           onValidityChange={setIsSecondaryPickerValid}
           label="Secondary Color"
           usingDefault={!loadError && secondaryExplicit === null}
@@ -238,13 +201,13 @@ export function StoreBrandingColors({ onColorsChange }: StoreBrandingColorsProps
         <div className="flex items-start justify-between gap-2 mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
           <div className="flex items-start gap-2">
             <AlertCircle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-amber-800">{loadError}</p>
+            <p className="text-xs text-amber-800">{colorLoadMessage}</p>
           </div>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => void fetchColors()}
-            disabled={isLoading}
+            onClick={() => onRetry?.()}
+            disabled={loading}
             className="flex-shrink-0 h-7 px-2 text-xs"
           >
             Retry
