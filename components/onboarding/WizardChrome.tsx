@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { drawableBrandImageUrl } from '@/lib/onboarding/brandAssets';
+import { merchantDisplayName } from '@/lib/onboarding/appName';
 import type { OnboardingStep } from '@/lib/onboarding/types';
 import { ONBOARDING_STEPS } from '@/lib/onboarding/types';
 
@@ -20,13 +21,10 @@ export const WIZARD_HEADER_FALLBACK = 'Setup';
 
 const SHOP_DOMAIN = /^(?:https?:\/\/)?[a-z0-9][a-z0-9-]*\.myshopify\.com\/?$/i;
 const STORE_ID = /^[a-f0-9]{24}$/i;
-const PLATFORM_WORDMARK = /^cartaisy$/i;
 
 function acceptableHeaderMark(value: string | null | undefined): string | null {
-  if (typeof value !== 'string') return null;
-  const name = value.trim();
+  const name = merchantDisplayName(value);
   if (!name) return null;
-  if (PLATFORM_WORDMARK.test(name)) return null;
   if (SHOP_DOMAIN.test(name)) return null;
   if (STORE_ID.test(name)) return null;
   return name;

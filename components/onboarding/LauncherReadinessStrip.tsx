@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { merchantDisplayName } from '@/lib/onboarding/appName';
 import { persistedBrandImageUrl } from '@/lib/onboarding/brandAssets';
 
 export const BRAND_STEP_HREF = '/dashboard/onboarding?step=brand';
@@ -12,11 +13,12 @@ export function launcherThumbUrl(value: string | null | undefined): string | nul
   return persistedBrandImageUrl(value);
 }
 
-/** Trimmed display name. Blank and whitespace-only stay missing. No substitute is applied. */
+/**
+ * Trimmed display name for Build readiness. Blank, whitespace-only, and the
+ * platform wordmark stay missing. No substitute is applied.
+ */
 export function launcherDisplayName(value: string | null | undefined): string | null {
-  if (typeof value !== 'string') return null;
-  const name = value.trim();
-  return name.length > 0 ? name : null;
+  return merchantDisplayName(value);
 }
 
 interface LauncherReadinessStripProps {

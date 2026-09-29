@@ -8,6 +8,7 @@ import {
   registerPayloadFromCloudinary,
   type StoredBrandAssets,
 } from '@/lib/onboarding/brandAssets';
+import { APP_NAME_WORDMARK_MESSAGE, isPlatformWordmark } from '@/lib/onboarding/appName';
 import type { BrandingDraft } from '@/lib/onboarding/types';
 
 export const HEX_COLOR_REGEX = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
@@ -222,6 +223,9 @@ export async function fetchStoreProfile(): Promise<{ name: string | null; brandA
 }
 
 export async function saveAppName(name: string): Promise<{ ok: boolean; error: string | null }> {
+  if (isPlatformWordmark(name)) {
+    return { ok: false, error: APP_NAME_WORDMARK_MESSAGE };
+  }
   try {
     const response = await fetch('/api/store', {
       method: 'PATCH',

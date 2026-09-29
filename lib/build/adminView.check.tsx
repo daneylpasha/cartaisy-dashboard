@@ -180,6 +180,25 @@ assert.equal(blankName.includes('EAS'), false);
 assert.equal(blankName.includes('Copy all EAS env'), false);
 assert.equal(blankName.includes('Cartaisy'), false);
 
+const wordmarkName = html({
+  requests: [{ ...request, appName: '  Cartaisy  ', iconUrl: ICON_URL, splashUrl: SPLASH_URL, storeId: STORE_ID }],
+});
+assert.ok(wordmarkName.includes('No app name'));
+assert.equal(wordmarkName.includes('APP_NAME'), false);
+assert.equal(wordmarkName.includes('Cartaisy'), false);
+assert.ok(wordmarkName.includes('Copy all EAS env'));
+assert.equal(copyValues(wordmarkName).some((value) => value.includes('APP_NAME')), false);
+assert.equal(copyValues(wordmarkName).includes(`ICON_IMAGE_URL=${ICON_URL}`), true);
+
+const wordmarkOnly = html({
+  requests: [{ ...request, appName: 'cartaisy' }],
+});
+assert.ok(wordmarkOnly.includes('No app name'));
+assert.equal(wordmarkOnly.includes('APP_NAME'), false);
+assert.equal(wordmarkOnly.includes('Copy all EAS env'), false);
+assert.equal(wordmarkOnly.includes('data-copy'), false);
+assert.equal(wordmarkOnly.includes('Cartaisy'), false);
+
 const STORE_ID_UPPER = '66F1C2E0A1B2C3D4E5F60710';
 const storeOnly = html({
   requests: [{ ...request, storeId: STORE_ID_UPPER }],

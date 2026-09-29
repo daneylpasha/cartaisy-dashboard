@@ -7,6 +7,7 @@ import {
   getStoreBrandAssets,
   saveStoreBrandAssets,
 } from '@/lib/services/storeBrandAssets';
+import { APP_NAME_WORDMARK_MESSAGE, isPlatformWordmark } from '@/lib/onboarding/appName';
 import { canManageSettings } from '@/lib/utils/permissions';
 
 export async function GET(request: NextRequest) {
@@ -58,6 +59,10 @@ export async function PATCH(request: NextRequest) {
         : null;
     if (!record) {
       return NextResponse.json({ error: 'No valid fields provided for update' }, { status: 400 });
+    }
+
+    if (isPlatformWordmark(record.name)) {
+      return NextResponse.json({ error: APP_NAME_WORDMARK_MESSAGE }, { status: 400 });
     }
 
     let brandAssets = await getStoreBrandAssets(session.user.storeId);

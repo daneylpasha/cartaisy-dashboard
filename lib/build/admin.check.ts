@@ -188,6 +188,16 @@ assert.equal(opsAppName('   '), null);
 assert.equal(opsAppName(''), null);
 assert.equal(opsAppName(null), null);
 assert.equal(opsAppName(undefined), null);
+assert.equal(opsAppName('Cartaisy'), null);
+assert.equal(opsAppName('  cartaisy  '), null);
+assert.equal(opsAppName('CARTAISY'), null);
+assert.equal(opsAppName('Cartaisy Shop'), 'Cartaisy Shop');
+assert.equal(easEnvAssignments({ appName: 'Cartaisy' }), null);
+assert.equal(
+  easEnvAssignments({ appName: '  Cartaisy  ', iconUrl: ICON_URL }),
+  `ICON_IMAGE_URL=${ICON_URL}`,
+);
+assert.equal(easEnvAssignments({ appName: 'Cartaisy', iconUrl: ICON_URL })?.includes('APP_NAME'), false);
 assert.equal(opsStoreId(`  ${STORE_ID}  `), STORE_ID);
 assert.equal(opsStoreId(STORE_ID_UPPER), STORE_ID_UPPER);
 assert.equal(opsStoreId(''), null);
