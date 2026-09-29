@@ -8,10 +8,8 @@ import { StoreInfoCard } from '@/components/settings/StoreInfoCard';
 import { PlanUsageCard } from '@/components/settings/PlanUsageCard';
 import { StoreSettingsForm } from '@/components/settings/StoreSettingsForm';
 import { DeleteStoreDialog } from '@/components/settings/DeleteStoreDialog';
-import { StoreLogoUpload } from '@/components/settings/StoreLogoUpload';
-import { StoreBrandingColors } from '@/components/settings/StoreBrandingColors';
 import { StoreCredentialsPanel } from '@/components/build/StoreCredentialsPanel';
-import { StoreAppBrand } from '@/components/settings/StoreAppBrand';
+import { StoreBrandingSection } from '@/components/settings/StoreBrandingSection';
 import { Button } from '@/components/ui/button';
 import { useShopifyStatus } from '@/hooks/useShopifyStatus';
 import {
@@ -185,9 +183,10 @@ function SettingsContent() {
             <ImageIcon className="w-4 h-4 text-slate-600" />
             <h2 className="text-sm font-semibold tracking-tight text-slate-900">Store Branding</h2>
           </div>
-          <StoreLogoUpload
-            currentLogo={store?.logo}
+          <StoreBrandingSection
             storeName={store?.name || session?.user?.storeName || 'Store'}
+            appName={store?.name || session?.user?.storeName || ''}
+            fallbackLogo={store?.logo ?? null}
             onLogoChange={(logoUrl) => {
               // Functional update (not `{ ...store, ... }` against the
               // render-captured `store`): a logo save and a color save can
@@ -198,8 +197,6 @@ function SettingsContent() {
               // updates in this section compose safely instead of racing.
               setStore((currentStore: typeof store) => ({ ...currentStore, logo: logoUrl }));
             }}
-          />
-          <StoreBrandingColors
             onColorsChange={(colors) => {
               setStore((currentStore: typeof store) => ({
                 ...currentStore,
@@ -207,12 +204,6 @@ function SettingsContent() {
                 secondaryColor: colors.secondaryColor,
               }));
             }}
-          />
-          <StoreAppBrand
-            appName={store?.name || session?.user?.storeName || ''}
-            logoUrl={store?.logo ?? null}
-            primaryColor={store?.primaryColor ?? null}
-            secondaryColor={store?.secondaryColor ?? null}
           />
         </div>
       )}

@@ -16,6 +16,8 @@ function source(relativePath: string): string {
 
 const viewSource = source('../../components/settings/StoreAppBrandView.tsx');
 const containerSource = source('../../components/settings/StoreAppBrand.tsx');
+const sectionSource = source('../../components/settings/StoreBrandingSection.tsx');
+const loaderSource = source('../../lib/settings/storeBranding.ts');
 const pageSource = source('../../app/dashboard/settings/page.tsx');
 
 assert.doesNotMatch(viewSource, /SmartHomePreview|HomeScreenLauncherMock|SplashBootMock/);
@@ -26,15 +28,17 @@ assert.doesNotMatch(containerSource, /console\.(log|debug|info|error|warn)/);
 assert.doesNotMatch(containerSource, /shpat_|accessToken|access_token/);
 assert.match(containerSource, /uploadBrandAsset/);
 assert.match(containerSource, /planBrandAssetSave/);
-assert.match(containerSource, /mergeStoredBrandAssets/);
-assert.match(containerSource, /fetchBranding/);
-assert.match(containerSource, /fetchStoreProfile/);
+assert.doesNotMatch(containerSource, /fetchBranding\(/);
+assert.match(loaderSource, /mergeStoredBrandAssets/);
+assert.match(loaderSource, /fetchStoreProfile/);
 assert.match(containerSource, /if \(plan\.persist === 'dashboard'\) \{[\s\S]*saveStoredBrandAsset/);
 assert.doesNotMatch(containerSource, /branding\/icon|branding\/splash|images\/signature|images\/register/);
 
 const connected = pageSource.slice(pageSource.indexOf('shopifyStatus?.isConnected && store'));
-assert.match(connected, /<StoreAppBrand/);
-assert.equal(pageSource.match(/<StoreAppBrand/g)?.length, 1);
+assert.match(connected, /<StoreBrandingSection/);
+assert.equal(pageSource.match(/<StoreBrandingSection/g)?.length, 1);
+assert.equal(sectionSource.match(/<StoreAppBrand/g)?.length, 1);
+assert.equal(pageSource.match(/<StoreAppBrand/g)?.length ?? 0, 0);
 
 assert.equal(settingsBrandImageUrl('https://cdn.example/icon.png'), 'https://cdn.example/icon.png');
 assert.equal(settingsBrandImageUrl('blob:http://localhost/1'), 'blob:http://localhost/1');

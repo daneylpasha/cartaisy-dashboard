@@ -1,20 +1,16 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { useSession } from '@/lib/auth';
 import { tokenStorage } from '@/lib/api/mutator/custom-instance';
-import { fetchBranding, fetchStoreProfile, planBrandAssetSave, saveStoredBrandAsset, uploadBrandAsset } from '@/lib/onboarding/branding';
-import { mergeStoredBrandAssets } from '@/lib/onboarding/brandAssets';
+import { planBrandAssetSave, saveStoredBrandAsset, uploadBrandAsset } from '@/lib/onboarding/branding';
 import { EMPTY_CATALOG } from '@/lib/onboarding/normalizers';
 import { loadShopifySnapshot } from '@/lib/onboarding/shopifyConnect';
 import { useReadyInstallPreview } from '@/hooks/useReadyInstallPreview';
 import type { BrandingDraft, LockedCatalog, SyncGate } from '@/lib/onboarding/types';
 import {
-  applySettingsBrandProps,
-  presentSettingsBrand,
   settingsBrandImageUrl,
   StoreAppBrandView,
-  type SettingsBrandProps,
 } from '@/components/settings/StoreAppBrandView';
 
 const QUIET_SYNC: SyncGate = {
@@ -25,47 +21,38 @@ const QUIET_SYNC: SyncGate = {
 };
 
 interface StoreAppBrandProps {
+  draft: BrandingDraft | null;
+  setDraft: Dispatch<SetStateAction<BrandingDraft | null>>;
+  loading: boolean;
+  loadError: string | null;
+  refreshKey: number;
+  onRetry: () => void;
   appName: string;
-  logoUrl?: string | null;
-  primaryColor?: string | null;
-  secondaryColor?: string | null;
-}
-
-function brandProps(input: StoreAppBrandProps): SettingsBrandProps {
-  return {
-    appName: input.appName,
-    logoUrl: input.logoUrl ?? null,
-    primaryColor: input.primaryColor ?? null,
-    secondaryColor: input.secondaryColor ?? null,
-  };
 }
 
 export function StoreAppBrand({
+  draft,
+  setDraft,
+  loading,
+  loadError,
+  refreshKey,
+  onRetry,
   appName,
-  logoUrl = null,
-  primaryColor = null,
-  secondaryColor = null,
 }: StoreAppBrandProps) {
   const installPreview = useReadyInstallPreview('settings');
   const { data: session, status } = useSession();
   const storeId = session?.user?.storeId?.trim() || null;
-  const propsRef = useRef(brandProps({ appName, logoUrl, primaryColor, secondaryColor }));
-  propsRef.current = brandProps({ appName, logoUrl, primaryColor, secondaryColor });
-  const seenProps = useRef<SettingsBrandProps | null>(null);
   const assetRequestRef = useRef({ icon: 0, splash: 0 });
   const persistedIconRef = useRef<string | null>(null);
   const persistedSplashRef = useRef<string | null>(null);
+  const seenName = useRef<string | null>(null);
   const blobs = useRef(new Set<string>());
 
-  const [draft, setDraft] = useState<BrandingDraft | null>(null);
   const [catalog, setCatalog] = useState<LockedCatalog>(EMPTY_CATALOG);
   const [sync, setSync] = useState<SyncGate>(QUIET_SYNC);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<string | null>(null);
   const [iconUploading, setIconUploading] = useState(false);
   const [splashUploading, setSplashUploading] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     const current = blobs.current;
@@ -76,83 +63,41 @@ export function StoreAppBrand({
   }, []);
 
   useEffect(() => {
+    if (!draft) return;
+    if (draft.iconPersisted) persistedIconRef.current = draft.iconUrl;
+    if (draft.splashPersisted) persistedSplashRef.current = draft.splashUrl;
+  }, [draft]);
+
+  useEffect(() => {
+    const next = appName.trim();
+    if (seenName.current === null) {
+      seenName.current = next;
+      return;
+    }
+    if (seenName.current === next) return;
+    seenName.current = next;
+    if (!next) return;
+    setDraft((current) => (current && current.appName !== next ? { ...current, appName: next } : current));
+  }, [appName, setDraft]);
+
+  useEffect(() => {
     if (status === 'loading') return;
     let cancelled = false;
     const token = tokenStorage.getToken();
-    const startedProps = propsRef.current;
 
-    async function load() {
-      if (!storeId || !token) {
-        if (!cancelled) {
-          setDraft(null);
-          setLoadError('Sign in again to edit your app icon and splash.');
-          setLoading(false);
-        }
-        return;
-      }
-
-      setLoading(true);
-      const [branding, profile, snapshot] = await Promise.all([
-        fetchBranding(storeId, token),
-        fetchStoreProfile(),
-        loadShopifySnapshot(token, storeId).catch(() => null),
-      ]);
-      if (cancelled) return;
-
-      if (!branding) {
-        setLoadError('We could not load your brand. Try again before replacing an image.');
-        setLoading(false);
-        return;
-      }
-
-      const merged = presentSettingsBrand(
-        mergeStoredBrandAssets(
-          {
-            ...branding,
-            // Blank stays blank. The in-app phone supplies its own placeholder.
-            appName: (branding.appName || startedProps.appName).trim(),
-            logoUrl: branding.logoUrl ?? settingsBrandImageUrl(startedProps.logoUrl),
-          },
-          profile.brandAssets
-        )
-      );
-      const next = applySettingsBrandProps(merged, startedProps, propsRef.current);
-      setDraft(next);
-      persistedIconRef.current = next.iconUrl;
-      persistedSplashRef.current = next.splashUrl;
-      seenProps.current = propsRef.current;
-      if (snapshot) {
-        setCatalog(snapshot.catalog);
-        setSync(snapshot.sync);
-      }
-      setLoadError(null);
-      setLoading(false);
+    async function loadSnapshot() {
+      if (!storeId || !token) return;
+      const snapshot = await loadShopifySnapshot(token, storeId).catch(() => null);
+      if (cancelled || !snapshot) return;
+      setCatalog(snapshot.catalog);
+      setSync(snapshot.sync);
     }
 
-    void load();
+    void loadSnapshot();
     return () => {
       cancelled = true;
     };
-  }, [status, storeId, reloadKey]);
-
-  useEffect(() => {
-    const next = brandProps({ appName, logoUrl, primaryColor, secondaryColor });
-    const prev = seenProps.current;
-    if (!prev) {
-      seenProps.current = next;
-      return;
-    }
-    if (
-      prev.appName === next.appName &&
-      prev.logoUrl === next.logoUrl &&
-      prev.primaryColor === next.primaryColor &&
-      prev.secondaryColor === next.secondaryColor
-    ) {
-      return;
-    }
-    seenProps.current = next;
-    setDraft((current) => (current ? applySettingsBrandProps(current, prev, next) : current));
-  }, [appName, logoUrl, primaryColor, secondaryColor]);
+  }, [status, storeId, refreshKey]);
 
   function release(url: string | null) {
     if (!url?.startsWith('blob:')) return;
@@ -242,11 +187,11 @@ export function StoreAppBrand({
       fieldError={fieldError}
       iconUploading={iconUploading}
       splashUploading={splashUploading}
-      retrying={loading && reloadKey > 0}
+      retrying={loading && refreshKey > 0}
       onRetry={() => {
         if (loading || iconUploading || splashUploading) return;
         setFieldError(null);
-        setReloadKey((key) => key + 1);
+        onRetry();
       }}
       onIconFile={(file) => void handleBrandAsset('icon', file)}
       onSplashFile={(file) => void handleBrandAsset('splash', file)}
