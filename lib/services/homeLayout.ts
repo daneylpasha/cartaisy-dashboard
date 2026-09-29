@@ -1,59 +1,120 @@
 import { connectToDatabase } from '@/lib/db';
 import { HomeLayout, IHomeLayoutSection, DEFAULT_SECTIONS } from '@/models/HomeLayout';
+import {
+  normalizeLayoutSections,
+  resolveHomeLayoutView,
+  type HomePublishStatus,
+} from '@/lib/homeLayout/publish';
 
 export interface HomeLayoutResponse {
   sections: IHomeLayoutSection[];
+  publishedSections: IHomeLayoutSection[];
+  publishedAt: string | null;
+  status: HomePublishStatus;
 }
 
-/**
- * Get home layout for a store
- */
-export async function getHomeLayout(storeId: string): Promise<HomeLayoutResponse> {
-  await connectToDatabase();
+function asSections(value: unknown): IHomeLayoutSection[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((section) => {
+    if (!section || typeof section !== 'object') return [];
+    const candidate = section as { type?: unknown; isVisible?: unknown; position?: unknown };
+    if (typeof candidate.type !== 'string' || candidate.type.length === 0) return [];
+    return [
+      {
+        type: candidate.type as IHomeLayoutSection['type'],
+        isVisible: candidate.isVisible !== false,
+        position: typeof candidate.position === 'number' ? candidate.position : 0,
+      },
+    ];
+  });
+}
 
-  let layout = await HomeLayout.findOne({ storeId });
-
-  // If no layout exists, create default
-  if (!layout) {
-    layout = await HomeLayout.create({
-      storeId,
-      sections: DEFAULT_SECTIONS,
-    });
-  }
+function toResponse(doc: {
+  sections?: unknown;
+  draftSections?: unknown;
+  publishedAt?: Date | null;
+} | null): HomeLayoutResponse {
+  const view = resolveHomeLayoutView({
+    storedSections: asSections(doc?.sections),
+    draftSections: asSections(doc?.draftSections),
+    publishedAt: doc?.publishedAt ?? null,
+    fallback: DEFAULT_SECTIONS,
+  });
 
   return {
-    sections: layout.sections.sort((a, b) => a.position - b.position),
+    sections: view.draft as IHomeLayoutSection[],
+    publishedSections: view.published as IHomeLayoutSection[],
+    publishedAt: doc?.publishedAt ? new Date(doc.publishedAt).toISOString() : null,
+    status: view.status,
   };
 }
 
 /**
- * Update home layout sections order
+ * Editor view for a store. Does not create a document, so opening App Builder
+ * does not write a layout the public feed or a shared reader could treat as live.
+ */
+export async function getHomeLayout(storeId: string): Promise<HomeLayoutResponse> {
+  await connectToDatabase();
+  const layout = await HomeLayout.findOne({ storeId }).lean();
+  return toResponse(layout);
+}
+
+/**
+ * Persist the editor draft. Does not set publishedAt and does not replace the
+ * published section snapshot.
  */
 export async function updateHomeLayout(
   storeId: string,
   sections: IHomeLayoutSection[]
 ): Promise<HomeLayoutResponse> {
   await connectToDatabase();
-
-  // Validate and normalize positions
-  const normalizedSections = sections.map((section, index) => ({
-    ...section,
-    position: index,
-  }));
+  const draftSections = normalizeLayoutSections(asSections(sections));
 
   const layout = await HomeLayout.findOneAndUpdate(
     { storeId },
-    { sections: normalizedSections },
-    { new: true, upsert: true }
-  );
+    { $set: { draftSections } },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  ).lean();
 
-  return {
-    sections: layout.sections.sort((a, b) => a.position - b.position),
-  };
+  if (!layout) {
+    throw new Error('Failed to save home layout draft');
+  }
+
+  return toResponse(layout);
 }
 
 /**
- * Toggle section visibility
+ * Copy the current editor sections into the published snapshot.
+ */
+export async function publishHomeLayout(
+  storeId: string,
+  sections: IHomeLayoutSection[]
+): Promise<HomeLayoutResponse> {
+  await connectToDatabase();
+  const published = normalizeLayoutSections(asSections(sections));
+  const publishedAt = new Date();
+
+  const layout = await HomeLayout.findOneAndUpdate(
+    { storeId },
+    {
+      $set: {
+        sections: published,
+        draftSections: published,
+        publishedAt,
+      },
+    },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  ).lean();
+
+  if (!layout) {
+    throw new Error('Failed to publish home layout');
+  }
+
+  return toResponse(layout);
+}
+
+/**
+ * Toggle visibility on the saved draft only.
  */
 export async function toggleSectionVisibility(
   storeId: string,
@@ -61,27 +122,9 @@ export async function toggleSectionVisibility(
   isVisible: boolean
 ): Promise<HomeLayoutResponse> {
   await connectToDatabase();
-
-  const layout = await HomeLayout.findOne({ storeId });
-
-  if (!layout) {
-    // Create with defaults and update the specific section
-    const sections = DEFAULT_SECTIONS.map((s) =>
-      s.type === sectionType ? { ...s, isVisible } : s
-    );
-    const newLayout = await HomeLayout.create({ storeId, sections });
-    return { sections: newLayout.sections };
-  }
-
-  // Update the specific section
-  const updatedSections = layout.sections.map((s) =>
-    s.type === sectionType ? { ...s, isVisible } : s
+  const current = await getHomeLayout(storeId);
+  const next = current.sections.map((section) =>
+    section.type === sectionType ? { ...section, isVisible } : section
   );
-
-  layout.sections = updatedSections;
-  await layout.save();
-
-  return {
-    sections: layout.sections.sort((a, b) => a.position - b.position),
-  };
+  return updateHomeLayout(storeId, next);
 }

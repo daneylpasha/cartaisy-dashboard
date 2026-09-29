@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db';
-import { HomeLayout, DEFAULT_SECTIONS } from '@/models/HomeLayout';
+import { HomeLayout } from '@/models/HomeLayout';
+import { publishedFeedSections } from '@/lib/homeLayout/publish';
 import { CarouselItem } from '@/models/CarouselItem';
 import { PromoBanner } from '@/models/PromoBanner';
 import { CalloutBanner } from '@/models/CalloutBanner';
@@ -27,12 +28,21 @@ export async function GET(request: NextRequest) {
 
     await connectToDatabase();
 
-    // Get home layout order
-    const layout = await HomeLayout.findOne({ storeId });
-    const sections = layout?.sections || DEFAULT_SECTIONS;
+    // Only a published snapshot is live. A missing publish keeps the default home.
+    const layout = await HomeLayout.findOne({ storeId }).lean();
+    const sortedSections = publishedFeedSections(layout?.publishedAt, layout?.sections);
 
-    // Sort sections by position
-    const sortedSections = [...sections].sort((a, b) => a.position - b.position);
+    if (!layout?.publishedAt) {
+      return NextResponse.json({
+        success: true,
+        data: {
+          published: false,
+          publishedAt: null,
+          sections: [],
+          layout: [],
+        },
+      });
+    }
 
     // Fetch all component data in parallel
     const [
@@ -85,6 +95,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
+        published: true,
+        publishedAt: layout.publishedAt ? new Date(layout.publishedAt).toISOString() : null,
         sections: homeFeed,
         layout: sortedSections,
       },

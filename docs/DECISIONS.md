@@ -352,6 +352,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Merchant Build my app and Settings → Build setup presentation. No new credential API and no EAS Submit change. Human review is required because this is the release handoff next to store credentials.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#88`.
 
+### App Builder publish is a snapshot on the existing home layout
+
+- Date: 2026-09-29.
+- Decision: Publish home is an explicit action on the dashboard `HomeLayout` document. The editor draft is `draftSections` plus any unsaved order or visibility changes. `sections` and `publishedAt` are the published snapshot. `PUT /api/home-layout` saves the draft only. `POST /api/home-layout/publish` copies the current editor sections into `sections` and `draftSections` and sets `publishedAt`. Opening App Builder does not insert a document. `GET /api/public/home-feed` returns an empty layout until `publishedAt` is set, then only that snapshot. A layout stored before `publishedAt` existed is not treated as published. The App Builder shows Not published yet, Published, or Draft, and the publish confirmation says this layout is what the installed app should show under the home header. The default home stays until that publish. Hidden-only publishes say the default home stays because nothing is visible. No backend field was added.
+- Reason: Dashboard #90. Save wrote the only layout and the public feed also served default sections when the merchant had not published. There was no draft versus live state.
+- Impact: App Builder, the module-stack preview, and `GET /api/public/home-feed`. The installed app still reads backend `GET /customer/homescreen`, which does not read `publishedAt`. If both databases share `homelayouts`, draft saves no longer overwrite `sections`. Module item create and edit are unchanged. No Shopify token is rendered or stored. Human review is required because this is home-module publishing.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/HOME_MODULE_EDITOR_CONTRACT.md`, `docs/TESTING.md`. GitHub issue: `#90`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.
