@@ -5,6 +5,8 @@ import {
   installPreviewMode,
   installPreviewWhileLoading,
   previewStepLead,
+  INSTALL_QR_WAIT_COPY,
+  installQrSlots,
   readyInstallsFromList,
   readyInstallsFromRequest,
   settingsBrandLead,
@@ -18,8 +20,8 @@ const IOS = 'https://u.expo.dev/artifact/ios';
 
 function request(
   id: string,
-  android: PlatformStatus,
-  ios: PlatformStatus,
+  android: PlatformStatus | 'unknown',
+  ios: PlatformStatus | 'unknown',
   urls?: { android?: string | null; ios?: string | null }
 ): BuildRequest {
   return {
@@ -74,6 +76,38 @@ const newerFirst = readyInstallsFromList([
 ]);
 assert.equal(newerFirst.find((install) => install.platform === 'android')?.url, ANDROID);
 assert.equal(newerFirst.find((install) => install.platform === 'ios')?.url, IOS);
+
+const queuedSlots = installQrSlots(request('66f1c2e0a1b2c3d4e5f60720', 'queued', 'building'));
+assert.deepEqual(
+  queuedSlots.map((slot) => ({ platform: slot.platform, url: slot.url })),
+  [
+    { platform: 'android', url: null },
+    { platform: 'ios', url: null },
+  ]
+);
+
+const readyGap = installQrSlots(request('66f1c2e0a1b2c3d4e5f60721', 'ready', 'not_requested'));
+assert.deepEqual(readyGap, [{ platform: 'android', label: 'Android', url: null }]);
+
+const mixedSlots = installQrSlots(
+  request('66f1c2e0a1b2c3d4e5f60722', 'ready', 'building', { android: ANDROID, ios: IOS })
+);
+assert.equal(mixedSlots[0]?.url, ANDROID);
+assert.equal(mixedSlots[1]?.url, null);
+assert.equal(mixedSlots[1]?.label, 'iOS');
+
+const appleWait = installQrSlots(request('66f1c2e0a1b2c3d4e5f60723', 'waiting_on_merchant', 'waiting_on_merchant'));
+assert.deepEqual(appleWait, []);
+
+const failedOnly = installQrSlots(request('66f1c2e0a1b2c3d4e5f60724', 'failed', 'failed'));
+assert.deepEqual(failedOnly, []);
+
+const unknownSlot = installQrSlots(request('66f1c2e0a1b2c3d4e5f60725', 'unknown', 'not_requested'));
+assert.deepEqual(unknownSlot, [{ platform: 'android', label: 'Android', url: null }]);
+
+assert.equal(installQrSlots(null).length, 0);
+assert.match(INSTALL_QR_WAIT_COPY, /scannable install code/);
+assert.doesNotMatch(INSTALL_QR_WAIT_COPY, /qr|eas|cartaisy|expo/i);
 
 assert.equal(showsBrandMock(undefined), true);
 assert.equal(showsBrandMock({ phase: 'loading', installs: [] }), false);

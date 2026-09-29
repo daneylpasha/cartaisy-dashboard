@@ -312,6 +312,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Merchant Build my app, the brand step, the preview step, and Settings Store Branding. No new backend field. No Shopify token and no Expo token is rendered or sent. Human review is required because this is the merchant-facing install handoff and the branding preview.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issues: `#76`, `#77`.
 
+### Build my app holds the install-code row before the URL exists
+
+- Date: 2026-09-29.
+- Decision: On Build my app, each platform that is `queued`, `building`, `ready` without a public https `installUrl`, or still unrecognized keeps a card in the install-code row above the progress cards. The card uses the same frame as the code and says a scannable install code will appear when the preview is ready. It does not draw a code, invent a URL, or call a QR host. When a public https URL arrives, that card becomes the code, the URL as text, and Copy link. The row stays, so the progress cards do not jump down from an empty gap. A platform that is `failed`, `not_requested`, or `waiting_on_merchant` does not take a slot in that row. The queued, building, and ready progress rail stays. Brand, Preview, and Settings still hide the phone mock only under the rules from the 2026-09-29 install-preview decision.
+- Reason: Dashboard #80. Before the install URL existed, that row was absent, so the code appearing later pushed the page. Merchants need to see that scanning comes next.
+- Impact: Merchant Build my app presentation. No backend field. No Shopify token and no Expo token is rendered or sent. Human review is required because this is the merchant-facing install handoff.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#80`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

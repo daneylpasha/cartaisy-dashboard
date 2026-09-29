@@ -21,7 +21,7 @@ import type { BuildRequestAvailability } from '@/lib/onboarding/types';
 import { InstallQrBoard } from '@/components/build/InstallQrBoard';
 import { LauncherReadinessStrip } from '@/components/onboarding/LauncherReadinessStrip';
 import { StoreSubmitControl } from '@/components/build/StoreSubmitControl';
-import { readyInstallsFromRequest } from '@/lib/build/installPreview';
+import { installQrSlots } from '@/lib/build/installPreview';
 import {
   credentialForSubmit,
   presentStoreSubmit,
@@ -317,7 +317,7 @@ export function BuildMyAppView({
   const iosStatus = mode === 'status' && request ? request.platforms.ios.status : null;
   const androidInstall = mode === 'status' && request ? request.platforms.android.installUrl : null;
   const iosInstall = mode === 'status' && request ? request.platforms.ios.installUrl : null;
-  const installCodes = mode === 'status' ? readyInstallsFromRequest(request) : [];
+  const installSlots = mode === 'status' ? installQrSlots(request) : [];
   const settled = request ? isSettledBuildRequest(request) : false;
   const summary = mode === 'status' && request ? outcomeCopy(request) : null;
   const submitLive = Boolean(
@@ -385,7 +385,7 @@ export function BuildMyAppView({
         {launcher}
       </div>
 
-      {installCodes.length > 0 ? <InstallQrBoard installs={installCodes} /> : null}
+      {installSlots.length > 0 ? <InstallQrBoard slots={installSlots} /> : null}
 
       <fieldset className="mt-6 min-w-0">
         <legend className="text-sm font-medium text-slate-950">Platforms</legend>
