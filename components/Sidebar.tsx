@@ -266,7 +266,7 @@ function SidebarContent({
         )}
       </div>
 
-      <nav className="flex-1 space-y-4 overflow-y-auto px-2 py-3" aria-label="Dashboard">
+      <nav className="min-h-0 flex-1 space-y-4 overflow-y-auto px-2 py-3" aria-label="Dashboard">
         {groups.map((group) => (
           <NavGroup key={group.id} group={group} collapsed={collapsed} onNavigate={onNavigate} />
         ))}
@@ -434,7 +434,7 @@ export function Sidebar({ mobileOpen, onMobileOpenChange }: SidebarProps) {
     <>
       <aside
         className={cn(
-          'hidden h-screen shrink-0 flex-col border-r border-slate-200 bg-white transition-[width] duration-200 md:flex',
+          'hidden h-full min-h-0 shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white transition-[width] duration-200 md:flex',
           collapsed ? 'w-[72px]' : 'w-60'
         )}
       >
