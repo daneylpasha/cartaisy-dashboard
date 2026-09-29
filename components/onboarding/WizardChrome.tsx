@@ -1,9 +1,11 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { displayBrandImageUrl } from '@/lib/onboarding/brandAssets';
+import { safeImageUrl } from '@/lib/onboarding/normalizers';
 import type { OnboardingStep } from '@/lib/onboarding/types';
 import { ONBOARDING_STEPS } from '@/lib/onboarding/types';
 
@@ -44,6 +46,27 @@ export function wizardHeaderMark(...values: Array<string | null | undefined>): s
   return WIZARD_HEADER_FALLBACK;
 }
 
+/**
+ * Image beside the header name. The app icon wins; the logo is used only
+ * when that icon is not a drawable URL. Public https and in-memory blob
+ * previews only. `safeImageUrl` drops other schemes, and
+ * `displayBrandImageUrl` drops token-shaped values.
+ */
+export function wizardHeaderImageUrl(
+  iconUrl?: string | null,
+  logoUrl?: string | null
+): string | null {
+  for (const value of [iconUrl, logoUrl]) {
+    if (typeof value !== 'string') continue;
+    const safe = safeImageUrl(value.trim() || null);
+    if (!safe) continue;
+    const url = displayBrandImageUrl(safe);
+    if (!url) continue;
+    if (url.startsWith('https:') || url.startsWith('blob:')) return url;
+  }
+  return null;
+}
+
 interface WizardChromeProps {
   step: OnboardingStep;
   wide?: boolean;
@@ -51,6 +74,10 @@ interface WizardChromeProps {
   appName?: string | null;
   /** Session or profile store name. Used when the app name is not a mark. */
   storeName?: string | null;
+  /** Branding app icon, including an unsaved blob preview. */
+  iconUrl?: string | null;
+  /** Branding logo. Shown only when the icon is not drawable. */
+  logoUrl?: string | null;
   children: ReactNode;
 }
 
@@ -59,17 +86,44 @@ export function WizardChrome({
   wide = false,
   appName = null,
   storeName = null,
+  iconUrl = null,
+  logoUrl = null,
   children,
 }: WizardChromeProps) {
   const currentIndex = ONBOARDING_STEPS.indexOf(step);
   const mark = wizardHeaderMark(appName, storeName);
+  const imageUrl = wizardHeaderImageUrl(iconUrl, logoUrl);
+  const [brokenFor, setBrokenFor] = useState<string | null>(null);
+  const showImage = Boolean(imageUrl) && brokenFor !== imageUrl;
+  const markBroken = (src: string) => {
+    setBrokenFor((current) => (current === src ? current : src));
+  };
 
   return (
     <div className="min-h-screen bg-[#f5f5f6] text-slate-900">
       <header className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-5 sm:px-8">
-        <p className="min-w-0 truncate font-heading text-[15px] font-semibold tracking-tight text-slate-950">
-          {mark}
-        </p>
+        <div className="flex min-w-0 items-center gap-2.5">
+          {showImage && imageUrl ? (
+            // Merchant hosts and session blob previews are outside the image allowlist.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={imageUrl}
+              alt=""
+              width={32}
+              height={32}
+              referrerPolicy="no-referrer"
+              decoding="async"
+              ref={(node) => {
+                if (node?.complete && node.naturalWidth === 0) markBroken(imageUrl);
+              }}
+              onError={() => markBroken(imageUrl)}
+              className="size-8 shrink-0 rounded-lg object-cover ring-1 ring-slate-200"
+            />
+          ) : null}
+          <p className="min-w-0 truncate font-heading text-[15px] font-semibold tracking-tight text-slate-950">
+            {mark}
+          </p>
+        </div>
         <Link
           href="/dashboard"
           className="shrink-0 text-sm text-slate-600 transition-colors hover:text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"

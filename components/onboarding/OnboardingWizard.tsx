@@ -491,6 +491,8 @@ export function OnboardingWizard() {
       wide={step === 'brand' || step === 'preview'}
       appName={draft.appName}
       storeName={session?.user?.storeName}
+      iconUrl={draft.iconUrl}
+      logoUrl={draft.logoUrl}
     >
       <AnimatePresence mode="wait">
         <motion.div key={loading ? 'loading' : step} {...motionProps}>
