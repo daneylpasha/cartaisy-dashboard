@@ -137,11 +137,11 @@ export function OnboardingWizard() {
   const refreshShopifySnapshot = useCallback(async () => {
     const token = tokenStorage.getToken();
     if (!token) return;
-    const snapshot = await loadShopifySnapshot(token, storeId);
+    const snapshot = await loadShopifySnapshot(token);
     setConnection(snapshot.connection);
     setSync(snapshot.sync);
     setCatalog(snapshot.catalog);
-  }, [storeId]);
+  }, []);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -160,7 +160,7 @@ export function OnboardingWizard() {
       }
 
       const [snapshot, branding, profile] = await Promise.all([
-        loadShopifySnapshot(token, storeId),
+        loadShopifySnapshot(token),
         fetchBranding(storeId, token),
         fetchStoreProfile(),
       ]);

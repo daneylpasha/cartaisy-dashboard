@@ -464,6 +464,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Brand facts on the Go live strip and the setup checklist. No new backend field. No Shopify token is rendered or sent. Human review is required because this is the branding read on the merchant frame.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`.
 
+### The shopper phone mock is removed
+
+- Date: 2026-09-29.
+- Decision: Brand, Preview, and Settings show `BrandInstallPreview`: first-build instructions when no ready public https install URL exists, and a compact Expo install code when one does. `/dashboard/app-builder/preview` is a module stack, not a shopper phone. `components/onboarding/SmartHomePreview.tsx` and `lib/onboarding/shopperChrome.ts` are deleted. No route mounts a shopper phone frame. `loadShopifySnapshot` still reads catalog counts and collection names. It does not request preview product tiles. Branding editors, Go live, Build, Publish, and Use logo stay as they are.
+- Reason: Dashboard #126. The product rule from dashboard #99 is that a branding phone is not a preview of the installable app. Leaving the unmounted component in the repo invited an agent to mount it again.
+- Impact: Dead preview code and the docs that described it. Install QR and first-build instructions are unchanged. The onboarding snapshot no longer calls `GET /products` for phone tiles. No Shopify Admin token is sent. Human review is required because this sits on the merchant-facing branding preview and drops a Shopify catalog read that existed only for that phone.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/HOME_MODULE_EDITOR_CONTRACT.md`, `docs/TESTING.md`. GitHub issue: `#126`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.
