@@ -11,9 +11,12 @@ import type { BrandingDraft, SyncGate } from '@/lib/onboarding/types';
 import { fetchBranding } from '@/lib/onboarding/branding';
 import {
   ensureShellBrandingSession,
+  readShellBranding,
   resetShellBrandingSessions,
   shellBrandingSession,
+  type ShellBrandingSession,
 } from '@/lib/dashboard/shellBranding';
+import { loadBrandRead } from '@/lib/dashboard/loadHome';
 import { applySettingsColors, applySettingsLogo, loadSettingsBrandingDraft } from '@/lib/settings/storeBranding';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -34,6 +37,9 @@ const brandingHelperSource = source('../onboarding/branding.ts');
 const shellSource = source('../../components/dashboard/DashboardShell.tsx');
 const providerSource = source('../../components/dashboard/DashboardBrandingProvider.tsx');
 const shellLoadSource = source('../dashboard/shellBranding.ts');
+const loadHomeSource = source('../dashboard/loadHome.ts');
+const wizardSource = source('../../components/onboarding/OnboardingWizard.tsx');
+const buildPanelSource = source('../../components/onboarding/BuildMyAppPanel.tsx');
 
 for (const file of [logoSource, colorsSource, appBrandSource, pageSource]) {
   assert.doesNotMatch(file, /fetchBranding/);
@@ -69,6 +75,7 @@ assert.doesNotMatch(sidebarSource, /console\.(log|debug|info|error|warn)/);
 assert.match(sidebarSource, /useDashboardBranding/);
 assert.equal(sidebarSource.match(/<SidebarContent/g)?.length, 2);
 assert.match(sidebarSource, /\{mobileOpen \? \([\s\S]*<SidebarContent/);
+assert.match(shellSource, /if \(isOnboarding\) \{[\s\S]*<DashboardBrandingProvider>/);
 assert.match(shellSource, /<DashboardBrandingProvider>/);
 assert.match(providerSource, /ensureShellBrandingSession\([\s\S]*fetchBranding\)/);
 assert.equal(providerSource.match(/fetchBranding\(/g)?.length ?? 0, 0);
@@ -77,6 +84,17 @@ assert.match(shellLoadSource, /reloadKey <= current\.reloadKey\) return current/
 assert.match(shellLoadSource, /promise: load\(storeId, token\)/);
 assert.match(shellLoadSource, /session\.draft = draft/);
 assert.match(shellLoadSource, /session\.settled = true/);
+assert.match(shellLoadSource, /__cartaisyShellBranding/);
+assert.match(shellLoadSource, /globalThis/);
+assert.match(shellLoadSource, /if \(current\) return current\.promise/);
+assert.match(loadHomeSource, /readShellBranding\(storeId, token, fetchBranding\)/);
+assert.doesNotMatch(loadHomeSource, /await fetchBranding\(/);
+assert.match(loadHomeSource, /merchantDisplayName\(draft\.appName\)/);
+assert.match(loadHomeSource, /persistedBrandImageUrl\(draft\.iconUrl\)/);
+assert.match(wizardSource, /fetchBranding\(storeId, token\)/);
+assert.doesNotMatch(wizardSource, /readShellBranding|DashboardBrandingProvider/);
+assert.match(buildPanelSource, /fetchBranding\(storeId, token\)/);
+assert.doesNotMatch(buildPanelSource, /readShellBranding|DashboardBrandingProvider/);
 assert.match(brandingHelperSource, /inflightBranding/);
 assert.match(brandingHelperSource, /if \(pending\) return pending/);
 assert.match(brandingHelperSource, /globalThis/);
@@ -425,9 +443,152 @@ async function checkShellKeepsSettledLoad() {
   }
 }
 
+async function withHomeToken<T>(token: string | null, run: () => Promise<T>): Promise<T> {
+  const host = globalThis as { window?: unknown; localStorage?: unknown };
+  const previousWindow = host.window;
+  const previousStorage = host.localStorage;
+  const jar = new Map<string, string>();
+  if (token) jar.set('cartaisy_token', token);
+  host.window = globalThis;
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    value: {
+      getItem: (key: string) => jar.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        jar.set(key, value);
+      },
+      removeItem: (key: string) => {
+        jar.delete(key);
+      },
+    },
+  });
+  try {
+    return await run();
+  } finally {
+    host.window = previousWindow;
+    if (previousStorage) {
+      Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: previousStorage });
+    } else {
+      delete host.localStorage;
+    }
+  }
+}
+
+async function checkHomeReusesShellBranding() {
+  resetShellBrandingSessions();
+  const realFetch = globalThis.fetch;
+  let brandingGets = 0;
+  globalThis.fetch = async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (!url.endsWith('/branding')) throw new Error(`unexpected fetch ${url}`);
+    brandingGets += 1;
+    return new Response(
+      JSON.stringify({
+        data: {
+          appName: 'Northwind',
+          logoUrl: 'https://cdn.example/logo.png',
+          primaryColor: '#0F766E',
+          secondaryColor: null,
+          iconUrl: 'https://cdn.example/icon.png',
+          splashUrl: null,
+        },
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  };
+
+  try {
+    const shell = ensureShellBrandingSession('store-home', 'sidebar-token', 0, fetchBranding);
+    assert.ok(shell);
+    await shell.promise;
+    assert.equal(shell.settled, true);
+    assert.equal(brandingGets, 1);
+    const registry = (
+      globalThis as { __cartaisyInflightBranding?: Map<string, Promise<unknown>> }
+    ).__cartaisyInflightBranding;
+    assert.equal(registry?.has('store-home'), false);
+
+    const settled = await withHomeToken('home-token', () => loadBrandRead('store-home'));
+    assert.equal(brandingGets, 1);
+    assert.equal(settled.known, true);
+    assert.equal(settled.displayName, 'Northwind');
+    assert.equal(settled.hasIcon, true);
+    assert.equal(settled.saved, true);
+
+    const unsigned = await withHomeToken(null, () => loadBrandRead('store-home'));
+    assert.equal(brandingGets, 1);
+    assert.equal(unsigned.known, false);
+    assert.equal(unsigned.saved, null);
+    assert.equal(unsigned.displayName, null);
+    assert.equal(unsigned.hasIcon, false);
+
+    let release: (draft: BrandingDraft | null) => void = () => {};
+    const gate = new Promise<BrandingDraft | null>((resolve) => {
+      release = resolve;
+    });
+    const inflight = ensureShellBrandingSession('store-flight', 'sidebar-token', 0, () => gate);
+    assert.ok(inflight);
+    assert.equal(inflight.settled, false);
+    const joined = readShellBranding('store-flight', 'home-token', fetchBranding);
+    assert.equal(joined, inflight.promise);
+    const pending = withHomeToken('home-token', () => loadBrandRead('store-flight'));
+    assert.equal(brandingGets, 1);
+    release(saved);
+    const flown = await pending;
+    assert.equal(brandingGets, 1);
+    assert.equal(flown.displayName, 'Northwind');
+    assert.equal(flown.hasIcon, true);
+    assert.equal(flown.saved, true);
+    assert.equal(inflight.settled, true);
+
+    const failed = ensureShellBrandingSession('store-miss', 'sidebar-token', 0, async () => null);
+    await failed?.promise;
+    const missed = await withHomeToken('home-token', () => loadBrandRead('store-miss'));
+    assert.equal(brandingGets, 1);
+    assert.equal(missed.known, false);
+    assert.equal(missed.saved, null);
+    assert.equal(missed.displayName, null);
+    assert.equal(missed.hasIcon, false);
+
+    const beforeCold = brandingGets;
+    const cold = await withHomeToken('home-token', () => loadBrandRead('store-cold'));
+    assert.equal(brandingGets, beforeCold + 1);
+    assert.equal(cold.displayName, 'Northwind');
+    assert.equal(cold.hasIcon, true);
+    const again = await withHomeToken('home-token', () => loadBrandRead('store-cold'));
+    assert.equal(brandingGets, beforeCold + 1);
+    assert.equal(again.displayName, cold.displayName);
+    assert.equal(again.hasIcon, true);
+    assert.equal(shellBrandingSession('store-cold')?.settled, true);
+
+    const harbor: BrandingDraft = { ...saved, appName: 'Harbor', iconUrl: null };
+    const planted: ShellBrandingSession = {
+      storeId: 'store-other-chunk',
+      reloadKey: 0,
+      promise: Promise.resolve(harbor),
+      draft: harbor,
+      settled: true,
+    };
+    const host = globalThis as { __cartaisyShellBranding?: Map<string, ShellBrandingSession> };
+    assert.ok(host.__cartaisyShellBranding instanceof Map);
+    host.__cartaisyShellBranding.set('store-other-chunk', planted);
+    const beforePlanted = brandingGets;
+    const otherChunk = await withHomeToken('home-token', () => loadBrandRead('store-other-chunk'));
+    assert.equal(brandingGets, beforePlanted);
+    assert.equal(otherChunk.displayName, 'Harbor');
+    assert.equal(otherChunk.hasIcon, false);
+    assert.equal(otherChunk.saved, true);
+    assert.equal(otherChunk.known, true);
+  } finally {
+    globalThis.fetch = realFetch;
+    resetShellBrandingSessions();
+  }
+}
+
 checkSingleLoad()
   .then(() => checkSharedNetworkGet())
   .then(() => checkShellKeepsSettledLoad())
+  .then(() => checkHomeReusesShellBranding())
   .then(() => {
     console.log('settings branding check ok');
   })
