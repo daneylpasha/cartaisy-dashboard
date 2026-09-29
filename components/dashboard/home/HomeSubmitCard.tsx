@@ -48,11 +48,38 @@ function NoticeLine({ notice }: { notice: HomeSubmitNotice }) {
 /**
  * Quiet store-submit notes on Home. Absent until a submit is moving, sent, or failed.
  * Build is where the merchant starts or retries a submit.
+ * Folded into Go live, the notes stay and do not add a second filled action.
  */
-export function HomeSubmitCard({ notices }: { notices: HomeSubmitNotice[] }) {
+export function HomeSubmitCard({
+  notices,
+  folded = false,
+  link = true,
+}: {
+  notices: HomeSubmitNotice[];
+  folded?: boolean;
+  link?: boolean;
+}) {
   const title = homeSubmitTitle(notices);
   if (!title) return null;
   const retry = notices.every((notice) => notice.tone === 'failed');
+  const action = link ? (
+    <Link href={BUILD_MY_APP_HREF} className={LINK}>
+      {retry ? 'Open Build to try again' : 'Open Build'}
+    </Link>
+  ) : null;
+
+  if (folded) {
+    return (
+      <div data-home-submit="">
+        <ul className="space-y-3">
+          {notices.map((notice) => (
+            <NoticeLine key={notice.platform} notice={notice} />
+          ))}
+        </ul>
+        {action}
+      </div>
+    );
+  }
 
   return (
     <section data-home-submit="" className="mt-8 rounded-xl border border-slate-200 bg-white px-5 py-5">
@@ -62,9 +89,7 @@ export function HomeSubmitCard({ notices }: { notices: HomeSubmitNotice[] }) {
           <NoticeLine key={notice.platform} notice={notice} />
         ))}
       </ul>
-      <Link href={BUILD_MY_APP_HREF} className={LINK}>
-        {retry ? 'Open Build to try again' : 'Open Build'}
-      </Link>
+      {action}
     </section>
   );
 }

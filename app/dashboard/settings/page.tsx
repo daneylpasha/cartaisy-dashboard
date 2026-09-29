@@ -220,7 +220,7 @@ function SettingsContent() {
       )}
 
       {/* Shopify Connection Section */}
-      <div>
+      <div id="shopify-connection" className="scroll-mt-20">
         <div className="flex items-center gap-2 mb-3">
           <Link className="w-4 h-4 text-slate-600" />
           <h2 className="text-sm font-semibold tracking-tight text-slate-900">Shopify Connection</h2>

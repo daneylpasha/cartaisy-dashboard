@@ -20,9 +20,12 @@ const QUIET =
 export function ShopifyCatalogBlockPanel({
   block,
   shop,
+  embedded = false,
 }: {
   block: ShopifyCatalogBlockKind;
   shop: string | null;
+  /** Sits inside another card. The outer frame stays on the parent. */
+  embedded?: boolean;
 }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +46,10 @@ export function ShopifyCatalogBlockPanel({
   };
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white px-5 py-5" aria-live="polite">
+    <section
+      className={embedded ? 'border-t border-slate-100 px-5 py-5' : 'rounded-xl border border-slate-200 bg-white px-5 py-5'}
+      aria-live="polite"
+    >
       <h2 className="text-sm font-semibold text-slate-950">{copy.headline}</h2>
       <p className="mt-1 max-w-md text-sm leading-6 text-slate-600">{copy.support}</p>
       {shop ? (

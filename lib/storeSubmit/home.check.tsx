@@ -32,11 +32,15 @@ function source(relativePath: string): string {
 const loadHomeSource = source('../dashboard/loadHome.ts');
 const cardSource = source('../../components/dashboard/home/HomeSubmitCard.tsx');
 const homeSource = source('../../components/dashboard/home/ConnectedHome.tsx');
+const stripSource = source('../../components/dashboard/home/GoLiveStrip.tsx');
 const controlSource = source('../../components/build/StoreSubmitControl.tsx');
 
 assert.match(loadHomeSource, /listStoreSubmits/);
 assert.match(loadHomeSource, /focusBuildRequest/);
-assert.match(homeSource, /HomeSubmitCard/);
+assert.match(loadHomeSource, /submitKnown/);
+assert.match(homeSource, /GoLiveStrip/);
+assert.doesNotMatch(homeSource, /HomeSubmitCard/);
+assert.match(stripSource, /HomeSubmitCard/);
 assert.match(cardSource, /BUILD_MY_APP_HREF/);
 assert.doesNotMatch(cardSource, /startStoreSubmit|EXPO_TOKEN|easBuildId|easSubmissionId|private_key|shpat_/);
 assert.doesNotMatch(cardSource, /console\.(log|debug|info|error|warn)/);
@@ -89,7 +93,13 @@ function facts(submitNotices: HomeSubmitNotice[], installs: ConnectedHomeFacts['
     installs,
     previewBuilding: false,
     submitNotices,
+    submitKnown: true,
     homeLayout: null,
+    syncState: 'succeeded',
+    catalogEligible: true,
+    brand: { known: true, displayName: 'Northwind', hasIcon: true },
+    accounts: { known: true, apple: 'connected', google: 'connected' },
+    previewPhase: installs.length > 0 ? 'ready' : 'none',
   };
 }
 

@@ -1,18 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { ShopifyCatalogBlockPanel } from '@/components/shopify/ShopifyCatalogBlockPanel';
-import { HomeInstallCard } from '@/components/dashboard/home/HomeInstallCard';
-import { HomePreviewBuildingCard } from '@/components/dashboard/home/HomePreviewBuildingCard';
-import { HomeSubmitCard } from '@/components/dashboard/home/HomeSubmitCard';
+import { GoLiveStrip } from '@/components/dashboard/home/GoLiveStrip';
 import type { ConnectedHomeFacts } from '@/lib/dashboard/loadHome';
-import {
-  APP_BUILDER_PUBLISH_HREF,
-  HOME_PUBLISH_COPY,
-  type HomeLayoutOverview,
-  type HomePublishStatus,
-} from '@/lib/homeLayout/publish';
 
 export function ConnectedHome({
   storeName,
@@ -27,8 +17,6 @@ export function ConnectedHome({
   const orderCount = facts.orderCount;
   const showProducts = productCount != null && productCount > 0;
   const showOrders = orderCount != null && orderCount > 0;
-  const builderIsPrimary = facts.modules.kind === 'empty' && !facts.next;
-
   return (
     <div className="mx-auto w-full max-w-3xl motion-safe:animate-in motion-safe:fade-in motion-safe:duration-300">
       <h1 className="font-heading text-[1.75rem] font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
@@ -38,50 +26,36 @@ export function ConnectedHome({
         {shop ? `Connected to ${shop}.` : 'Shopify is connected.'}
       </p>
 
-      {facts.installs.length > 0 ? (
-        <HomeInstallCard installs={facts.installs} />
-      ) : facts.previewBuilding ? (
-        <HomePreviewBuildingCard />
-      ) : null}
-      <HomeSubmitCard notices={facts.submitNotices} />
-      {facts.homeLayout ? <HomeLayoutStatus layout={facts.homeLayout} /> : null}
+      <GoLiveStrip
+        shop={shop}
+        installs={facts.installs}
+        input={{
+          catalogBlock: facts.catalogBlock,
+          syncState: facts.syncState,
+          syncLabel: facts.syncLabel,
+          syncDetail: facts.syncDetail,
+          catalogEligible: facts.catalogEligible,
+          brand: facts.brand,
+          homeLayout: facts.homeLayout,
+          preview: facts.previewPhase,
+          previewDetail: facts.buildDetail,
+          accounts: facts.accounts,
+          submitKnown: facts.submitKnown,
+          submitNotices: facts.submitNotices,
+        }}
+      />
 
-      {facts.next && (
-        <section className="mt-8 flex flex-col gap-4 rounded-xl border border-slate-200 bg-white px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-sm font-semibold text-slate-950">{facts.next.title}</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">{facts.next.body}</p>
-          </div>
-          <Button asChild className="h-11 w-full shrink-0 rounded-lg px-4 sm:w-auto">
-            <Link href={facts.next.href}>{facts.next.action}</Link>
-          </Button>
-        </section>
-      )}
-
-      {facts.catalogBlock && (
-        <div className="mt-8">
-          <ShopifyCatalogBlockPanel block={facts.catalogBlock} shop={shop} />
+      {(showProducts || showOrders || facts.modules.kind === 'counts') && (
+        <div className="mt-6 divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white">
+          {showProducts && productCount != null && (
+            <StatusRow label="Products" value={productCount.toLocaleString()} />
+          )}
+          {showOrders && orderCount != null && <StatusRow label="Orders" value={orderCount.toLocaleString()} />}
+          {facts.modules.kind === 'counts' && (
+            <StatusRow label="Home sections" value={facts.modules.total.toLocaleString()} />
+          )}
         </div>
       )}
-
-      <div className="mt-6 divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <StatusRow label="Shopify" value={shop || 'Connected'} />
-        <StatusRow label="Catalog" value={facts.syncLabel} detail={facts.syncDetail} />
-        <StatusRow
-          label="App build"
-          value={facts.buildLabel}
-          detail={facts.buildDetail}
-          href={facts.buildState === 'unknown' ? null : '/dashboard/onboarding?step=ready'}
-          hrefLabel={facts.buildState === 'none' ? 'Request' : 'View'}
-        />
-        {showProducts && productCount != null && (
-          <StatusRow label="Products" value={productCount.toLocaleString()} />
-        )}
-        {showOrders && orderCount != null && <StatusRow label="Orders" value={orderCount.toLocaleString()} />}
-        {facts.modules.kind === 'counts' && (
-          <StatusRow label="Home sections" value={facts.modules.total.toLocaleString()} />
-        )}
-      </div>
 
       {facts.modules.kind === 'counts' && (
         <ul className="mt-3 flex flex-wrap gap-2">
@@ -102,18 +76,12 @@ export function ConnectedHome({
           <p className="mt-1 max-w-md text-sm leading-6 text-slate-600">
             Carousels, banners, and collections show up here after you add them in the app builder.
           </p>
-          {builderIsPrimary ? (
-            <Button asChild className="mt-4 h-11 rounded-lg px-4">
-              <Link href="/dashboard/app-builder">Open app builder</Link>
-            </Button>
-          ) : (
-            <Link
-              href="/dashboard/app-builder"
-              className="mt-3 inline-flex text-sm font-medium text-slate-950 underline-offset-4 hover:underline"
-            >
-              Open app builder
-            </Link>
-          )}
+          <Link
+            href="/dashboard/app-builder"
+            className="mt-3 inline-flex text-sm font-medium text-slate-950 underline-offset-4 hover:underline"
+          >
+            Open app builder
+          </Link>
         </section>
       )}
 
@@ -135,38 +103,6 @@ export function ConnectedHome({
         </section>
       )}
     </div>
-  );
-}
-
-const LAYOUT_PILL: Record<HomePublishStatus, string> = {
-  not_published: 'bg-slate-100 text-slate-700',
-  published: 'bg-emerald-50 text-emerald-800',
-  draft: 'bg-amber-50 text-amber-800',
-};
-
-function HomeLayoutStatus({ layout }: { layout: HomeLayoutOverview }) {
-  return (
-    <section
-      data-home-layout={layout.status}
-      className="mt-8 flex flex-col gap-4 rounded-xl border border-slate-200 bg-white px-5 py-5 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-sm font-semibold text-slate-950">Home layout</h2>
-          <span
-            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${LAYOUT_PILL[layout.status]}`}
-          >
-            {layout.label}
-          </span>
-        </div>
-        <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">{layout.detail}</p>
-      </div>
-      {layout.needsPublish ? (
-        <Button asChild className="h-11 w-full shrink-0 rounded-lg px-4 sm:w-auto">
-          <Link href={APP_BUILDER_PUBLISH_HREF}>{HOME_PUBLISH_COPY.action}</Link>
-        </Button>
-      ) : null}
-    </section>
   );
 }
 
