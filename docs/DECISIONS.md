@@ -336,6 +336,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Connected Home presentation. No backend field. No Shopify token and no Expo token is rendered or sent. Build wait and QR UI are unchanged. Human review is required because this is the merchant-facing install handoff.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#84`.
 
+### A finished store submit says what happens next
+
+- Date: 2026-09-29.
+- Decision: When a store submit is `submitted`, Build my app and Settings → Build setup show a confirmation on that platform card: sent to App Store Connect or Google Play, that the store may still review it, where to look (App Store Connect or Play Console), and a plain review-time note. Android still names the internal testing track. The screen does not invent a store URL. `failed` shows a short title and the safe `message`, or the fixed fallback, and Submit again. `queued` and `submitting` stay a quiet status on that card. Home, for a connected store, shows the same notes for the focused build request (an in-flight build, otherwise the first in the list) when that request has a submit that is `queued`, `submitting`, `submitted`, or `failed`, and links to Build. Home does not start a submit. If that submit list fails, the Home card stays off. No private key, service-account JSON, Expo token, or submit id is rendered.
+- Reason: Dashboard #85. After submit, the status line was easy to miss and did not say where to check the review.
+- Impact: Merchant Build my app, Settings → Build setup, and connected Home presentation. No new backend field. No Shopify token and no store private key is rendered or sent. Human review is required because this is the release handoff the merchant reads after submit.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#85`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

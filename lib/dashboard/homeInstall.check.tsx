@@ -77,6 +77,7 @@ function facts(installs: ReadyInstall[], extra?: Partial<ConnectedHomeFacts>): C
     catalogBlock: null,
     installs,
     previewBuilding: false,
+    submitNotices: [],
     ...extra,
   };
 }

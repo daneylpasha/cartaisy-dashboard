@@ -1,5 +1,6 @@
 'use client';
 
+import { Check } from 'lucide-react';
 import { STORE_ACCOUNTS_ANCHOR, type StoreSubmitPresentation } from '@/lib/storeSubmit/contract';
 
 const PRIMARY_BUTTON =
@@ -12,9 +13,8 @@ const LINK =
   'text-sm font-medium text-slate-950 underline decoration-slate-300 underline-offset-4 transition-colors hover:decoration-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400';
 
 function pillClass(tone: StoreSubmitPresentation['tone']): string {
-  if (tone === 'submitted') return 'bg-emerald-50 text-emerald-800';
   if (tone === 'failed') return 'bg-red-50 text-red-800';
-  return 'bg-slate-950 text-white';
+  return 'bg-slate-100 text-slate-700';
 }
 
 export function StoreSubmitControl({
@@ -26,16 +26,46 @@ export function StoreSubmitControl({
   onSubmit: () => void;
   connectHref?: string;
 }) {
-  const detailId = model.detail || model.guidance ? `${model.platform}-submit-detail` : undefined;
+  const described = model.nextStep || model.detail || model.guidance || (model.tone === 'failed' ? model.alert : null);
+  const detailId = described ? `${model.platform}-submit-detail` : undefined;
+  const confirmation = model.headline !== null;
 
   return (
     <div
       className="mt-4 border-t border-slate-100 pt-4"
       data-submit={model.platform}
       data-submit-state={model.state}
+      data-submit-outcome={model.tone === 'idle' ? undefined : model.tone}
       aria-busy={model.tone === 'progress' ? true : undefined}
     >
-      {model.detail || model.guidance || model.statusLabel ? (
+      {confirmation ? (
+        <div className="flex items-start gap-3">
+          {model.tone === 'submitted' ? (
+            <span
+              aria-hidden
+              className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-slate-950 text-white"
+            >
+              <Check className="size-4" strokeWidth={2.5} />
+            </span>
+          ) : (
+            <span aria-hidden className="mt-2 size-2 shrink-0 rounded-full bg-red-700" />
+          )}
+          <div className="min-w-0">
+            <p className="font-heading text-[15px] font-semibold tracking-tight text-slate-950">{model.headline}</p>
+            {model.tone === 'submitted' && model.nextStep ? (
+              <p id={detailId} className="mt-1 text-sm leading-6 text-slate-600" role="status">
+                {model.nextStep}
+              </p>
+            ) : null}
+            {model.tone === 'failed' && model.alert ? (
+              <p id={detailId} className="mt-1 text-sm leading-6 text-red-800" role="alert">
+                {model.alert}
+              </p>
+            ) : null}
+            {model.guidance ? <p className="mt-1 text-sm leading-6 text-slate-600">{model.guidance}</p> : null}
+          </div>
+        </div>
+      ) : model.detail || model.guidance || model.statusLabel ? (
         <div className="flex items-start justify-between gap-3">
           <div id={detailId} className="min-w-0">
             {model.detail ? (
@@ -57,7 +87,7 @@ export function StoreSubmitControl({
           ) : null}
         </div>
       ) : null}
-      {model.alert ? (
+      {model.alert && model.tone !== 'failed' ? (
         <p className="mt-2 text-sm leading-6 text-red-700" role="alert">
           {model.alert}
         </p>

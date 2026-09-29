@@ -132,7 +132,7 @@ assert.equal(isDisabled(buttonTag(readyBoth, 'Submit to App Store')), false);
 assert.ok(readyBoth.includes('Install Android build'));
 assert.ok(readyBoth.includes('Install iOS build'));
 assert.ok(readyBoth.includes(`href="${INSTALL}"`));
-assert.equal((readyBoth.match(/target="_blank"/g) ?? []).length, 2);
+assert.equal((readyBoth.match(/target="_blank"/g) ?? []).length, 4);
 assert.ok(readyBoth.includes('data-submit="android"'));
 assert.ok(readyBoth.includes('data-submit-state="idle"'));
 assertCalm(readyBoth);
@@ -187,7 +187,11 @@ const submitted = html({
   request: request('not_requested', 'ready'),
   storeSubmit: bindings({ jobs: { android: null, ios: submitJob('ios', 'submitted') } }),
 });
-assert.ok(submitted.includes('Sent to App Store Connect. Apple may still need to review it before it is available.'));
+assert.ok(submitted.includes('Sent to App Store Connect'));
+assert.ok(submitted.includes('Check App Store Connect for the review.'));
+assert.ok(submitted.includes('day or two'));
+assert.ok(submitted.includes('data-submit-outcome="submitted"'));
+assert.equal(submitted.includes('https://'), false);
 assert.equal(isDisabled(buttonTag(submitted, 'Submit again')), false);
 assert.ok(submitted.includes('data-submit-state="submitted"'));
 assert.equal(submitted.includes('Submit to Play'), false);
@@ -202,7 +206,9 @@ const failed = html({
     },
   }),
 });
+assert.ok(failed.includes('This submit did not finish'));
 assert.ok(failed.includes('The store did not accept this build. Check the store listing, then try again.'));
+assert.ok(failed.includes('data-submit-outcome="failed"'));
 assert.equal(isDisabled(buttonTag(failed, 'Submit again')), false);
 assert.ok(failed.includes('Play Console') === false);
 assert.ok(failed.includes('data-submit-state="failed"'));
@@ -223,6 +229,8 @@ const submitting = html({
   storeSubmit: bindings({ jobs: { android: submitJob('android', 'submitting'), ios: null } }),
 });
 assert.ok(submitting.includes('Sending this build to Google Play.'));
+assert.ok(submitting.includes('data-submit-outcome="progress"'));
+assert.equal(submitting.includes('data-submit-outcome="submitted"'), false);
 assert.ok(submitting.includes('This page updates on its own.'));
 assert.equal(isDisabled(buttonTag(submitting, 'Submitting...')), true);
 assert.ok(submitting.includes('aria-busy="true"'));
@@ -269,8 +277,11 @@ const settingsSubmitted = settings({
   request: request('ready', 'not_requested'),
   jobs: { android: submitJob('android', 'submitted'), ios: null },
 });
-assert.ok(settingsSubmitted.includes('Sent to Google Play.'));
-assert.ok(settingsSubmitted.includes('Play Console may still need a review'));
+assert.ok(settingsSubmitted.includes('Sent to Google Play'));
+assert.ok(settingsSubmitted.includes('Check Play Console for the review'));
+assert.ok(settingsSubmitted.includes('internal testing track'));
+assert.ok(settingsSubmitted.includes('data-submit-outcome="submitted"'));
+assert.equal(settingsSubmitted.includes('https://'), false);
 assert.equal(isDisabled(buttonTag(settingsSubmitted, 'Submit again')), false);
 assertCalm(settingsSubmitted);
 

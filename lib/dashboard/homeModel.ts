@@ -153,16 +153,22 @@ export function catalogRow(
   return base;
 }
 
+/** The build Home describes: an in-flight request, otherwise the first in the list. */
+export function focusBuildRequest(requests: BuildRequest[]): BuildRequest | null {
+  if (requests.length === 0) return null;
+  return requests.find((request) => shouldPollBuildRequest(request)) ?? requests[0] ?? null;
+}
+
 export function describeBuild(
   list: { kind: 'ok'; requests: BuildRequest[] } | { kind: 'error' }
 ): { state: 'unknown' | 'none' | 'present'; label: string; detail: string | null } {
   if (list.kind === 'error') {
     return { state: 'unknown', label: 'Could not check', detail: null };
   }
-  if (list.requests.length === 0) {
+  const active = focusBuildRequest(list.requests);
+  if (!active) {
     return { state: 'none', label: 'No build requested', detail: null };
   }
-  const active = list.requests.find((request) => shouldPollBuildRequest(request)) ?? list.requests[0];
   const parts = requestedPlatforms(active).map((platform) => {
     const name = platform === 'android' ? 'Android' : 'iOS';
     return `${name} · ${platformStatusLabel(platform, active.platforms[platform].status)}`;

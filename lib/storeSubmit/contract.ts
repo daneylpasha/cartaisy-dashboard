@@ -28,17 +28,23 @@ export const SUBMIT_CHECKING_ACCOUNTS_MESSAGE = 'Checking store accounts...';
 export const SUBMIT_ACCOUNTS_UNAVAILABLE_MESSAGE =
   'Store accounts could not be loaded. Try again before submitting.';
 export const SUBMIT_FAILED_FALLBACK_MESSAGE = 'This submit did not finish. You can try again.';
+export const SUBMIT_FAILED_TITLE = 'This submit did not finish';
 export const SUBMIT_MISSING_APPLE = 'Connect an App Store Connect API key before submitting to the App Store.';
 export const SUBMIT_MISSING_GOOGLE = 'Connect a Google Play service account before submitting to Play.';
 export const SUBMIT_ATTENTION_APPLE = 'Upload the App Store Connect API key again before submitting.';
 export const SUBMIT_ATTENTION_GOOGLE = 'Upload the Google Play service account JSON again before submitting.';
+export const SUBMIT_SENT_IOS_TITLE = 'Sent to App Store Connect';
+export const SUBMIT_SENT_ANDROID_TITLE = 'Sent to Google Play';
 export const SUBMIT_REVIEW_IOS =
-  'Sent to App Store Connect. Apple may still need to review it before it is available.';
+  'Apple reviews this before it is available. Check App Store Connect for the review. It often takes a day or two, and it can take longer.';
 export const SUBMIT_REVIEW_ANDROID =
-  'Sent to Google Play. It is on the internal testing track, and Play Console may still need a review before it is available.';
+  'It is on the internal testing track. Check Play Console for the review before testers can install it. It can finish the same day, and it can take longer.';
 export const SUBMIT_PROGRESS_IOS = 'Sending this build to App Store Connect.';
 export const SUBMIT_PROGRESS_ANDROID = 'Sending this build to Google Play.';
 export const SUBMIT_QUEUED_COPY = 'Waiting to send this build.';
+export const SUBMIT_QUEUED_TITLE = 'Waiting to send';
+export const SUBMIT_SENDING_IOS_TITLE = 'Sending to App Store Connect';
+export const SUBMIT_SENDING_ANDROID_TITLE = 'Sending to Google Play';
 
 const UNSAFE_SUBMIT_TEXT =
   /EXPO_TOKEN|shpat_|shpss_|shpca_|shpct_|shpua_|easBuildId|easSubmissionId|keyP8|access_token|api_secret|client_secret|refresh_token|serviceAccount|BEGIN [A-Z0-9 ]*PRIVATE/i;
@@ -73,6 +79,10 @@ export interface StoreSubmitPresentation {
   tone: StoreSubmitTone;
   state: StoreSubmitState;
   statusLabel: string | null;
+  /** Confirmation title after a submit is sent or has failed. Null while it is still moving. */
+  headline: string | null;
+  /** Where to check the review, after a successful submit. No store URL. */
+  nextStep: string | null;
   detail: string | null;
   guidance: string | null;
   alert: string | null;
@@ -89,6 +99,78 @@ export function isSafeMerchantText(value: string): boolean {
 
 export function shouldPollStoreSubmit(status: SubmitStatus | null | undefined): boolean {
   return status === 'queued' || status === 'submitting';
+}
+
+export interface SubmitOutcomeCopy {
+  tone: 'progress' | 'submitted' | 'failed';
+  headline: string;
+  body: string;
+}
+
+/**
+ * Merchant copy for a submit the API already returned.
+ * Progress stays a short status. Sent and failed name what happened next.
+ * Nothing here is a store URL.
+ */
+export function submitOutcomeCopy(
+  platform: SubmitPlatform,
+  status: SubmitStatus,
+  message: string | null
+): SubmitOutcomeCopy {
+  if (status === 'queued') {
+    return { tone: 'progress', headline: SUBMIT_QUEUED_TITLE, body: SUBMIT_QUEUED_COPY };
+  }
+  if (status === 'submitting') {
+    return {
+      tone: 'progress',
+      headline: platform === 'ios' ? SUBMIT_SENDING_IOS_TITLE : SUBMIT_SENDING_ANDROID_TITLE,
+      body: platform === 'ios' ? SUBMIT_PROGRESS_IOS : SUBMIT_PROGRESS_ANDROID,
+    };
+  }
+  if (status === 'submitted') {
+    return {
+      tone: 'submitted',
+      headline: platform === 'ios' ? SUBMIT_SENT_IOS_TITLE : SUBMIT_SENT_ANDROID_TITLE,
+      body: platform === 'ios' ? SUBMIT_REVIEW_IOS : SUBMIT_REVIEW_ANDROID,
+    };
+  }
+  const body = message && isSafeMerchantText(message) ? message.trim() : SUBMIT_FAILED_FALLBACK_MESSAGE;
+  return { tone: 'failed', headline: SUBMIT_FAILED_TITLE, body };
+}
+
+export interface HomeSubmitNotice {
+  platform: SubmitPlatform;
+  label: 'Android' | 'iOS';
+  tone: 'progress' | 'submitted' | 'failed';
+  headline: string;
+  body: string;
+}
+
+/** Home notes for submits that are moving, sent, or failed. Idle builds are omitted. */
+export function homeSubmitNotices(jobs: StoreSubmitJobs): HomeSubmitNotice[] {
+  const notices: HomeSubmitNotice[] = [];
+  for (const platform of ['android', 'ios'] as const) {
+    const job = jobs[platform];
+    if (!job) continue;
+    const copy = submitOutcomeCopy(platform, job.status, job.message);
+    notices.push({
+      platform,
+      label: platform === 'ios' ? 'iOS' : 'Android',
+      tone: copy.tone,
+      headline: copy.headline,
+      body: copy.body,
+    });
+  }
+  return notices;
+}
+
+export function homeSubmitTitle(notices: HomeSubmitNotice[]): string | null {
+  if (notices.length === 0) return null;
+  const tones = new Set(notices.map((notice) => notice.tone));
+  if (tones.size === 1 && tones.has('progress')) return 'Sending to the store';
+  if (tones.size === 1 && tones.has('submitted')) return 'Sent for review';
+  if (tones.size === 1 && tones.has('failed')) return 'A submit needs another try';
+  return 'Store submit';
 }
 
 export function submitActionLabel(platform: SubmitPlatform): string {
@@ -154,6 +236,9 @@ export function presentStoreSubmit(input: {
       : input.job?.status === 'failed'
         ? 'failed'
         : 'idle';
+  const settled = !moving && input.job ? submitOutcomeCopy(input.platform, input.job.status, input.job.message) : null;
+  const headline = settled && settled.tone !== 'progress' ? settled.headline : null;
+  const nextStep = settled?.tone === 'submitted' ? settled.body : null;
 
   const blocked = block.reason !== null && !moving;
   const disabled = moving || blocked;
@@ -169,7 +254,7 @@ export function presentStoreSubmit(input: {
           ? SUBMIT_PROGRESS_IOS
           : SUBMIT_PROGRESS_ANDROID;
   } else if (tone === 'submitted') {
-    detail = input.platform === 'ios' ? SUBMIT_REVIEW_IOS : SUBMIT_REVIEW_ANDROID;
+    detail = nextStep;
     guidance = block.reason;
   } else if (tone === 'failed') {
     guidance = block.reason;
@@ -182,10 +267,7 @@ export function presentStoreSubmit(input: {
   let alert: string | null = null;
   if (safeError && (!moving || interrupt)) alert = safeError;
   else if (tone === 'failed') {
-    alert =
-      input.job?.message && isSafeMerchantText(input.job.message)
-        ? input.job.message.trim()
-        : SUBMIT_FAILED_FALLBACK_MESSAGE;
+    alert = settled?.tone === 'failed' ? settled.body : SUBMIT_FAILED_FALLBACK_MESSAGE;
   }
 
   const statusLabel =
@@ -217,6 +299,8 @@ export function presentStoreSubmit(input: {
     tone,
     state,
     statusLabel,
+    headline,
+    nextStep,
     detail,
     guidance,
     alert,
