@@ -166,7 +166,7 @@ export default function HomescreenPreviewPage() {
           <ComponentOrderSidebar data={data} />
         </div>
 
-        {/* Mobile Preview */}
+        {/* Module stack */}
         <div className="flex-1 flex justify-center py-4">
           <MobileFrame>
             <div className="space-y-0">
