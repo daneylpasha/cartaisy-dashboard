@@ -6,6 +6,7 @@ import { homeSubmitNotices, type HomeSubmitNotice } from '@/lib/storeSubmit/cont
 import { fetchCollectionsCatalogBlock } from '@/lib/api/shopifyConnection';
 import { API_URL, tokenStorage } from '@/lib/api/mutator/custom-instance';
 import { fetchBranding } from '@/lib/onboarding/branding';
+import { persistedBrandImageUrl } from '@/lib/onboarding/brandAssets';
 import { normalizeCatalog, UNAVAILABLE_SYNC } from '@/lib/onboarding/normalizers';
 import { catalogBlockFromPayload, withCatalogBlock } from '@/lib/shopify/catalogBlock';
 import type { ShopifyCatalogBlockKind } from '@/lib/onboarding/types';
@@ -17,6 +18,7 @@ import {
   focusBuildRequest,
   formatTimeAgo,
   homePreviewBuilding,
+  newestPreviewBuilding,
   moduleSummary,
   nextSetupAction,
   type BrandingSaved,
@@ -24,6 +26,9 @@ import {
   type NextSetupAction,
 } from '@/lib/dashboard/homeModel';
 import { homeLayoutOverviewFromPayload, type HomeLayoutOverview } from '@/lib/homeLayout/publish';
+import { fetchStoreCredentials } from '@/lib/storeCredentials/client';
+import type { SyncGateState } from '@/lib/onboarding/types';
+import type { GoLiveAccountsRead, GoLiveBrandRead, GoLivePreviewPhase } from '@/lib/dashboard/goLive';
 
 export interface HomeActivity {
   id: string;
@@ -50,13 +55,22 @@ export interface ConnectedHomeFacts {
    * Stays false when Scan to install is shown, and when Shopify needs reconnect or billing.
    */
   previewBuilding: boolean;
-  /** Store submits for the focused build. Empty hides the submit card. */
+  /** Store submits for the focused build. Empty hides the submit notes. */
   submitNotices: HomeSubmitNotice[];
+  /** False when the submit list failed. An empty list is not a failed read. */
+  submitKnown: boolean;
   /**
    * Home layout publish state from GET /api/home-layout.
    * Null when that read fails or the status is unrecognized. Do not invent one.
    */
   homeLayout: HomeLayoutOverview | null;
+  syncState: SyncGateState;
+  /** True only for the build-eligibility contract. Null when sync could not be read. */
+  catalogEligible: boolean | null;
+  brand: GoLiveBrandRead;
+  accounts: GoLiveAccountsRead;
+  /** Ready install wins over a newer queued request. A failed list stays unknown. */
+  previewPhase: GoLivePreviewPhase;
 }
 
 async function readJson(response: Response): Promise<unknown> {
@@ -72,16 +86,30 @@ function asRecord(value: unknown): Record<string, unknown> | null {
   return value as Record<string, unknown>;
 }
 
+const UNKNOWN_BRAND: GoLiveBrandRead = { known: false, displayName: null, hasIcon: false };
+const UNKNOWN_ACCOUNTS: GoLiveAccountsRead = { known: false, apple: null, google: null };
+
 export async function loadBrandingSaved(storeId: string | undefined): Promise<BrandingSaved> {
+  const read = await loadBrandRead(storeId);
+  return read.saved;
+}
+
+export async function loadBrandRead(storeId: string | undefined): Promise<GoLiveBrandRead & { saved: BrandingSaved }> {
   const token = tokenStorage.getToken();
-  if (!storeId || !token) return null;
+  if (!storeId || !token) return { ...UNKNOWN_BRAND, saved: null };
   const draft = await fetchBranding(storeId, token);
-  if (!draft) return null;
-  return brandingLooksSaved({
-    logoUrl: draft.logoUrl,
-    primaryColor: draft.primaryColor,
-    secondaryColor: draft.secondaryColor,
-  });
+  if (!draft) return { ...UNKNOWN_BRAND, saved: null };
+  const displayName = draft.appName.trim();
+  return {
+    saved: brandingLooksSaved({
+      logoUrl: draft.logoUrl,
+      primaryColor: draft.primaryColor,
+      secondaryColor: draft.secondaryColor,
+    }),
+    known: true,
+    displayName: displayName.length > 0 ? displayName : null,
+    hasIcon: persistedBrandImageUrl(draft.iconUrl) != null,
+  };
 }
 
 async function loadOverviewCounts(
@@ -171,20 +199,27 @@ export async function loadConnectedHome(storeId: string | undefined): Promise<Co
       installs: [],
       previewBuilding: false,
       submitNotices: [],
+      submitKnown: false,
       homeLayout: null,
+      syncState: 'unavailable',
+      catalogEligible: null,
+      brand: UNKNOWN_BRAND,
+      accounts: UNKNOWN_ACCOUNTS,
+      previewPhase: 'unknown',
     };
   }
 
-  const [syncGate, builds, counts, collectionsBlock, brandingSaved, modules, activity, homeLayout] =
+  const [syncGate, builds, counts, collectionsBlock, brandRead, modules, activity, homeLayout, credentials] =
     await Promise.all([
       fetchCatalogSync(token),
       listBuildRequests(token),
       loadOverviewCounts(token),
       fetchCollectionsCatalogBlock(),
-      loadBrandingSaved(storeId),
+      loadBrandRead(storeId),
       loadModuleStats(),
       loadActivity(now),
       loadHomeLayout(),
+      fetchStoreCredentials(token),
     ]);
 
   const gated = withCatalogBlock(withCatalogBlock(syncGate, counts.block), collectionsBlock);
@@ -199,7 +234,15 @@ export async function loadConnectedHome(storeId: string | undefined): Promise<Co
   const previewBuilding =
     buildList.kind === 'ok' &&
     homePreviewBuilding({ requests: buildList.requests, catalogBlocked: gated.block != null });
-  const submitNotices = await loadSubmitNotices(token, buildList.kind === 'ok' ? buildList.requests : []);
+  const previewPhase: GoLivePreviewPhase =
+    buildList.kind === 'ok'
+      ? installs.length > 0
+        ? 'ready'
+        : newestPreviewBuilding(buildList.requests)
+          ? 'building'
+          : 'none'
+      : 'unknown';
+  const submit = await loadSubmitRead(token, buildList.kind === 'ok' ? buildList.requests : null);
 
   return {
     syncLabel: sync.label,
@@ -211,19 +254,35 @@ export async function loadConnectedHome(storeId: string | undefined): Promise<Co
     orderCount: gated.block ? null : counts.orderCount,
     modules,
     activity,
-    next: nextSetupAction({ brandingSaved, build: build.state }),
+    next: nextSetupAction({ brandingSaved: brandRead.saved, build: build.state }),
     catalogBlock: gated.block ?? null,
     installs,
     previewBuilding,
-    submitNotices,
+    submitNotices: submit.notices,
+    submitKnown: submit.known,
     homeLayout,
+    syncState: gated.state,
+    catalogEligible: gated.state === 'unavailable' ? null : gated.eligibleForBuild,
+    brand: { known: brandRead.known, displayName: brandRead.displayName, hasIcon: brandRead.hasIcon },
+    accounts: credentials.ok
+      ? {
+          known: true,
+          apple: credentials.credentials.apple.status,
+          google: credentials.credentials.google.status,
+        }
+      : UNKNOWN_ACCOUNTS,
+    previewPhase,
   };
 }
 
-async function loadSubmitNotices(token: string, requests: BuildRequest[]): Promise<HomeSubmitNotice[]> {
+async function loadSubmitRead(
+  token: string,
+  requests: BuildRequest[] | null
+): Promise<{ known: boolean; notices: HomeSubmitNotice[] }> {
+  if (!requests) return { known: false, notices: [] };
   const active = focusBuildRequest(requests);
-  if (!active) return [];
+  if (!active) return { known: true, notices: [] };
   const listed = await listStoreSubmits(token, active.id);
-  if (!listed.ok) return [];
-  return homeSubmitNotices(listed.jobs);
+  if (!listed.ok) return { known: false, notices: [] };
+  return { known: true, notices: homeSubmitNotices(listed.jobs) };
 }

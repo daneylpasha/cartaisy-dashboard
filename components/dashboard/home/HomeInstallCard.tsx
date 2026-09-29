@@ -25,27 +25,52 @@ function installLead(installs: ReadyInstall[]): string {
 /**
  * Compact install codes on Home. Absent unless a platform is ready with a
  * public https URL. Build stays the large code.
+ * Folded into Go live, the codes stay and the filled button does not.
  */
-export function HomeInstallCard({ installs }: { installs: ReadyInstall[] }) {
+export function HomeInstallCard({
+  installs,
+  folded = false,
+  link = true,
+}: {
+  installs: ReadyInstall[];
+  folded?: boolean;
+  link?: boolean;
+}) {
   const shown = publicInstalls(installs);
   if (shown.length === 0) return null;
 
+  const openBuild =
+    link ? (
+      <Link
+        href={BUILD_MY_APP_HREF}
+        className="mt-3 inline-flex text-sm font-medium text-slate-950 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
+      >
+        Open Build
+      </Link>
+    ) : null;
+
   return (
-    <section data-home-install="" className="mt-8 rounded-xl border border-slate-200 bg-white px-5 py-5">
+    <section data-home-install="" className={folded ? 'mt-3' : 'mt-8 rounded-xl border border-slate-200 bg-white px-5 py-5'}>
       <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0 max-w-md">
-          <h2 className="font-heading text-sm font-semibold tracking-tight text-slate-950">Scan to install</h2>
+          <h2 className={folded ? 'text-sm font-medium text-slate-700' : 'font-heading text-sm font-semibold tracking-tight text-slate-950'}>
+            Scan to install
+          </h2>
           <p className="mt-1 text-sm leading-6 text-slate-600">{installLead(shown)}</p>
-          <Button asChild className="mt-4 h-11 rounded-lg px-4">
-            <Link href={BUILD_MY_APP_HREF}>Open Build</Link>
-          </Button>
+          {folded ? (
+            openBuild
+          ) : (
+            <Button asChild className="mt-4 h-11 rounded-lg px-4">
+              <Link href={BUILD_MY_APP_HREF}>Open Build</Link>
+            </Button>
+          )}
         </div>
         <ul className="flex shrink-0 flex-wrap gap-4">
           {shown.map((install) => (
             <li key={install.platform} className="text-center">
               <p className="text-xs font-medium text-slate-500">{install.label}</p>
               <div className="mt-2 w-fit rounded-2xl bg-white p-2 ring-1 ring-slate-200">
-                <InstallQrMark url={install.url} title={`${install.label} install code`} pixelSize={136} />
+                <InstallQrMark url={install.url} title={`${install.label} install code`} pixelSize={folded ? 104 : 136} />
               </div>
             </li>
           ))}

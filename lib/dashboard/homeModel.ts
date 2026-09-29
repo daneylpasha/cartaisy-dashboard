@@ -187,15 +187,20 @@ export function describeBuild(
  * Reconnect and billing stay their own notices.
  * Failed, waiting, and ready-without-a-link do not pretend a build is moving.
  */
-export function homePreviewBuilding(input: { requests: BuildRequest[]; catalogBlocked: boolean }): boolean {
-  if (input.catalogBlocked) return false;
-  if (readyInstallsFromList(input.requests).length > 0) return false;
-  const latest = input.requests[0];
+/** Newest request has a platform queued or building. Does not apply the Home card gates. */
+export function newestPreviewBuilding(requests: BuildRequest[]): boolean {
+  const latest = requests[0];
   if (!latest) return false;
   return (['android', 'ios'] as const).some((platform) => {
     const status = latest.platforms[platform].status;
     return status === 'queued' || status === 'building';
   });
+}
+
+export function homePreviewBuilding(input: { requests: BuildRequest[]; catalogBlocked: boolean }): boolean {
+  if (input.catalogBlocked) return false;
+  if (readyInstallsFromList(input.requests).length > 0) return false;
+  return newestPreviewBuilding(input.requests);
 }
 
 export interface ModuleRow {

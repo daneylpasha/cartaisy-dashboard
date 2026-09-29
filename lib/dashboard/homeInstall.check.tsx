@@ -20,7 +20,8 @@ function source(relativePath: string): string {
 
 const loadHomeSource = source('./loadHome.ts');
 const cardSource = source('../../components/dashboard/home/HomeInstallCard.tsx');
-const buildingSource = source('../../components/dashboard/home/HomePreviewBuildingCard.tsx');
+const liveSource = source('./goLive.ts');
+const stripSource = source('../../components/dashboard/home/GoLiveStrip.tsx');
 const homeSource = source('../../components/dashboard/home/ConnectedHome.tsx');
 const setupSource = source('../../components/dashboard/home/SetupHome.tsx');
 const boardSource = source('../../components/build/InstallQrBoard.tsx');
@@ -28,18 +29,22 @@ const previewSource = source('../build/installPreview.ts');
 
 assert.match(loadHomeSource, /readyInstallsFromList/);
 assert.match(loadHomeSource, /homePreviewBuilding/);
-assert.match(homeSource, /HomeInstallCard/);
-assert.match(homeSource, /HomePreviewBuildingCard/);
+assert.match(loadHomeSource, /fetchStoreCredentials/);
+assert.match(loadHomeSource, /loadBrandRead/);
+assert.match(homeSource, /GoLiveStrip/);
+assert.doesNotMatch(homeSource, /HomeInstallCard|HomePreviewBuildingCard|HomeSubmitCard|HomeLayoutStatus/);
+assert.match(stripSource, /HomeInstallCard/);
+assert.match(stripSource, /data-go-live-cta/);
 assert.match(cardSource, /BUILD_MY_APP_HREF/);
-assert.match(buildingSource, /BUILD_MY_APP_HREF/);
-assert.match(buildingSource, /Your preview is building/);
+assert.match(liveSource, /Your preview is building/);
 assert.doesNotMatch(cardSource, /EXPO_TOKEN|easBuildId|access_token|shpat_|api\.qrserver|chart\.googleapis/);
-assert.doesNotMatch(buildingSource, /EXPO_TOKEN|easBuildId|access_token|shpat_|api\.qrserver|chart\.googleapis|Cartaisy|EAS|InstallQr/);
+assert.doesNotMatch(liveSource, /EXPO_TOKEN|easBuildId|access_token|shpat_|api\.qrserver|chart\.googleapis|Cartaisy|EAS/);
+assert.doesNotMatch(stripSource, /EXPO_TOKEN|easBuildId|access_token|shpat_|api\.qrserver|chart\.googleapis|Cartaisy|EAS/);
 assert.doesNotMatch(cardSource, /console\.(log|debug|info|error|warn)/);
-assert.doesNotMatch(buildingSource, /console\.(log|debug|info|error|warn)/);
+assert.doesNotMatch(liveSource, /console\.(log|debug|info|error|warn)/);
 assert.doesNotMatch(cardSource, /INSTALL_QR_WAIT_COPY|installQrSlots/);
-assert.doesNotMatch(buildingSource, /INSTALL_QR_WAIT_COPY|installQrSlots/);
-assert.doesNotMatch(setupSource, /HomePreviewBuildingCard|data-home-preview-building|Scan to install/);
+assert.doesNotMatch(stripSource, /INSTALL_QR_WAIT_COPY|installQrSlots/);
+assert.doesNotMatch(setupSource, /GoLiveStrip|data-go-live|data-home-preview-building|Scan to install/);
 assert.match(boardSource, /INSTALL_QR_WAIT_COPY/);
 assert.match(previewSource, /export function showsBrandMock/);
 
@@ -63,23 +68,34 @@ function request(
 }
 
 function facts(installs: ReadyInstall[], extra?: Partial<ConnectedHomeFacts>): ConnectedHomeFacts {
+  const shown = extra?.installs ?? installs;
+  const previewBuilding = extra?.previewBuilding ?? false;
+  const buildState = extra?.buildState ?? 'present';
   return {
     syncLabel: 'Synced',
     syncDetail: null,
     buildLabel: 'Android · Ready',
     buildDetail: null,
-    buildState: 'present',
     productCount: 12,
     orderCount: 3,
     modules: { kind: 'empty' },
     activity: null,
     next: null,
     catalogBlock: null,
-    installs,
-    previewBuilding: false,
     submitNotices: [],
+    submitKnown: true,
     homeLayout: null,
+    syncState: 'succeeded',
+    catalogEligible: true,
+    brand: { known: true, displayName: 'Northwind', hasIcon: true },
+    accounts: { known: true, apple: 'missing', google: 'missing' },
     ...extra,
+    installs: shown,
+    previewBuilding,
+    buildState,
+    previewPhase:
+      extra?.previewPhase ??
+      (shown.length > 0 ? 'ready' : buildState === 'unknown' ? 'unknown' : previewBuilding ? 'building' : 'none'),
   };
 }
 
@@ -100,7 +116,8 @@ assert.match(ready, /Android and iOS are ready/);
 assert.match(ready, /larger ones/);
 assert.match(ready, /Open Build/);
 assert.equal(ready.includes(`href="${BUILD_MY_APP_HREF}"`), true);
-assert.match(ready, /App build/);
+assert.match(ready, /Go live/);
+assert.equal((ready.match(/data-go-live-cta/g) ?? []).length, 1);
 assert.match(ready, /No home sections yet/);
 assert.equal(ready.includes(ANDROID), false);
 assert.equal(ready.includes(IOS), false);
@@ -145,7 +162,8 @@ assert.equal(building.includes('Cartaisy'), false);
 assert.equal(building.includes('EAS'), false);
 assert.equal(building.includes('shpat_'), false);
 assert.match(building, /Connected to northwind.myshopify.com/);
-assert.match(building, /App build/);
+assert.match(building, /Go live/);
+assert.equal((building.match(/data-go-live-cta/g) ?? []).length, 1);
 
 const preferScan = home(both, { previewBuilding: true });
 assert.equal((preferScan.match(/data-home-install/g) ?? []).length, 1);
@@ -232,7 +250,8 @@ assert.equal(quiet.includes('data-home-preview-building'), false);
 assert.equal(quiet.includes('data-home-install'), false);
 assert.equal(quiet.includes('Your preview is building'), false);
 assert.equal(quiet.includes('Scan to install'), false);
-assert.match(quiet, /App build/);
+assert.match(quiet, /Go live/);
+assert.match(quiet, /Not ready/);
 
 const billing = home([], { previewBuilding: false, catalogBlock: 'billing', buildLabel: 'Android · Queued' });
 assert.equal(billing.includes('data-home-preview-building'), false);
@@ -240,6 +259,7 @@ assert.equal(billing.includes('Your preview is building'), false);
 assert.match(billing, /Shopify billing needs attention/);
 assert.match(billing, /Reconnect Shopify/);
 assert.equal(billing.includes('Sync again'), false);
+assert.equal((billing.match(/data-go-live-cta/g) ?? []).length, 0);
 
 const reconnect = home([], { previewBuilding: false, catalogBlock: 'reconnect', buildLabel: 'iOS · Building' });
 assert.equal(reconnect.includes('data-home-preview-building'), false);
@@ -298,7 +318,8 @@ assert.match(unpublishedHome, /data-home-layout="not_published"/);
 assert.match(unpublishedHome, /Not published yet/);
 assert.match(unpublishedHome, /Nothing is saved/);
 assert.equal(unpublishedHome.includes('href="/dashboard/app-builder#publish-home"'), true);
-assert.match(unpublishedHome, />Publish home</);
+assert.equal((unpublishedHome.match(/>Publish home</g) ?? []).length, 1);
+assert.equal((unpublishedHome.match(/data-go-live-cta/g) ?? []).length, 1);
 assert.equal(unpublishedHome.includes('Cartaisy'), false);
 
 const draftHome = home([], {
