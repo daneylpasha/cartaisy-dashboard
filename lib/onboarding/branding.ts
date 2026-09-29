@@ -12,6 +12,21 @@ import type { BrandingDraft } from '@/lib/onboarding/types';
 
 export const HEX_COLOR_REGEX = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
 export const DEFAULT_PRIMARY_COLOR = '#FF6B6B';
+/** Swatch shown when secondary is unset. Not a saved color. */
+export const DEFAULT_SECONDARY_DISPLAY = '#FFFFFF';
+export const PLATFORM_DEFAULT_COLOR_LABEL = 'Using the platform default';
+
+export interface BrandColorSelection {
+  /** Null means the platform default. A string is an explicit hex. */
+  primary: string | null;
+  secondary: string | null;
+}
+
+/** Fields for `PATCH /admin/stores/:storeId/branding`. Null clears that color. */
+export type BrandColorPatch = {
+  primaryColor?: string | null;
+  secondaryColor?: string | null;
+};
 
 const BRAND_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'] as const;
 const BRAND_IMAGE_MAX_BYTES = 2 * 1024 * 1024;
@@ -64,12 +79,81 @@ function brandingRecord(payload: unknown): Record<string, unknown> | null {
   return root;
 }
 
+/** A saved hex, or null when the payload has null, omits the field, or is not a hex. */
+export function explicitBrandColor(value: unknown): string | null {
+  const text = readString(value);
+  if (!text || !HEX_COLOR_REGEX.test(text)) return null;
+  return text;
+}
+
+export function displayPrimaryColor(explicit: string | null): string {
+  return explicit ?? DEFAULT_PRIMARY_COLOR;
+}
+
+export function displaySecondaryColor(explicit: string | null): string {
+  return explicit ?? DEFAULT_SECONDARY_DISPLAY;
+}
+
+/**
+ * True when the form should say this color is the platform default.
+ * An explicit hex is never that state, even when it matches the swatch fallback.
+ * Drafts that do not track an explicit value yet treat an empty secondary, or a
+ * primary equal to the display fallback, as the default.
+ */
+export function brandColorUsesPlatformDefault(
+  explicit: string | null | undefined,
+  display: string,
+  kind: 'primary' | 'secondary'
+): boolean {
+  if (typeof explicit === 'string' && HEX_COLOR_REGEX.test(explicit)) return false;
+  if (explicit === null) return true;
+  const trimmed = display.trim();
+  if (!trimmed) return true;
+  if (kind === 'secondary') return false;
+  return trimmed.toLowerCase() === DEFAULT_PRIMARY_COLOR.toLowerCase();
+}
+
+function resolvedExplicitColor(
+  explicit: string | null | undefined,
+  display: string,
+  kind: 'primary' | 'secondary'
+): string | null {
+  if (typeof explicit === 'string' && HEX_COLOR_REGEX.test(explicit)) return explicit;
+  if (explicit === null) return null;
+  if (brandColorUsesPlatformDefault(undefined, display, kind)) return null;
+  const trimmed = display.trim();
+  return HEX_COLOR_REGEX.test(trimmed) ? trimmed : null;
+}
+
+/** Explicit colors to save. Null is a clear, not the display fallback hex. */
+export function brandColorSelection(draft: {
+  primaryColor: string;
+  secondaryColor: string;
+  primaryExplicit?: string | null;
+  secondaryExplicit?: string | null;
+}): BrandColorSelection {
+  return {
+    primary: resolvedExplicitColor(draft.primaryExplicit, draft.primaryColor, 'primary'),
+    secondary: resolvedExplicitColor(draft.secondaryExplicit, draft.secondaryColor, 'secondary'),
+  };
+}
+
+/** Only colors that changed. A null value clears that color on the server. */
+export function brandColorPatch(draft: BrandColorSelection, saved: BrandColorSelection): BrandColorPatch {
+  const patch: BrandColorPatch = {};
+  if (draft.primary !== saved.primary) patch.primaryColor = draft.primary;
+  if (draft.secondary !== saved.secondary) patch.secondaryColor = draft.secondary;
+  return patch;
+}
+
 export function emptyBrandingDraft(appName: string): BrandingDraft {
   return {
     appName,
     logoUrl: null,
     primaryColor: DEFAULT_PRIMARY_COLOR,
     secondaryColor: '',
+    primaryExplicit: null,
+    secondaryExplicit: null,
     splashUrl: null,
     iconUrl: null,
     splashPersisted: true,
@@ -81,15 +165,17 @@ export function brandingFromPayload(payload: unknown, appName: string): Branding
   const data = brandingRecord(payload);
   if (!data) return emptyBrandingDraft(appName);
 
-  const primary = readString(data.primaryColor);
-  const secondary = readString(data.secondaryColor) ?? '';
+  const primaryExplicit = explicitBrandColor(data.primaryColor);
+  const secondaryExplicit = explicitBrandColor(data.secondaryColor);
   const serverName = readString(data.appName);
 
   return {
     appName: serverName ?? appName,
     logoUrl: displayBrandImageUrl(readString(data.logoUrl)),
-    primaryColor: primary && HEX_COLOR_REGEX.test(primary) ? primary : DEFAULT_PRIMARY_COLOR,
-    secondaryColor: secondary && HEX_COLOR_REGEX.test(secondary) ? secondary : '',
+    primaryColor: displayPrimaryColor(primaryExplicit),
+    secondaryColor: secondaryExplicit ?? '',
+    primaryExplicit,
+    secondaryExplicit,
     splashUrl: displayBrandImageUrl(readString(data.splashUrl) ?? readString(data.splashImageUrl)),
     iconUrl: displayBrandImageUrl(readString(data.iconUrl) ?? readString(data.appIconUrl)),
     splashPersisted: true,
@@ -158,7 +244,7 @@ export async function saveAppName(name: string): Promise<{ ok: boolean; error: s
 export async function saveBrandColors(
   storeId: string,
   token: string,
-  colors: { primaryColor?: string; secondaryColor?: string }
+  colors: BrandColorPatch
 ): Promise<{ ok: boolean; error: string | null; draft: BrandingDraft | null }> {
   try {
     const response = await fetch(`${API_URL}/admin/stores/${storeId}/branding`, {

@@ -5,7 +5,7 @@ import { ImagePlus, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { BrandInstallPreview } from '@/components/onboarding/BrandInstallPreview';
 import { settingsBrandLead, type InstallPreviewModel } from '@/lib/build/installPreview';
-import { HEX_COLOR_REGEX, validateBrandImage } from '@/lib/onboarding/branding';
+import { DEFAULT_PRIMARY_COLOR, HEX_COLOR_REGEX, validateBrandImage } from '@/lib/onboarding/branding';
 import { displayBrandImageUrl } from '@/lib/onboarding/brandAssets';
 import type { BrandingDraft, LockedCatalog, SyncGate } from '@/lib/onboarding/types';
 
@@ -43,16 +43,23 @@ export function applySettingsBrandProps(
   const patch: Partial<BrandingDraft> = {};
   if (next.appName !== prev.appName && next.appName.trim()) patch.appName = next.appName.trim();
   if (next.logoUrl !== prev.logoUrl) patch.logoUrl = settingsBrandImageUrl(next.logoUrl);
-  if (
-    next.primaryColor !== prev.primaryColor &&
-    next.primaryColor &&
-    HEX_COLOR_REGEX.test(next.primaryColor)
-  ) {
-    patch.primaryColor = next.primaryColor;
+  if (next.primaryColor !== prev.primaryColor) {
+    if (next.primaryColor && HEX_COLOR_REGEX.test(next.primaryColor)) {
+      patch.primaryColor = next.primaryColor;
+      patch.primaryExplicit = next.primaryColor;
+    } else if (next.primaryColor == null || next.primaryColor.trim() === '') {
+      patch.primaryColor = DEFAULT_PRIMARY_COLOR;
+      patch.primaryExplicit = null;
+    }
   }
   if (next.secondaryColor !== prev.secondaryColor) {
-    patch.secondaryColor =
-      next.secondaryColor && HEX_COLOR_REGEX.test(next.secondaryColor) ? next.secondaryColor : '';
+    if (next.secondaryColor && HEX_COLOR_REGEX.test(next.secondaryColor)) {
+      patch.secondaryColor = next.secondaryColor;
+      patch.secondaryExplicit = next.secondaryColor;
+    } else {
+      patch.secondaryColor = '';
+      patch.secondaryExplicit = null;
+    }
   }
   if (Object.keys(patch).length === 0) return draft;
   return presentSettingsBrand({ ...draft, ...patch });

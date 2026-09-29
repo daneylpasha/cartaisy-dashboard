@@ -4,12 +4,16 @@ import { useRef, useState } from 'react';
 import { ImagePlus, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ColorPicker } from '@/components/ui/color-picker';
 import { BrandInstallPreview } from '@/components/onboarding/BrandInstallPreview';
 import { LockedShopifyDetails } from '@/components/onboarding/LockedShopifyDetails';
 import { brandStepLead, type InstallPreviewModel } from '@/lib/build/installPreview';
 import { SetupNotice, WizardFooter } from '@/components/onboarding/WizardChrome';
-import { validateBrandImage } from '@/lib/onboarding/branding';
+import {
+  DEFAULT_PRIMARY_COLOR,
+  brandColorUsesPlatformDefault,
+  validateBrandImage,
+} from '@/lib/onboarding/branding';
+import { BrandColorControl } from '@/components/brand/BrandColorControl';
 import { safeImageUrl } from '@/lib/onboarding/normalizers';
 import type { BrandingDraft, LockedCatalog, ShopifyConnectionSnapshot, SyncGate } from '@/lib/onboarding/types';
 
@@ -178,19 +182,47 @@ export function BrandingStep({
               </div>
 
               <div className="grid gap-6 sm:grid-cols-2">
-                <ColorPicker
+                <BrandColorControl
                   label="Primary color"
                   value={draft.primaryColor}
                   presets={COLOR_PRESETS}
-                  onChange={(primaryColor) => onDraftChange({ ...draft, primaryColor })}
+                  usingDefault={brandColorUsesPlatformDefault(
+                    draft.primaryExplicit,
+                    draft.primaryColor,
+                    'primary'
+                  )}
+                  onChange={(primaryColor) =>
+                    onDraftChange({ ...draft, primaryColor, primaryExplicit: primaryColor })
+                  }
                   onValidityChange={onPrimaryValidity}
+                  onClear={() =>
+                    onDraftChange({
+                      ...draft,
+                      primaryColor: DEFAULT_PRIMARY_COLOR,
+                      primaryExplicit: null,
+                    })
+                  }
                 />
-                <ColorPicker
+                <BrandColorControl
                   label="Secondary color"
                   value={draft.secondaryColor || '#FFFFFF'}
                   presets={COLOR_PRESETS}
-                  onChange={(secondaryColor) => onDraftChange({ ...draft, secondaryColor })}
+                  usingDefault={brandColorUsesPlatformDefault(
+                    draft.secondaryExplicit,
+                    draft.secondaryColor,
+                    'secondary'
+                  )}
+                  onChange={(secondaryColor) =>
+                    onDraftChange({ ...draft, secondaryColor, secondaryExplicit: secondaryColor })
+                  }
                   onValidityChange={onSecondaryValidity}
+                  onClear={() =>
+                    onDraftChange({
+                      ...draft,
+                      secondaryColor: '',
+                      secondaryExplicit: null,
+                    })
+                  }
                 />
               </div>
             </div>

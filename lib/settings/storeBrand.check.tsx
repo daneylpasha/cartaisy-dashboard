@@ -61,6 +61,19 @@ assert.equal(renamed.appName, 'Harbor');
 assert.equal(renamed.logoUrl, null);
 assert.equal(renamed.primaryColor, '#112233');
 assert.equal(renamed.secondaryColor, '');
+assert.equal(renamed.primaryExplicit, '#112233');
+assert.equal(renamed.secondaryExplicit, null);
+
+const returnedToDefault = applySettingsBrandProps(
+  draft,
+  { appName: 'Northwind', logoUrl: draft.logoUrl, primaryColor: '#0F766E', secondaryColor: '#F5F5F4' },
+  { appName: 'Northwind', logoUrl: draft.logoUrl, primaryColor: null, secondaryColor: null }
+);
+assert.equal(returnedToDefault.primaryColor, '#FF6B6B');
+assert.equal(returnedToDefault.primaryExplicit, null);
+assert.equal(returnedToDefault.secondaryColor, '');
+assert.equal(returnedToDefault.secondaryExplicit, null);
+assert.notEqual(returnedToDefault.primaryExplicit, '#0F766E');
 assert.equal(renamed.iconUrl, draft.iconUrl);
 assert.equal(renamed.splashUrl, draft.splashUrl);
 

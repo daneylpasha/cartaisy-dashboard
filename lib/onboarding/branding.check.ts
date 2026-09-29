@@ -1,4 +1,10 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { BrandColorControl } from '@/components/brand/BrandColorControl';
 import {
   displayBrandImageUrl,
   IMAGE_LIMIT_MESSAGE,
@@ -8,6 +14,11 @@ import {
   registerPayloadFromCloudinary,
 } from '@/lib/onboarding/brandAssets';
 import {
+  DEFAULT_PRIMARY_COLOR,
+  PLATFORM_DEFAULT_COLOR_LABEL,
+  brandColorPatch,
+  brandColorSelection,
+  brandColorUsesPlatformDefault,
   brandingAssetRouteMissing,
   brandingFromPayload,
   emptyBrandingDraft,
@@ -203,5 +214,108 @@ assert.equal(
   }),
   null
 );
+
+const cleared = brandingFromPayload(
+  { data: { primaryColor: null, secondaryColor: null, appName: 'Harbor' } },
+  'Fallback'
+);
+assert.equal(cleared.primaryExplicit, null);
+assert.equal(cleared.secondaryExplicit, null);
+assert.equal(cleared.primaryColor, DEFAULT_PRIMARY_COLOR);
+assert.equal(cleared.secondaryColor, '');
+assert.equal(brandColorSelection(cleared).primary, null);
+assert.equal(brandColorSelection(cleared).secondary, null);
+assert.equal(brandColorUsesPlatformDefault(cleared.primaryExplicit, cleared.primaryColor, 'primary'), true);
+
+const missingColors = brandingFromPayload({ data: { appName: 'Harbor' } }, '');
+assert.equal(missingColors.primaryExplicit, null);
+assert.equal(missingColors.secondaryExplicit, null);
+assert.equal(brandColorSelection(missingColors).primary, null);
+
+const explicitDefault = brandingFromPayload(
+  { data: { primaryColor: '#FF6B6B', secondaryColor: '#FFFFFF' } },
+  ''
+);
+assert.equal(explicitDefault.primaryExplicit, '#FF6B6B');
+assert.equal(explicitDefault.secondaryExplicit, '#FFFFFF');
+assert.equal(
+  brandColorUsesPlatformDefault(explicitDefault.primaryExplicit, explicitDefault.primaryColor, 'primary'),
+  false
+);
+assert.notEqual(brandColorSelection(explicitDefault).primary, null);
+
+const clearPrimary = brandColorPatch(
+  { primary: null, secondary: '#112233' },
+  { primary: '#0F766E', secondary: '#112233' }
+);
+assert.deepEqual(clearPrimary, { primaryColor: null });
+
+const clearBoth = brandColorPatch(
+  { primary: null, secondary: null },
+  { primary: '#111111', secondary: '#222222' }
+);
+assert.deepEqual(clearBoth, { primaryColor: null, secondaryColor: null });
+assert.equal(JSON.stringify(clearBoth), '{"primaryColor":null,"secondaryColor":null}');
+
+assert.deepEqual(
+  brandColorPatch({ primary: null, secondary: null }, { primary: null, secondary: null }),
+  {}
+);
+
+assert.deepEqual(
+  brandColorPatch({ primary: '#FF6B6B', secondary: null }, { primary: null, secondary: null }),
+  { primaryColor: '#FF6B6B' }
+);
+
+const untouchedDefault = brandColorPatch(brandColorSelection(cleared), brandColorSelection(cleared));
+assert.deepEqual(untouchedDefault, {});
+
+const here = dirname(fileURLToPath(import.meta.url));
+const settingsSource = readFileSync(join(here, '../../components/settings/StoreBrandingColors.tsx'), 'utf8');
+const brandStepSource = readFileSync(join(here, '../../components/onboarding/steps/BrandingStep.tsx'), 'utf8');
+const controlSource = readFileSync(join(here, '../../components/brand/BrandColorControl.tsx'), 'utf8');
+const wizardSource = readFileSync(join(here, '../../components/onboarding/OnboardingWizard.tsx'), 'utf8');
+
+assert.match(settingsSource, /primaryColor: null/);
+assert.match(settingsSource, /secondaryColor: null/);
+assert.match(settingsSource, /brandColorPatch/);
+assert.match(brandStepSource, /primaryExplicit: null/);
+assert.match(brandStepSource, /secondaryExplicit: null/);
+assert.match(wizardSource, /brandColorPatch\(brandColorSelection\(draft\)/);
+assert.equal(PLATFORM_DEFAULT_COLOR_LABEL, 'Using the platform default');
+assert.match(controlSource, /PLATFORM_DEFAULT_COLOR_LABEL/);
+
+const defaultSwatch = renderToStaticMarkup(
+  createElement(BrandColorControl, {
+    label: 'Primary color',
+    value: DEFAULT_PRIMARY_COLOR,
+    usingDefault: true,
+    onChange: () => undefined,
+    onClear: () => undefined,
+  })
+);
+assert.match(defaultSwatch, /Using the platform default/);
+assert.match(defaultSwatch, /Clear primary color/);
+assert.match(defaultSwatch, /<button[^>]*\sdisabled(?:=|\s|>)/);
+assert.match(defaultSwatch, /#FF6B6B/);
+assert.doesNotMatch(defaultSwatch, /saved/i);
+
+const customSwatch = renderToStaticMarkup(
+  createElement(BrandColorControl, {
+    label: 'Secondary color',
+    value: '#112233',
+    usingDefault: false,
+    onChange: () => undefined,
+    onClear: () => undefined,
+  })
+);
+assert.doesNotMatch(customSwatch, /Using the platform default/);
+assert.doesNotMatch(customSwatch, /<button[^>]*\sdisabled(?:=|\s|>)/);
+assert.match(customSwatch, /#112233/);
+assert.match(customSwatch, /Clear secondary color/);
+assert.match(controlSource, />\s*Clear\s*</);
+assert.doesNotMatch(settingsSource, /cartaisy/i);
+assert.doesNotMatch(brandStepSource, /cartaisy/i);
+assert.doesNotMatch(controlSource, /cartaisy/i);
 
 console.log('branding check ok');
