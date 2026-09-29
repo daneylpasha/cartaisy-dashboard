@@ -8,7 +8,12 @@ export interface IHomeLayoutSection {
 
 export interface IHomeLayout extends Document {
   storeId: string;
+  /** Published snapshot. Empty until the merchant publishes. Readers that share this document should treat this list as live. */
   sections: IHomeLayoutSection[];
+  /** Saved editor draft. Order and visibility changes land here until publish. */
+  draftSections: IHomeLayoutSection[];
+  /** Set only by an explicit publish. Absent or null means the layout is not published. */
+  publishedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,6 +48,14 @@ const HomeLayoutSchema = new Schema<IHomeLayout>(
     sections: {
       type: [HomeLayoutSectionSchema],
       default: [],
+    },
+    draftSections: {
+      type: [HomeLayoutSectionSchema],
+      default: [],
+    },
+    publishedAt: {
+      type: Date,
+      default: null,
     },
   },
   { timestamps: true }

@@ -53,6 +53,13 @@ import { restrictToVerticalAxis, restrictToWindowEdges } from '@dnd-kit/modifier
 // `IHomeLayoutSection` is the shape this page's data actually has: /api/home-layout
 // returns it via lib/services/homeLayout.
 import type { IHomeLayoutSection } from '@/models/HomeLayout';
+import { HomePublishBar } from '@/components/app-builder/HomePublishBar';
+import {
+  HOME_PUBLISH_COPY,
+  publishSuccessCopy,
+  visiblePublishStatus,
+  type HomePublishStatus,
+} from '@/lib/homeLayout/publish';
 
 interface ComponentStats {
   carouselCount: number;
@@ -310,7 +317,7 @@ function SortableItem({ section, stats, onToggleVisibility, isDragOverlay = fals
                   ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
                   : 'bg-slate-100 text-slate-400 hover:bg-slate-200 hover:text-slate-600'
               }`}
-              title={section.isVisible ? 'Hide from app' : 'Show in app'}
+              title={section.isVisible ? 'Hide when you publish' : 'Show when you publish'}
             >
               {section.isVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
             </button>
@@ -337,6 +344,9 @@ export default function AppBuilderPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [serverStatus, setServerStatus] = useState<HomePublishStatus>('not_published');
+  const [publishSuccess, setPublishSuccess] = useState<string | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState('');
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -360,6 +370,9 @@ export default function AppBuilderPage() {
              section.position !== original?.position;
     });
   }, [sections, originalSections]);
+
+  const publishState = visiblePublishStatus(serverStatus, hasChanges);
+  const canPublish = publishState !== 'published' && sections.length > 0 && !isPublishing && !isSaving;
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -390,6 +403,13 @@ export default function AppBuilderPage() {
           const loadedSections = layoutData.data.sections;
           setSections(loadedSections);
           setOriginalSections(loadedSections);
+          if (
+            layoutData.data.status === 'not_published' ||
+            layoutData.data.status === 'published' ||
+            layoutData.data.status === 'draft'
+          ) {
+            setServerStatus(layoutData.data.status);
+          }
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load data');
@@ -416,7 +436,18 @@ export default function AppBuilderPage() {
         throw new Error('Failed to save layout');
       }
 
-      setOriginalSections(sections);
+      const saved = await response.json();
+      const nextSections = Array.isArray(saved?.data?.sections) ? saved.data.sections : sections;
+      setSections(nextSections);
+      setOriginalSections(nextSections);
+      if (
+        saved?.data?.status === 'not_published' ||
+        saved?.data?.status === 'published' ||
+        saved?.data?.status === 'draft'
+      ) {
+        setServerStatus(saved.data.status);
+      }
+      setPublishSuccess(null);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
@@ -426,12 +457,43 @@ export default function AppBuilderPage() {
     }
   }, [sections]);
 
+  const publishLayout = useCallback(async () => {
+    setIsPublishing(true);
+    setError('');
+    setSaveSuccess(false);
+    setPublishSuccess(null);
+    try {
+      const response = await fetch('/api/home-layout/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sections }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to publish home');
+      }
+
+      const published = await response.json();
+      const nextSections = published?.data?.sections ?? sections;
+      setSections(nextSections);
+      setOriginalSections(nextSections);
+      setServerStatus('published');
+      setPublishSuccess(publishSuccessCopy(nextSections));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to publish home');
+    } finally {
+      setIsPublishing(false);
+    }
+  }, [sections]);
+
   const handleDiscardChanges = useCallback(() => {
     setSections(originalSections);
+    setPublishSuccess(null);
   }, [originalSections]);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id as string);
+    setPublishSuccess(null);
   }, []);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
@@ -451,6 +513,7 @@ export default function AppBuilderPage() {
   }, []);
 
   const handleToggleVisibility = useCallback((type: string) => {
+    setPublishSuccess(null);
     setSections((items) =>
       items.map((item) =>
         item.type === type ? { ...item, isVisible: !item.isVisible } : item
@@ -498,7 +561,7 @@ export default function AppBuilderPage() {
                 Design Your App Experience
               </h1>
               <p className="text-slate-400 text-sm max-w-xl">
-                Drag and drop to reorder components. Toggle visibility to control what your customers see.
+                Drag to reorder modules and choose which ones are included. Publish home writes the section order the installed app reads under its header.
               </p>
             </div>
 
@@ -532,6 +595,15 @@ export default function AppBuilderPage() {
         </div>
       </div>
 
+      <HomePublishBar
+        status={publishState}
+        sections={sections}
+        successMessage={publishSuccess}
+        isPublishing={isPublishing}
+        canPublish={canPublish}
+        onPublish={publishLayout}
+      />
+
       {/* Action Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 rounded-xl bg-white border border-slate-200">
         <div className="flex items-center gap-2">
@@ -549,9 +621,9 @@ export default function AppBuilderPage() {
 
         <div className="flex items-center gap-2">
           {saveSuccess && (
-            <div className="flex items-center gap-1.5 text-emerald-600 text-xs font-medium">
+            <div className="flex items-center gap-1.5 text-slate-600 text-xs font-medium">
               <CheckCircle2 className="w-3.5 h-3.5" />
-              Saved successfully
+              {HOME_PUBLISH_COPY.draftSaved}
             </div>
           )}
           {hasChanges && (
@@ -584,7 +656,7 @@ export default function AppBuilderPage() {
                 ) : (
                   <>
                     <Save className="w-3.5 h-3.5" />
-                    Save Changes
+                    {HOME_PUBLISH_COPY.saveDraft}
                   </>
                 )}
               </Button>
@@ -609,7 +681,7 @@ export default function AppBuilderPage() {
         <div>
           <h2 className="text-sm font-semibold tracking-tight text-slate-900">Component Layout</h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Drag to reorder how sections appear on your mobile app homescreen
+            Drag to reorder the draft. The installed app keeps reading the last published section order until you publish again.
           </p>
         </div>
       </div>
@@ -674,7 +746,7 @@ export default function AppBuilderPage() {
               <li>• <span className="font-medium text-slate-700">Drag</span> the grip handle to reorder sections</li>
               <li>• <span className="font-medium text-slate-700">Toggle visibility</span> with the eye icon to show/hide sections</li>
               <li>• <span className="font-medium text-slate-700">Click "Manage"</span> to add or edit items within each section</li>
-              <li>• <span className="font-medium text-slate-700">Preview</span> your changes before saving to see how they look on mobile</li>
+              <li>• <span className="font-medium text-slate-700">Preview</span> the module stack before you publish. Saving a draft does not change the section order the installed app reads.</li>
             </ul>
           </div>
           <Link

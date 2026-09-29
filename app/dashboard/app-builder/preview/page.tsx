@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { HomescreenPreviewData } from '@/types';
+import { publishStatusCopy, type HomePublishStatus } from '@/lib/homeLayout/publish';
 import {
   MobileFrame,
   CarouselPreview,
@@ -15,12 +16,46 @@ import {
 import { ComponentOrderSidebar } from '@/components/app-builder/preview/ComponentOrderSidebar';
 import { Button } from '@/components/ui/button';
 import { AlertCircle, Loader2, RefreshCw, Smartphone } from 'lucide-react';
+import type { ReactNode } from 'react';
+
+function renderPreviewSection(type: string, data: HomescreenPreviewData): ReactNode {
+  switch (type) {
+    case 'carousel':
+      return <CarouselPreview items={data.carousel} />;
+    case 'promo_banners':
+      return <PromoBannerPreview items={data.promoBanners} />;
+    case 'callout_banners':
+      return <CalloutBannersPreview items={data.calloutBanners} />;
+    case 'category_grid':
+      return <CategoryGridPreview items={data.categoryGrid} />;
+    case 'collection_displays':
+      return <CollectionDisplayPreview items={data.collectionDisplays} />;
+    case 'collection_showcases':
+      return <CollectionShowcasePreview items={data.collectionShowcases} />;
+    case 'category_collection_grid':
+      return <CategoryCollectionGridPreview items={data.categoryCollectionGrids} />;
+    default:
+      return null;
+  }
+}
+
+function previewLead(
+  status: HomePublishStatus | null,
+  sections: { isVisible: boolean }[] | null
+): string {
+  const base =
+    'Module stack. Splash, the home header, product, and cart are the shopper phone on Brand and Preview.';
+  if (!status || !sections) return base;
+  return `${base} ${publishStatusCopy(status, sections).detail}`;
+}
 
 export default function HomescreenPreviewPage() {
   const [data, setData] = useState<HomescreenPreviewData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [publishStatus, setPublishStatus] = useState<HomePublishStatus | null>(null);
+  const [layoutSections, setLayoutSections] = useState<{ type: string; isVisible: boolean }[] | null>(null);
 
   const fetchPreview = async (showRefreshIndicator = false) => {
     try {
@@ -31,7 +66,10 @@ export default function HomescreenPreviewPage() {
       }
       setError('');
 
-      const response = await fetch('/api/preview/homescreen');
+      const [response, layoutResponse] = await Promise.all([
+        fetch('/api/preview/homescreen'),
+        fetch('/api/home-layout'),
+      ]);
 
       if (!response.ok) {
         throw new Error('Failed to fetch preview data');
@@ -39,6 +77,17 @@ export default function HomescreenPreviewPage() {
 
       const result = await response.json();
       setData(result.data);
+
+      if (layoutResponse.ok) {
+        const layout = await layoutResponse.json();
+        const status = layout?.data?.status;
+        if (status === 'not_published' || status === 'published' || status === 'draft') {
+          setPublishStatus(status);
+        }
+        if (Array.isArray(layout?.data?.sections)) {
+          setLayoutSections(layout.data.sections);
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load preview');
     } finally {
@@ -93,7 +142,7 @@ export default function HomescreenPreviewPage() {
             Homescreen Preview
           </h1>
           <p className="text-slate-600 mt-1">
-            Module order for a published home. Splash, the home header, product, and cart are the shopper phone on Brand and Preview.
+            {previewLead(publishStatus, layoutSections)}
           </p>
         </div>
         <Button
@@ -118,29 +167,33 @@ export default function HomescreenPreviewPage() {
         <div className="flex-1 flex justify-center py-4">
           <MobileFrame>
             <div className="space-y-0">
-              {/* Carousel - Always at top */}
-              <CarouselPreview items={data.carousel} />
+              {layoutSections
+                ? layoutSections
+                    .filter((section) => section.isVisible)
+                    .map((section) => (
+                      <div key={`${section.type}-${section.isVisible}`}>{renderPreviewSection(section.type, data)}</div>
+                    ))
+                : (
+                  <>
+                    <CarouselPreview items={data.carousel} />
+                    <CategoryGridPreview items={data.categoryGrid} />
+                    <CalloutBannersPreview items={data.calloutBanners} />
+                    <CollectionDisplayPreview items={data.collectionDisplays} />
+                    <CategoryCollectionGridPreview items={data.categoryCollectionGrids} />
+                    <PromoBannerPreview items={data.promoBanners} />
+                    <CollectionShowcasePreview items={data.collectionShowcases} />
+                  </>
+                )}
 
-              {/* Category Grid */}
-              <CategoryGridPreview items={data.categoryGrid} />
-
-              {/* Callout Banners */}
-              <CalloutBannersPreview items={data.calloutBanners} />
-
-              {/* Collection Displays */}
-              <CollectionDisplayPreview items={data.collectionDisplays} />
-
-              {/* Category Collection Grids */}
-              <CategoryCollectionGridPreview items={data.categoryCollectionGrids} />
-
-              {/* Promo Banners */}
-              <PromoBannerPreview items={data.promoBanners} />
-
-              {/* Collection Showcases */}
-              <CollectionShowcasePreview items={data.collectionShowcases} />
+              {layoutSections && layoutSections.every((section) => !section.isVisible) && (
+                <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                  <h3 className="text-sm font-semibold text-slate-900 mb-1">No modules included</h3>
+                  <p className="text-xs text-slate-500">No modules are included in this draft.</p>
+                </div>
+              )}
 
               {/* Empty State */}
-              {data.metadata.activeComponents === 0 && (
+              {!layoutSections && data.metadata.activeComponents === 0 && (
                 <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
                   <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mb-4">
                     <Smartphone className="w-8 h-8 text-slate-400" />

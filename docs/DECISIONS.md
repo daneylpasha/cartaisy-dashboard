@@ -352,6 +352,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Merchant Build my app and Settings → Build setup presentation. No new credential API and no EAS Submit change. Human review is required because this is the release handoff next to store credentials.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#88`.
 
+### App Builder publish is a snapshot on the existing home layout
+
+- Date: 2026-09-29.
+- Decision: Publish home is an explicit action on the dashboard `HomeLayout` document. The editor draft is `draftSections` plus any unsaved order or visibility changes. Publish writes `sections` and sets `publishedAt`. `PUT /api/home-layout` saves the draft and does not replace `sections`. `POST /api/home-layout/publish` copies the current editor sections into `sections` and `draftSections` and sets `publishedAt`. Opening App Builder does not insert a document. A non-empty `sections` list with no `publishedAt` stays published, because that list was live when save wrote `sections` directly. The first load or save sets `publishedAt` from `updatedAt` and does not clear `sections`. `GET /api/public/home-feed` returns an empty layout only when `sections` is empty and nothing has been published. The confirmation says the installed app reads this section order under the home header because Publish wrote `sections` and a draft no longer overwrites it. It does not claim the backend reads `publishedAt`. Hidden-only publishes say the default home stays because nothing is visible. No backend field was added. Updated the same day so pre-publish layouts are not labeled unpublished.
+- Reason: Dashboard #90. Save wrote the only layout and the public feed also served default sections when the merchant had not published. There was no draft versus live state.
+- Impact: App Builder, the module-stack preview, and `GET /api/public/home-feed`. The installed app still reads backend `GET /customer/homescreen`, which does not read `publishedAt` and may still render active module documents. If both databases share `homelayouts`, draft saves no longer overwrite `sections`, and a legacy `sections` list is not cleared. Module item create and edit are unchanged. No Shopify token is rendered or stored. Human review is required because this is home-module publishing.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/HOME_MODULE_EDITOR_CONTRACT.md`, `docs/TESTING.md`. GitHub issue: `#90`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.
