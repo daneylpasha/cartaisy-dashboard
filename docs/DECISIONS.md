@@ -392,6 +392,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Brand, Preview, and Settings presentation. Build my app, the Go live strip, and App Builder publish are unchanged. No new backend field. No Shopify token and no Expo token is rendered. Human review is required because this is the merchant-facing install handoff and the branding preview.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/HOME_MODULE_EDITOR_CONTRACT.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#99`.
 
+### Go live count matches the checklist, and billing is said once
+
+- Date: 2026-09-29.
+- Decision: The Go live header count is the checklist rows on connected Home and how many of those rows are done. Store accounts stay in the list, so they are in the count, and they still never take the filled action. When Shopify billing or reconnect blocks the catalog, that story is the strip lead only. The reconnect action stays under that lead. Home does not repeat the same billing or reconnect paragraph in a second notice.
+- Reason: Dashboard #98. The header said 1 of 6 while the list rendered seven rows, because the total was fixed and left out optional store accounts. Billing also appeared as the lead and again as the safety notice.
+- Impact: Connected Home presentation. Reconnect stays available for a billing or reconnect block, and that block still does not offer Sync again. It does not change auth, store ownership, the publish write, or Build eligibility. Human review is required because this sits next to Shopify recovery.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#98`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

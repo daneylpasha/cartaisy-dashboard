@@ -8,8 +8,6 @@ const BRAND_STEP_HREF = '/dashboard/onboarding?step=brand';
 /** Settings hosts the one catalog recovery control. */
 export const CATALOG_SYNC_HREF = '/dashboard/settings#shopify-connection';
 
-export const GO_LIVE_STEP_COUNT = 6;
-
 export type GoLivePreviewPhase = 'unknown' | 'ready' | 'building' | 'none';
 
 export type GoLiveStepId = 'shopify' | 'catalog' | 'brand' | 'home' | 'preview' | 'accounts' | 'submit';
@@ -351,6 +349,7 @@ function supportFor(step: GoLiveStep | undefined, input: GoLiveInput): string {
 
 /**
  * Connected Home readiness. Completed steps stay in the list.
+ * The header count is those rows and how many of them are done.
  * The first required step that is not done owns the single call to action.
  * Store accounts are shown and never take that call to action.
  * A failed read stays on that step and is not treated as done.
@@ -358,12 +357,12 @@ function supportFor(step: GoLiveStep | undefined, input: GoLiveInput): string {
 export function buildGoLive(input: GoLiveInput): GoLiveModel {
   const steps = assignTones(draftSteps(input));
   const focus = focusStep(steps);
-  const readyCount = steps.filter((step) => !step.optional && step.tone === 'done').length;
+  const readyCount = steps.filter((step) => step.tone === 'done').length;
   return {
     headline: headlineFor(focus, input),
     support: supportFor(focus, input),
     readyCount,
-    stepCount: GO_LIVE_STEP_COUNT,
+    stepCount: steps.length,
     steps,
     cta: ctaFor(focus, input),
   };
