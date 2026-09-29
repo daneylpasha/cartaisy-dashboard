@@ -12,6 +12,7 @@ import {
   catalogRow,
   describeBuild,
   formatTimeAgo,
+  homePreviewBuilding,
   moduleSummary,
   nextSetupAction,
   type BrandingSaved,
@@ -39,6 +40,11 @@ export interface ConnectedHomeFacts {
   catalogBlock: ShopifyCatalogBlockKind | null;
   /** Ready platforms with a public https install URL. Empty hides the install card. */
   installs: ReadyInstall[];
+  /**
+   * Newest request is queued or building, and no ready public install URL exists.
+   * Stays false when Scan to install is shown, and when Shopify needs reconnect or billing.
+   */
+  previewBuilding: boolean;
 }
 
 async function readJson(response: Response): Promise<unknown> {
@@ -141,6 +147,7 @@ export async function loadConnectedHome(storeId: string | undefined): Promise<Co
       next: null,
       catalogBlock: null,
       installs: [],
+      previewBuilding: false,
     };
   }
 
@@ -163,6 +170,9 @@ export async function loadConnectedHome(storeId: string | undefined): Promise<Co
   const buildList = builds.kind === 'ok' ? builds : { kind: 'error' as const };
   const build = describeBuild(buildList);
   const installs = buildList.kind === 'ok' ? readyInstallsFromList(buildList.requests) : [];
+  const previewBuilding =
+    buildList.kind === 'ok' &&
+    homePreviewBuilding({ requests: buildList.requests, catalogBlocked: gated.block != null });
 
   return {
     syncLabel: sync.label,
@@ -177,5 +187,6 @@ export async function loadConnectedHome(storeId: string | undefined): Promise<Co
     next: nextSetupAction({ brandingSaved, build: build.state }),
     catalogBlock: gated.block ?? null,
     installs,
+    previewBuilding,
   };
 }
