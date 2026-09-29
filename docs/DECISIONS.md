@@ -424,6 +424,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Onboarding header presentation. Name filters, Exit setup, the step rail, brand save, and Build my app are unchanged. No Shopify token is rendered.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`. GitHub issue: `#112`.
 
+### Use logo saves the home-screen icon through the existing upload
+
+- Date: 2026-09-29.
+- Decision: On the brand step and Settings → Store Branding, Use logo is shown when `drawableBrandImageUrl` accepts the logo (https or an in-memory blob) and the app icon is missing, unsafe, or broken. The same helper drops token-shaped and non-https URLs. The click fetches that logo as a file and passes it to the existing `onIconFile` / `uploadBrandAsset(..., 'icon', file)` save. It does not assign the logo URL to `iconUrl`. If the fetch fails, the icon stays empty and the field asks the merchant to add an image. The control is hidden while an icon is showing or while a brand image upload is in progress. Continue, Save, and Build stay on their existing rules. The wizard header still may draw the logo when the icon is not drawable; that display is not a saved home-screen icon.
+- Reason: Dashboard #114. A saved logo with an empty app icon shipped the first install without a home-screen icon, and merchants were asked to upload the same file again.
+- Impact: Onboarding brand step and Settings Store Branding. No backend contract change. No Shopify token is rendered or sent. Human review is required because this is the brand image save path.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`. GitHub issue: `#114`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

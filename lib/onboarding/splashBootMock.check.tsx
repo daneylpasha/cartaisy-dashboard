@@ -28,7 +28,7 @@ assert.doesNotMatch(brandSource, /HomeScreenLauncherMock|SplashBootMock|SmartHom
 assert.match(brandSource, /const nameReady = draft\.appName\.trim\(\)\.length >= 2;/);
 assert.match(
   brandSource,
-  /const blocked =\n\s*Boolean\(loadError\) \|\| !nameReady \|\| !primaryValid \|\| !secondaryValid \|\| logoUploading \|\| iconUploading \|\| splashUploading;/
+  /const uploadsBusy = logoUploading \|\| iconUploading \|\| splashUploading;\n\s*const blocked =\n\s*Boolean\(loadError\) \|\| !nameReady \|\| !primaryValid \|\| !secondaryValid \|\| uploadsBusy;/
 );
 assert.doesNotMatch(settingsViewSource, /HomeScreenLauncherMock|SplashBootMock|SmartHomePreview/);
 assert.doesNotMatch(previewStepSource, /SplashBootMock/);

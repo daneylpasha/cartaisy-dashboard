@@ -4,8 +4,7 @@ import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { displayBrandImageUrl } from '@/lib/onboarding/brandAssets';
-import { safeImageUrl } from '@/lib/onboarding/normalizers';
+import { drawableBrandImageUrl } from '@/lib/onboarding/brandAssets';
 import type { OnboardingStep } from '@/lib/onboarding/types';
 import { ONBOARDING_STEPS } from '@/lib/onboarding/types';
 
@@ -48,21 +47,16 @@ export function wizardHeaderMark(...values: Array<string | null | undefined>): s
 
 /**
  * Image beside the header name. The app icon wins; the logo is used only
- * when that icon is not a drawable URL. Public https and in-memory blob
- * previews only. `safeImageUrl` drops other schemes, and
- * `displayBrandImageUrl` drops token-shaped values.
+ * when that icon is not drawable. `drawableBrandImageUrl` keeps public https
+ * and in-memory blob previews, and drops token-shaped and other URLs.
  */
 export function wizardHeaderImageUrl(
   iconUrl?: string | null,
   logoUrl?: string | null
 ): string | null {
   for (const value of [iconUrl, logoUrl]) {
-    if (typeof value !== 'string') continue;
-    const safe = safeImageUrl(value.trim() || null);
-    if (!safe) continue;
-    const url = displayBrandImageUrl(safe);
-    if (!url) continue;
-    if (url.startsWith('https:') || url.startsWith('blob:')) return url;
+    const url = drawableBrandImageUrl(typeof value === 'string' ? value : null);
+    if (url) return url;
   }
   return null;
 }
