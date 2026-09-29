@@ -1,7 +1,9 @@
 'use client';
 
+import { BrandInstallPreview, brandPreviewShowsMock } from '@/components/onboarding/BrandInstallPreview';
 import { SmartHomePreview } from '@/components/onboarding/SmartHomePreview';
 import { WizardFooter } from '@/components/onboarding/WizardChrome';
+import { previewStepLead, type InstallPreviewModel } from '@/lib/build/installPreview';
 import { previewShelf, previewStepDetail } from '@/lib/onboarding/normalizers';
 import type { BrandingDraft, LockedCatalog, SyncGate } from '@/lib/onboarding/types';
 
@@ -13,6 +15,8 @@ interface PreviewStepProps {
   onBack: () => void;
   onContinue: () => void;
   onRetry: () => void;
+  /** Build list for this store. Omitted renders the light phone mock. */
+  installPreview?: InstallPreviewModel;
 }
 
 export function PreviewStep({
@@ -23,7 +27,9 @@ export function PreviewStep({
   onBack,
   onContinue,
   onRetry,
+  installPreview,
 }: PreviewStepProps) {
+  const showMock = brandPreviewShowsMock(installPreview);
   const shelf = previewShelf(sync, catalog.products, pending);
   const productLine = previewStepDetail(sync, catalog.products, pending);
 
@@ -35,16 +41,16 @@ export function PreviewStep({
           <h1 className="font-heading mt-3 text-[1.75rem] font-semibold tracking-tight text-slate-950">
             Preview your home
           </h1>
-          <p className="mt-3 max-w-md text-[15px] leading-7 text-slate-600">
-            These screens follow the shopper app. Opening is the splash. Home is the default home until you publish a layout. Product and cart use the same chrome.
-          </p>
-          <ul className="mt-6 space-y-2 text-sm leading-6 text-slate-600">
-            <li>Your name, colors, logo, icon, and splash are applied on the screens that use them.</li>
-            <li>{productLine}</li>
-            <li>Collection cards use names only. The app uses collection images when the catalog has them.</li>
-            <li>Favorites, wishlist, account, and checkout open in the installed app.</li>
-          </ul>
-          {shelf.kind !== 'products' ? (
+          <p className="mt-3 max-w-md text-[15px] leading-7 text-slate-600">{previewStepLead(installPreview)}</p>
+          {showMock ? (
+            <ul className="mt-6 space-y-2 text-sm leading-6 text-slate-600">
+              <li>Your name, colors, logo, icon, and splash are applied on the screens that use them.</li>
+              <li>{productLine}</li>
+              <li>Collection cards use names only. The app uses collection images when the catalog has them.</li>
+              <li>Favorites, wishlist, account, and checkout open in the installed app.</li>
+            </ul>
+          ) : null}
+          {showMock && shelf.kind !== 'products' ? (
             <button
               type="button"
               onClick={onRetry}
@@ -56,7 +62,9 @@ export function PreviewStep({
           ) : null}
         </div>
         <div className="mt-8 lg:col-start-2 lg:row-span-2 lg:mt-0 lg:self-start">
-          <SmartHomePreview draft={draft} catalog={catalog} sync={sync} pending={pending} />
+          <BrandInstallPreview model={installPreview}>
+            <SmartHomePreview draft={draft} catalog={catalog} sync={sync} pending={pending} />
+          </BrandInstallPreview>
         </div>
         <div className="lg:col-start-1">
           <WizardFooter onBack={onBack} primaryLabel="Continue" onPrimary={onContinue} />

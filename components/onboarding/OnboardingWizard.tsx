@@ -33,6 +33,7 @@ import {
   startShopifyConnect,
 } from '@/lib/onboarding/shopifyConnect';
 import { fetchCatalogSync, syncCatalogAgain } from '@/lib/build/client';
+import { useReadyInstallPreview } from '@/hooks/useReadyInstallPreview';
 import { withCatalogBlock } from '@/lib/shopify/catalogBlock';
 import { BUILD_STATUS_POLL_MS } from '@/lib/build/contract';
 import type {
@@ -69,6 +70,7 @@ export function OnboardingWizard() {
   sessionNameRef.current = session?.user?.storeName ?? '';
   const stepParam = searchParams.get('step');
   const step: OnboardingStep = isOnboardingStep(stepParam) ? stepParam : 'connect';
+  const installPreview = useReadyInstallPreview(step === 'brand' || step === 'preview' ? 'brand-preview' : step);
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -523,6 +525,7 @@ export function OnboardingWizard() {
               onBack={() => go('connect')}
               onContinue={handleSaveBrand}
               onRetry={() => setReloadKey((value) => value + 1)}
+              installPreview={installPreview}
             />
           ) : step === 'preview' ? (
             <PreviewStep
@@ -533,6 +536,7 @@ export function OnboardingWizard() {
               onBack={() => go('brand')}
               onContinue={() => go('ready')}
               onRetry={() => setReloadKey((value) => value + 1)}
+              installPreview={installPreview}
             />
           ) : (
             <ReadyStep
