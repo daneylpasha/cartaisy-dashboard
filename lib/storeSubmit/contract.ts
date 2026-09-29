@@ -6,7 +6,12 @@
  */
 
 import { isBuildRequestId, type PlatformStatus } from '../build/contract.ts';
-import { containsCredentialSecret, type CredentialStatus } from '../storeCredentials/contract.ts';
+import {
+  APPLE_STORE_ACCOUNT_ID,
+  GOOGLE_STORE_ACCOUNT_ID,
+  containsCredentialSecret,
+  type CredentialStatus,
+} from '../storeCredentials/contract.ts';
 
 /** Poll while a submit is still moving. A few seconds is enough. */
 export const SUBMIT_STATUS_POLL_MS = 4000;
@@ -17,7 +22,8 @@ export type SubmitStatus = (typeof SUBMIT_STATUSES)[number];
 
 export type SubmitPlatform = 'ios' | 'android';
 
-export const STORE_ACCOUNTS_ANCHOR = '#store-accounts-heading';
+export const CONNECT_APPLE_DEVELOPER = 'Connect Apple Developer';
+export const CONNECT_GOOGLE_PLAY = 'Connect Google Play';
 
 export const SUBMIT_SIGN_IN_MESSAGE = 'Sign in again to submit this build.';
 export const SUBMIT_FORBIDDEN_MESSAGE = 'You need to be a store admin to submit this build.';
@@ -87,6 +93,11 @@ export interface StoreSubmitPresentation {
   guidance: string | null;
   alert: string | null;
   showConnect: boolean;
+  /** Title for the connect path. Set when this card opens the existing account form. */
+  connectTitle: string | null;
+  connectLabel: string | null;
+  /** Hash of the existing Apple or Google connect card on this page. */
+  connectHref: string | null;
 }
 
 export function isSafeMerchantText(value: string): boolean {
@@ -177,6 +188,16 @@ export function submitActionLabel(platform: SubmitPlatform): string {
   return platform === 'ios' ? 'Submit to App Store' : 'Submit to Play';
 }
 
+export function connectAccountTitle(platform: SubmitPlatform): string {
+  return platform === 'ios' ? CONNECT_APPLE_DEVELOPER : CONNECT_GOOGLE_PLAY;
+}
+
+/** Same-page link into the existing credential card. Not a store URL. */
+export function connectAccountHref(platform: SubmitPlatform): string {
+  const id = platform === 'ios' ? APPLE_STORE_ACCOUNT_ID : GOOGLE_STORE_ACCOUNT_ID;
+  return `#${id}`;
+}
+
 export function credentialForSubmit(
   platform: SubmitPlatform,
   phase: 'loading' | 'error' | 'ready',
@@ -210,8 +231,9 @@ function credentialBlock(platform: SubmitPlatform, credential: CredentialStatus 
 }
 
 /**
- * What one platform's submit control shows. A missing account or an unfinished
- * build disables only this control.
+ * What one platform's submit control shows. A ready platform with a missing
+ * or needs-attention account offers Connect instead of a disabled submit.
+ * A build that is not ready disables only this control.
  */
 export function presentStoreSubmit(input: {
   platform: SubmitPlatform;
@@ -291,6 +313,9 @@ export function presentStoreSubmit(input: {
           ? 'blocked'
           : 'idle';
 
+  const showConnect = block.showConnect && !moving;
+  const connectTitle = showConnect ? connectAccountTitle(input.platform) : null;
+
   return {
     platform: input.platform,
     label: moving ? 'Submitting...' : again ? 'Submit again' : submitActionLabel(input.platform),
@@ -304,7 +329,10 @@ export function presentStoreSubmit(input: {
     detail,
     guidance,
     alert,
-    showConnect: block.showConnect && !moving,
+    showConnect,
+    connectTitle,
+    connectLabel: connectTitle,
+    connectHref: showConnect ? connectAccountHref(input.platform) : null,
   };
 }
 

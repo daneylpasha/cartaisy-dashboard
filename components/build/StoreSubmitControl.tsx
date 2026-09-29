@@ -1,16 +1,13 @@
 'use client';
 
 import { Check } from 'lucide-react';
-import { STORE_ACCOUNTS_ANCHOR, type StoreSubmitPresentation } from '@/lib/storeSubmit/contract';
+import type { StoreSubmitPresentation } from '@/lib/storeSubmit/contract';
 
 const PRIMARY_BUTTON =
   'inline-flex h-11 items-center justify-center rounded-lg bg-slate-950 px-5 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2';
 
 const QUIET_BUTTON =
   'text-sm font-medium text-slate-600 underline-offset-4 transition-colors hover:text-slate-950 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400';
-
-const LINK =
-  'text-sm font-medium text-slate-950 underline decoration-slate-300 underline-offset-4 transition-colors hover:decoration-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400';
 
 function pillClass(tone: StoreSubmitPresentation['tone']): string {
   if (tone === 'failed') return 'bg-red-50 text-red-800';
@@ -20,15 +17,15 @@ function pillClass(tone: StoreSubmitPresentation['tone']): string {
 export function StoreSubmitControl({
   model,
   onSubmit,
-  connectHref = STORE_ACCOUNTS_ANCHOR,
 }: {
   model: StoreSubmitPresentation;
   onSubmit: () => void;
-  connectHref?: string;
 }) {
   const described = model.nextStep || model.detail || model.guidance || (model.tone === 'failed' ? model.alert : null);
   const detailId = described ? `${model.platform}-submit-detail` : undefined;
   const confirmation = model.headline !== null;
+  const connect = Boolean(model.showConnect && model.connectHref && model.connectLabel);
+  const connectFirst = connect && model.state === 'blocked';
 
   return (
     <div
@@ -38,6 +35,9 @@ export function StoreSubmitControl({
       data-submit-outcome={model.tone === 'idle' ? undefined : model.tone}
       aria-busy={model.tone === 'progress' ? true : undefined}
     >
+      {connectFirst && model.connectTitle ? (
+        <p className="font-heading text-[15px] font-semibold tracking-tight text-slate-950">{model.connectTitle}</p>
+      ) : null}
       {confirmation ? (
         <div className="flex items-start gap-3">
           {model.tone === 'submitted' ? (
@@ -66,7 +66,7 @@ export function StoreSubmitControl({
           </div>
         </div>
       ) : model.detail || model.guidance || model.statusLabel ? (
-        <div className="flex items-start justify-between gap-3">
+        <div className={`flex items-start justify-between gap-3 ${connectFirst ? 'mt-1' : ''}`}>
           <div id={detailId} className="min-w-0">
             {model.detail ? (
               <p className="text-sm leading-6 text-slate-600" role="status">
@@ -93,20 +93,21 @@ export function StoreSubmitControl({
         </p>
       ) : null}
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-        <button
-          type="button"
-          onClick={onSubmit}
-          disabled={model.disabled}
-          aria-describedby={detailId}
-          className={model.quiet ? QUIET_BUTTON : PRIMARY_BUTTON}
-        >
-          {model.label}
-        </button>
-        {model.showConnect ? (
-          <a href={connectHref} className={LINK}>
-            Connect account
+        {connect ? (
+          <a href={model.connectHref ?? undefined} className={PRIMARY_BUTTON} aria-describedby={detailId}>
+            {model.connectLabel}
           </a>
-        ) : null}
+        ) : (
+          <button
+            type="button"
+            onClick={onSubmit}
+            disabled={model.disabled}
+            aria-describedby={detailId}
+            className={model.quiet ? QUIET_BUTTON : PRIMARY_BUTTON}
+          >
+            {model.label}
+          </button>
+        )}
       </div>
     </div>
   );

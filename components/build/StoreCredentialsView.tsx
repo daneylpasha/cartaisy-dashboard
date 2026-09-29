@@ -2,9 +2,11 @@
 
 import type { ReactNode } from 'react';
 import {
+  APPLE_STORE_ACCOUNT_ID,
   BUILD_MY_APP_HREF,
   BUILD_SETUP_SETTINGS_HREF,
   CREDENTIALS_HELPER,
+  GOOGLE_STORE_ACCOUNT_ID,
   canDisconnectCredential,
   credentialFormOpen,
   credentialStatusLabel,
@@ -93,11 +95,14 @@ function Card({
   status: CredentialStatus;
   children: ReactNode;
 }) {
+  const id = platform === 'apple' ? APPLE_STORE_ACCOUNT_ID : GOOGLE_STORE_ACCOUNT_ID;
+
   return (
     <article
+      id={id}
       data-platform={platform}
       data-status={status}
-      className="rounded-2xl border border-slate-200/80 bg-white px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
+      className="scroll-mt-20 rounded-2xl border border-slate-200/80 bg-white px-4 py-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)]"
     >
       <div className="flex items-start justify-between gap-3">
         <h4 className="font-heading text-[15px] font-semibold tracking-tight text-slate-950">{title}</h4>
