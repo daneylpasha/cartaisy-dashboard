@@ -19,7 +19,9 @@ import {
 } from '@/lib/build/contract';
 import type { BuildRequestAvailability } from '@/lib/onboarding/types';
 import { InstallQrBoard } from '@/components/build/InstallQrBoard';
+import { HomePublishNudge } from '@/components/onboarding/HomePublishNudge';
 import { LauncherReadinessStrip } from '@/components/onboarding/LauncherReadinessStrip';
+import type { HomeLayoutOverview } from '@/lib/homeLayout/publish';
 import { StoreSubmitControl } from '@/components/build/StoreSubmitControl';
 import { installQrSlots } from '@/lib/build/installPreview';
 import {
@@ -64,6 +66,11 @@ export interface BuildMyAppViewProps {
   splashUrl?: string | null;
   /** True while branding is still loading and no draft was passed in. */
   launcherPending?: boolean;
+  /**
+   * Home layout from GET /api/home-layout.
+   * Null while that read is missing, failed, or unrecognized. Does not affect submit.
+   */
+  homeLayout?: HomeLayoutOverview | null;
   onAndroidChange: (value: boolean) => void;
   onIosChange: (value: boolean) => void;
   onNotesChange: (value: string) => void;
@@ -262,6 +269,7 @@ export function BuildMyAppView({
   iconUrl = null,
   splashUrl = null,
   launcherPending = false,
+  homeLayout = null,
   onAndroidChange,
   onIosChange,
   onNotesChange,
@@ -273,7 +281,10 @@ export function BuildMyAppView({
   storeSubmit = null,
 }: BuildMyAppViewProps) {
   const launcher = (
-    <LauncherReadinessStrip appName={appName} iconUrl={iconUrl} splashUrl={splashUrl} pending={launcherPending} />
+    <>
+      <LauncherReadinessStrip appName={appName} iconUrl={iconUrl} splashUrl={splashUrl} pending={launcherPending} />
+      <HomePublishNudge layout={homeLayout} />
+    </>
   );
 
   if (phase === 'loading') {

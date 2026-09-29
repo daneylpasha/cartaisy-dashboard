@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { BuildMyAppView, type BuildMyAppViewProps, type StoreSubmitBindings } from '../../components/onboarding/BuildMyAppView.tsx';
+import { APP_BUILDER_PUBLISH_HREF, homeLayoutOverviewFromPayload } from '../homeLayout/publish.ts';
 import {
   StoreSubmitSettingsView,
   type StoreSubmitSettingsViewProps,
@@ -170,6 +171,24 @@ const composeStillBuilds = html({
     },
   }),
 });
+const draftWhileSubmitting = html({
+  request: request('ready', 'ready', { android: INSTALL, ios: 'https://u.expo.dev/artifact/ios' }),
+  storeSubmit: bindings(),
+  homeLayout: homeLayoutOverviewFromPayload({
+    data: {
+      status: 'draft',
+      sections: [{ type: 'carousel', isVisible: false, position: 0 }],
+      publishedSections: [{ type: 'carousel', isVisible: true, position: 0 }],
+    },
+  }),
+});
+assert.ok(draftWhileSubmitting.includes('data-home-publish="draft"'));
+assert.ok(draftWhileSubmitting.includes(`href="${APP_BUILDER_PUBLISH_HREF}"`));
+assert.equal(isDisabled(buttonTag(draftWhileSubmitting, 'Submit to Play')), false);
+assert.equal(isDisabled(buttonTag(draftWhileSubmitting, 'Submit to App Store')), false);
+assert.ok(draftWhileSubmitting.includes('Install Android build'));
+assertCalm(draftWhileSubmitting);
+
 assert.equal(isDisabled(buttonTag(composeStillBuilds, 'Build my app')), false);
 assert.equal(composeStillBuilds.includes('Submit to App Store'), false);
 assert.equal(composeStillBuilds.includes('Submit to Play'), false);
