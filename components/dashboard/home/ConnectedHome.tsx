@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ShopifyCatalogBlockPanel } from '@/components/shopify/ShopifyCatalogBlockPanel';
 import { HomeInstallCard } from '@/components/dashboard/home/HomeInstallCard';
+import { HomePreviewBuildingCard } from '@/components/dashboard/home/HomePreviewBuildingCard';
 import type { ConnectedHomeFacts } from '@/lib/dashboard/loadHome';
 
 export function ConnectedHome({
@@ -30,7 +31,11 @@ export function ConnectedHome({
         {shop ? `Connected to ${shop}.` : 'Shopify is connected.'}
       </p>
 
-      <HomeInstallCard installs={facts.installs} />
+      {facts.installs.length > 0 ? (
+        <HomeInstallCard installs={facts.installs} />
+      ) : facts.previewBuilding ? (
+        <HomePreviewBuildingCard />
+      ) : null}
 
       {facts.next && (
         <section className="mt-8 flex flex-col gap-4 rounded-xl border border-slate-200 bg-white px-5 py-5 sm:flex-row sm:items-center sm:justify-between">

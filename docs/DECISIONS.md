@@ -328,6 +328,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Connected Home presentation. No backend field. No Shopify token and no Expo token is rendered or sent. Human review is required because this is the merchant-facing install handoff.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#82`.
 
+### Home shows a calm card while the preview is building
+
+- Date: 2026-09-29.
+- Decision: Home for a connected store shows a quiet card when the newest build request is `queued` or `building` and `GET /api/v1/build-requests` has no ready public https `installUrl`. The newest request is the first list item, the same one Build my app opens. The card says the preview is building and links to Build (`/dashboard/onboarding?step=ready`) for progress and the install-code wait frame. It does not draw a code, invent a URL, or name the build tooling. If any platform on the list is `ready` with a public https install URL, Home keeps Scan to install and does not show this card. A newest request that is failed, waiting on the merchant, ready without a public URL, or unrecognized does not show it. A Shopify reconnect or billing notice on Home does not show it, and those notices stay as they are. The disconnected setup checklist does not show it. A failed list does not show it.
+- Reason: Dashboard #84. After Build my app, merchants land on Home while platforms are still queued or building and saw no sign that a preview had started.
+- Impact: Connected Home presentation. No backend field. No Shopify token and no Expo token is rendered or sent. Build wait and QR UI are unchanged. Human review is required because this is the merchant-facing install handoff.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#84`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

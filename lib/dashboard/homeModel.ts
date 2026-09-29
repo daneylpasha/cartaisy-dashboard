@@ -5,6 +5,7 @@ import {
   shouldPollBuildRequest,
   type BuildRequest,
 } from '../build/contract.ts';
+import { readyInstallsFromList } from '../build/installPreview.ts';
 import { catalogBlockCopy } from '../shopify/catalogBlock.ts';
 import type { SyncGate } from '../onboarding/types.ts';
 
@@ -171,6 +172,24 @@ export function describeBuild(
     label: parts.length > 0 ? parts.join(' · ') : 'Build requested',
     detail: outcomeCopy(active),
   };
+}
+
+/**
+ * Home card while the newest build is queued or building and nothing is ready to scan.
+ * The newest request is the first list item, the same one Build my app opens.
+ * A ready public install URL keeps Scan to install instead.
+ * Reconnect and billing stay their own notices.
+ * Failed, waiting, and ready-without-a-link do not pretend a build is moving.
+ */
+export function homePreviewBuilding(input: { requests: BuildRequest[]; catalogBlocked: boolean }): boolean {
+  if (input.catalogBlocked) return false;
+  if (readyInstallsFromList(input.requests).length > 0) return false;
+  const latest = input.requests[0];
+  if (!latest) return false;
+  return (['android', 'ios'] as const).some((platform) => {
+    const status = latest.platforms[platform].status;
+    return status === 'queued' || status === 'building';
+  });
 }
 
 export interface ModuleRow {
