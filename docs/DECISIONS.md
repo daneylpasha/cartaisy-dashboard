@@ -416,6 +416,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Onboarding presentation and the Go live brand support line. Connect, brand save, preview, publish, and Build my app behavior are unchanged. No Shopify token is rendered.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`. GitHub issue: `#108`.
 
+### The wizard header shows the merchant app icon
+
+- Date: 2026-09-29.
+- Decision: The onboarding header keeps the display-name mark from dashboard #108. When the branding draft has a safe https or in-memory blob app icon, a small rounded image sits beside that name. The logo is used only when the icon is missing or not drawable. `safeImageUrl` drops other schemes, and `displayBrandImageUrl` drops token-shaped values. A broken image is hidden and the text mark stays. The header does not add Cartaisy chrome or a phone.
+- Reason: Dashboard #112. Setup should look like the merchant's app once an icon exists.
+- Impact: Onboarding header presentation. Name filters, Exit setup, the step rail, brand save, and Build my app are unchanged. No Shopify token is rendered.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`. GitHub issue: `#112`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.
