@@ -488,6 +488,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Brand image selection only. The upload routes, Continue, Save, and Build eligibility are unchanged. No Shopify token is rendered. Human review is required because this is the brand image save path.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`. GitHub issue: `#130`.
 
+### The shell switches the active app without a new login
+
+- Date: 2026-09-29.
+- Decision: The dashboard sidebar is the app switcher. It shows the current app name. Two or more memberships open Switch app, which calls `POST /api/v1/auth/stores/switch` and keeps the same access token. The session `storeId` and `storeName` update, `__cartaisyShellBranding` and `__cartaisyInflightBranding` are cleared, and the browser loads `/dashboard`. Add app is shown to a `super_admin` who already has a store, including when that is their only store. The name is posted to `POST /api/v1/auth/stores`. The new store is already active, nothing is copied from the previous app, and `/dashboard/onboarding` opens for it. An invited admin does not see Add app. A 403 hides it. A failed create or switch stays on the current store and shows the field or menu error. A single-store merchant who cannot add an app sees the name only. Login continues to land on the active store from the session.
+- Reason: Dashboard #131. Backend membership, list, switch, and create shipped in cartaisy-backend #202. A second login, or a post-login picker, would throw away the active store the session already returns.
+- Impact: Auth session and the dashboard shell. Store-scoped reads keep using the active `storeId` from profile and from the stored user. No org hierarchy, billing split, team invite, Shopify token, or Expo token is added. Human review is required because this changes the active store without signing out.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`. GitHub issue: `#131`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

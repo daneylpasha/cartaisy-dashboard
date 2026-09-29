@@ -39,3 +39,6 @@ jobs:
 
       - name: Password reset checks
         run: npm run test:auth-password-reset
+
+      - name: App switcher checks
+        run: npm run test:auth-stores
