@@ -3,20 +3,22 @@
 import { useRef, useState } from 'react';
 import {
   USE_LOGO_AS_ICON_ERROR,
+  USE_LOGO_AS_SPLASH_ERROR,
   drawableBrandImageUrl,
   fileFromDrawableLogo,
 } from '@/lib/onboarding/brandAssets';
 import { validateBrandImage } from '@/lib/onboarding/branding';
 
 /**
- * Copies a drawable logo onto the app icon through the existing file save.
- * A failed fetch reports a field error and does not set an icon URL.
+ * Copies a drawable logo into a brand image through the existing file save.
+ * A failed fetch reports a field error and does not set an image URL.
  */
-export function useCopyLogoAsIcon(
+function useCopyDrawableLogo(
   logoUrl: string | null,
   uploadsBusy: boolean,
-  onIconFile: (file: File) => void,
-  onImageError: (message: string | null) => void
+  onFile: (file: File) => void,
+  onImageError: (message: string | null) => void,
+  failureMessage: string
 ) {
   const [copying, setCopying] = useState(false);
   const request = useRef(0);
@@ -32,7 +34,7 @@ export function useCopyLogoAsIcon(
       const file = await fileFromDrawableLogo(logo);
       if (request.current !== id) return;
       if (!file) {
-        onImageError(USE_LOGO_AS_ICON_ERROR);
+        onImageError(failureMessage);
         return;
       }
       const check = validateBrandImage(file);
@@ -40,9 +42,9 @@ export function useCopyLogoAsIcon(
         onImageError(check.message);
         return;
       }
-      onIconFile(file);
+      onFile(file);
     } catch {
-      if (request.current === id) onImageError(USE_LOGO_AS_ICON_ERROR);
+      if (request.current === id) onImageError(failureMessage);
     } finally {
       if (request.current === id) setCopying(false);
     }
@@ -53,4 +55,24 @@ export function useCopyLogoAsIcon(
     copyingLogo: copying,
     onUseLogo,
   };
+}
+
+/** Copies a drawable logo onto the app icon through the existing file save. */
+export function useCopyLogoAsIcon(
+  logoUrl: string | null,
+  uploadsBusy: boolean,
+  onIconFile: (file: File) => void,
+  onImageError: (message: string | null) => void
+) {
+  return useCopyDrawableLogo(logoUrl, uploadsBusy, onIconFile, onImageError, USE_LOGO_AS_ICON_ERROR);
+}
+
+/** Copies a drawable logo onto the splash through the existing file save. */
+export function useCopyLogoAsSplash(
+  logoUrl: string | null,
+  uploadsBusy: boolean,
+  onSplashFile: (file: File) => void,
+  onImageError: (message: string | null) => void
+) {
+  return useCopyDrawableLogo(logoUrl, uploadsBusy, onSplashFile, onImageError, USE_LOGO_AS_SPLASH_ERROR);
 }

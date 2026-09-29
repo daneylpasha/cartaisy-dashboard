@@ -9,6 +9,8 @@ import {
   displayBrandImageUrl,
   drawableBrandImageUrl,
   fileFromDrawableLogo,
+  USE_LOGO_AS_ICON_ERROR,
+  USE_LOGO_AS_SPLASH_ERROR,
   IMAGE_LIMIT_MESSAGE,
   mergeStoredBrandAssets,
   persistedBrandImageUrl,
@@ -327,6 +329,10 @@ assert.equal(drawableBrandImageUrl('https://cdn.example/logo.png?access_token=sh
 assert.equal(drawableBrandImageUrl('https://cdn.example/shpat_logo.png'), null);
 assert.equal(drawableBrandImageUrl('   '), null);
 assert.equal(drawableBrandImageUrl(null), null);
+assert.match(USE_LOGO_AS_ICON_ERROR, /Add an image for the app icon/);
+assert.match(USE_LOGO_AS_SPLASH_ERROR, /Add an image for the splash/);
+assert.notEqual(USE_LOGO_AS_ICON_ERROR, USE_LOGO_AS_SPLASH_ERROR);
+assert.doesNotMatch(USE_LOGO_AS_SPLASH_ERROR, /https?:|splashUrl|iconUrl/);
 
 const png = new Blob([Uint8Array.from([1, 2, 3, 4])], { type: 'image/png' });
 

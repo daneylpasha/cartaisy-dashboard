@@ -36,10 +36,29 @@ assert.match(
 );
 const copyLogoSource = source('../../components/brand/useCopyLogoAsIcon.ts');
 assert.match(brandSource, /useCopyLogoAsIcon/);
+assert.match(brandSource, /useCopyLogoAsSplash/);
 assert.match(brandSource, /onIconFile\(file\)/);
+assert.match(brandSource, /onSplashFile\(file\)/);
+assert.match(
+  brandSource,
+  /useCopyLogoAsIcon\(draft\.logoUrl, uploadsBusy, onIconFile, onImageError\)/
+);
+assert.match(
+  brandSource,
+  /useCopyLogoAsSplash\(draft\.logoUrl, uploadsBusy, onSplashFile, onImageError\)/
+);
+assert.doesNotMatch(brandSource, /splashUrl:\s*draft\.logoUrl|iconUrl:\s*draft\.logoUrl/);
 assert.match(copyLogoSource, /fileFromDrawableLogo/);
-assert.match(copyLogoSource, /onIconFile\(file\)/);
-assert.doesNotMatch(copyLogoSource, /iconUrl/);
+assert.match(copyLogoSource, /onFile\(file\)/);
+assert.match(
+  copyLogoSource,
+  /return useCopyDrawableLogo\(logoUrl, uploadsBusy, onIconFile, onImageError, USE_LOGO_AS_ICON_ERROR\)/
+);
+assert.match(
+  copyLogoSource,
+  /return useCopyDrawableLogo\(logoUrl, uploadsBusy, onSplashFile, onImageError, USE_LOGO_AS_SPLASH_ERROR\)/
+);
+assert.doesNotMatch(copyLogoSource, /iconUrl|splashUrl/);
 assert.match(brandSource, /showUseLogo = Boolean\(useLogo\) && !showImage && !busy/);
 assert.doesNotMatch(settingsViewSource, /HomeScreenLauncherMock|SmartHomePreview|SplashBootMock/);
 assert.doesNotMatch(previewStepSource, /HomeScreenLauncherMock/);
@@ -110,6 +129,14 @@ function continueButton(markup: string): string {
 
 function isDisabled(tag: string): boolean {
   return / disabled(?:=|>|\s)/.test(tag);
+}
+
+function fieldBlock(markup: string, id: string): string {
+  const token = `data-brand-field="${id}"`;
+  const start = markup.indexOf(token);
+  assert.ok(start >= 0, id);
+  const next = markup.indexOf('data-brand-field=', start + token.length);
+  return next === -1 ? markup.slice(start) : markup.slice(start, next);
 }
 
 function renderLauncher(next: BrandingDraft): string {
@@ -193,9 +220,21 @@ assert.match(homeScreen(missingIcon), /Northwind/);
 assert.match(missingIconMock, /Add an app icon in/);
 assertSoftLinks(missingIconMock);
 const emptyIcon = renderBrand({ ...draft, iconUrl: null });
-assert.match(emptyIcon, />Use logo</);
+assert.match(fieldBlock(emptyIcon, 'brand-icon'), />Use logo</);
+assert.doesNotMatch(fieldBlock(emptyIcon, 'brand-splash'), /Use logo/);
 assert.equal(isDisabled(continueButton(emptyIcon)), false);
 assert.doesNotMatch(emptyIcon, /data-launcher-mock|data-shopper-screen|data-splash-boot-mock/);
+
+const emptySplash = renderBrand({ ...draft, splashUrl: null });
+assert.match(fieldBlock(emptySplash, 'brand-splash'), />Use logo</);
+assert.doesNotMatch(fieldBlock(emptySplash, 'brand-icon'), /Use logo/);
+assert.equal(isDisabled(continueButton(emptySplash)), false);
+assert.doesNotMatch(emptySplash, /data-launcher-mock|data-shopper-screen|data-splash-boot-mock/);
+
+const bothEmpty = renderBrand({ ...draft, iconUrl: null, splashUrl: null });
+assert.match(fieldBlock(bothEmpty, 'brand-icon'), />Use logo</);
+assert.match(fieldBlock(bothEmpty, 'brand-splash'), />Use logo</);
+assert.equal(isDisabled(continueButton(bothEmpty)), false);
 
 const noLogo = renderBrand({ ...draft, logoUrl: null, iconUrl: null });
 assert.doesNotMatch(noLogo, /Use logo/);
@@ -230,6 +269,38 @@ assert.doesNotMatch(httpIconField, /http:\/\/cdn\.example\/icon\.png/);
 assert.doesNotMatch(renderBrand({ ...draft, iconUrl: null }, { logoUploading: true }), /Use logo/);
 assert.doesNotMatch(renderBrand({ ...draft, iconUrl: null }, { iconUploading: true }), /Use logo/);
 assert.doesNotMatch(renderBrand({ ...draft, iconUrl: null }, { splashUploading: true }), /Use logo/);
+
+assert.doesNotMatch(renderBrand({ ...draft, logoUrl: null, splashUrl: null }), /Use logo/);
+assert.doesNotMatch(
+  renderBrand({ ...draft, logoUrl: 'http://cdn.example/logo.png', splashUrl: null }),
+  /Use logo/
+);
+assert.doesNotMatch(
+  renderBrand({
+    ...draft,
+    logoUrl: 'https://cdn.example/logo.png?access_token=shpat_secret',
+    splashUrl: null,
+  }),
+  /Use logo/
+);
+const blobSplash = renderBrand({ ...draft, logoUrl: 'blob:http://localhost/logo', splashUrl: null });
+assert.match(fieldBlock(blobSplash, 'brand-splash'), />Use logo</);
+assert.doesNotMatch(fieldBlock(blobSplash, 'brand-icon'), /Use logo/);
+
+const unsafeSplash = renderBrand({
+  ...draft,
+  splashUrl: 'https://cdn.example/splash.png?access_token=shpat_secret',
+});
+assert.match(fieldBlock(unsafeSplash, 'brand-splash'), />Use logo</);
+assert.doesNotMatch(unsafeSplash, /access_token=shpat_secret/);
+
+const httpSplashField = renderBrand({ ...draft, splashUrl: 'http://cdn.example/splash.png' });
+assert.match(fieldBlock(httpSplashField, 'brand-splash'), />Use logo</);
+assert.doesNotMatch(httpSplashField, /http:\/\/cdn\.example\/splash\.png/);
+
+assert.doesNotMatch(renderBrand({ ...draft, splashUrl: null }, { logoUploading: true }), /Use logo/);
+assert.doesNotMatch(renderBrand({ ...draft, splashUrl: null }, { iconUploading: true }), /Use logo/);
+assert.doesNotMatch(renderBrand({ ...draft, splashUrl: null }, { splashUploading: true }), /Use logo/);
 
 const blankName = renderLauncher({ ...draft, appName: '   ' });
 const blankMock = launcher(blankName);

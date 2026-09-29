@@ -5,7 +5,7 @@ import { ImagePlus, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { BrandInstallPreview } from '@/components/onboarding/BrandInstallPreview';
 import { settingsBrandLead, type InstallPreviewModel } from '@/lib/build/installPreview';
-import { useCopyLogoAsIcon } from '@/components/brand/useCopyLogoAsIcon';
+import { useCopyLogoAsIcon, useCopyLogoAsSplash } from '@/components/brand/useCopyLogoAsIcon';
 import { DEFAULT_PRIMARY_COLOR, HEX_COLOR_REGEX, validateBrandImage } from '@/lib/onboarding/branding';
 import { drawableBrandImageUrl } from '@/lib/onboarding/brandAssets';
 import type { BrandingDraft, LockedCatalog, SyncGate } from '@/lib/onboarding/types';
@@ -92,12 +92,9 @@ export function StoreAppBrandView({
   onImageError,
   installPreview,
 }: StoreAppBrandViewProps) {
-  const { offerUseLogo, copyingLogo, onUseLogo } = useCopyLogoAsIcon(
-    draft?.logoUrl ?? null,
-    iconUploading || splashUploading,
-    onIconFile,
-    onImageError
-  );
+  const uploadsBusy = iconUploading || splashUploading;
+  const iconLogo = useCopyLogoAsIcon(draft?.logoUrl ?? null, uploadsBusy, onIconFile, onImageError);
+  const splashLogo = useCopyLogoAsSplash(draft?.logoUrl ?? null, uploadsBusy, onSplashFile, onImageError);
 
   if (!draft) {
     return (
@@ -143,7 +140,11 @@ export function StoreAppBrandView({
               hint={iconUploading ? 'Uploading...' : 'Home screen icon'}
               shape="icon"
               busy={iconUploading}
-              useLogo={offerUseLogo ? { copying: copyingLogo, onUse: () => void onUseLogo() } : null}
+              useLogo={
+                iconLogo.offerUseLogo
+                  ? { copying: iconLogo.copyingLogo, onUse: () => void iconLogo.onUseLogo() }
+                  : null
+              }
               onFile={(file) => acceptImage(file, onImageError, onIconFile)}
             />
             <ImageField
@@ -152,6 +153,11 @@ export function StoreAppBrandView({
               imageUrl={shown.splashUrl}
               hint={splashUploading ? 'Uploading...' : 'Opening screen'}
               busy={splashUploading}
+              useLogo={
+                splashLogo.offerUseLogo
+                  ? { copying: splashLogo.copyingLogo, onUse: () => void splashLogo.onUseLogo() }
+                  : null
+              }
               onFile={(file) => acceptImage(file, onImageError, onSplashFile)}
             />
           </div>
@@ -230,7 +236,7 @@ function ImageField({
   const showUseLogo = Boolean(useLogo) && !showImage && !busy;
 
   return (
-    <div className="relative min-w-0">
+    <div className="relative min-w-0" data-brand-field={id}>
       <Label htmlFor={id}>{label}</Label>
       <button
         type="button"

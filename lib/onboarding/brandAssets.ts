@@ -23,6 +23,9 @@ type BrandMime = keyof typeof BRAND_MIME_EXT;
 /** Shown when a saved logo cannot be copied onto the app icon. */
 export const USE_LOGO_AS_ICON_ERROR = 'We could not use that logo. Add an image for the app icon.';
 
+/** Shown when a saved logo cannot be copied onto the splash. */
+export const USE_LOGO_AS_SPLASH_ERROR = 'We could not use that logo. Add an image for the splash.';
+
 /**
  * Https or in-memory blob image that can be drawn or copied.
  * Token-shaped and other URLs, including plain http, are not drawable.
@@ -66,7 +69,7 @@ function brandMime(blobType: string, url: string): BrandMime | null {
 }
 
 /**
- * Reads a drawable logo into a file for the existing icon upload.
+ * Reads a drawable logo into a file for the existing icon or splash upload.
  * A failed fetch, an empty body, or a non-image response returns null.
  * This does not invent a URL.
  */
