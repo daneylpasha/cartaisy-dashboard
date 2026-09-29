@@ -10,9 +10,11 @@ import { brandStepLead, type InstallPreviewModel } from '@/lib/build/installPrev
 import { SetupNotice, WizardFooter } from '@/components/onboarding/WizardChrome';
 import { APP_NAME_WORDMARK_MESSAGE, isPlatformWordmark } from '@/lib/onboarding/appName';
 import {
+  BRAND_IMAGE_SIZE_GUIDE,
   DEFAULT_PRIMARY_COLOR,
+  acceptBrandImageFile,
   brandColorUsesPlatformDefault,
-  validateBrandImage,
+  type BrandImageKind,
 } from '@/lib/onboarding/branding';
 import { BrandColorControl } from '@/components/brand/BrandColorControl';
 import { useCopyLogoAsIcon, useCopyLogoAsSplash } from '@/components/brand/useCopyLogoAsIcon';
@@ -141,25 +143,22 @@ export function BrandingStep({
                 <ImageField
                   id="brand-logo"
                   label="Logo"
+                  kind="logo"
                   imageUrl={draft.logoUrl}
                   hint={logoUploading ? 'Uploading...' : 'Shown in the app header'}
+                  sizeGuide={BRAND_IMAGE_SIZE_GUIDE.logo}
                   fit="contain"
                   busy={logoUploading}
-                  onFile={(file) => {
-                    const check = validateBrandImage(file);
-                    if (!check.ok) {
-                      onImageError(check.message);
-                      return;
-                    }
-                    onImageError(null);
-                    onLogoFile(file);
-                  }}
+                  onImageError={onImageError}
+                  onFile={onLogoFile}
                 />
                 <ImageField
                   id="brand-icon"
                   label="App icon"
+                  kind="icon"
                   imageUrl={draft.iconUrl}
                   hint={iconUploading ? 'Uploading...' : 'Home screen icon'}
+                  sizeGuide={BRAND_IMAGE_SIZE_GUIDE.icon}
                   shape="icon"
                   busy={iconUploading}
                   useLogo={
@@ -167,21 +166,16 @@ export function BrandingStep({
                       ? { copying: iconLogo.copyingLogo, onUse: () => void iconLogo.onUseLogo() }
                       : null
                   }
-                  onFile={(file) => {
-                    const check = validateBrandImage(file);
-                    if (!check.ok) {
-                      onImageError(check.message);
-                      return;
-                    }
-                    onImageError(null);
-                    onIconFile(file);
-                  }}
+                  onImageError={onImageError}
+                  onFile={onIconFile}
                 />
                 <ImageField
                   id="brand-splash"
                   label="Splash"
+                  kind="splash"
                   imageUrl={draft.splashUrl}
                   hint={splashUploading ? 'Uploading...' : 'Opening screen'}
+                  sizeGuide={BRAND_IMAGE_SIZE_GUIDE.splash}
                   busy={splashUploading}
                   drawable
                   useLogo={
@@ -189,15 +183,8 @@ export function BrandingStep({
                       ? { copying: splashLogo.copyingLogo, onUse: () => void splashLogo.onUseLogo() }
                       : null
                   }
-                  onFile={(file) => {
-                    const check = validateBrandImage(file);
-                    if (!check.ok) {
-                      onImageError(check.message);
-                      return;
-                    }
-                    onImageError(null);
-                    onSplashFile(file);
-                  }}
+                  onImageError={onImageError}
+                  onFile={onSplashFile}
                 />
               </div>
 
@@ -272,27 +259,34 @@ export function BrandingStep({
 function ImageField({
   id,
   label,
+  kind,
   imageUrl,
   hint,
+  sizeGuide,
   fit = 'cover',
   shape = 'fill',
   busy = false,
   drawable = false,
   useLogo = null,
+  onImageError,
   onFile,
 }: {
   id: string;
   label: string;
+  kind: BrandImageKind;
   imageUrl: string | null;
   hint: string;
+  sizeGuide: string;
   fit?: 'cover' | 'contain';
   shape?: 'fill' | 'icon';
   busy?: boolean;
   drawable?: boolean;
   useLogo?: { copying: boolean; onUse: () => void } | null;
+  onImageError: (message: string | null) => void;
   onFile: (file: File) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const pick = useRef(0);
   const safeUrl =
     shape === 'icon' || drawable ? drawableBrandImageUrl(imageUrl) : safeImageUrl(imageUrl);
   const [brokenFor, setBrokenFor] = useState<string | null>(null);
@@ -346,13 +340,16 @@ function ImageField({
         className="sr-only"
         onChange={(event) => {
           const file = event.target.files?.[0];
-          if (file) onFile(file);
           event.target.value = '';
+          if (!file) return;
+          const id = ++pick.current;
+          void acceptBrandImageFile(file, kind, onImageError, onFile, () => pick.current === id);
         }}
       />
       <p className="mt-2 text-[11px] leading-4 text-slate-500 sm:text-xs sm:leading-5">
         {broken ? 'Add a new image.' : hint}
       </p>
+      <p className="mt-1 text-[11px] leading-4 text-slate-500 sm:text-xs sm:leading-5">{sizeGuide}</p>
       {showUseLogo && useLogo ? (
         <button
           type="button"

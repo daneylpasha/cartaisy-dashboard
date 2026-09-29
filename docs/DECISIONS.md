@@ -480,6 +480,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Dead preview components and the checks that rendered them. Live install preview, the Build readiness strip, and brand uploads are unchanged. No Shopify token is rendered. Human review is required because this sits on the merchant-facing branding preview.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`. GitHub issue: `#128`.
 
+### Brand images are checked for pixel size before upload
+
+- Date: 2026-09-29.
+- Decision: Logo, app icon, and splash on the brand step and Settings → Store Branding show a recommended size and are rejected in the browser when the decoded pixels are outside the allowed range. Recommended: logo 1024×1024 or a wide wordmark up to 2048×1024; app icon a square 1024×1024; splash a portrait 1284×2778. Allowed: icon square with each side 512–1024; splash either portrait (height greater than width, width 1080–1290, height 1920–2796) or square with each side 256–2048; logo each side 256–2048 and an aspect from 1:3 through 3:1. Landscape splash is rejected. JPG, PNG, WebP, and the 2MB limit stay. The earlier ±2% band around 1284×2778 is not used; the revised splash rule is that portrait range or the square range. Use logo checks the fetched file as the destination asset. A square logo inside the splash square range still saves as the splash. A rejected file does not upload and does not replace the saved image. No Expo token is sent to the client.
+- Reason: Dashboard #130. Android and iOS store art needs known sizes, and a square logo used as splash must keep working.
+- Impact: Brand image selection only. The upload routes, Continue, Save, and Build eligibility are unchanged. No Shopify token is rendered. Human review is required because this is the brand image save path.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`. GitHub issue: `#130`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

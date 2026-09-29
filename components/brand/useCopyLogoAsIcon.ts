@@ -7,7 +7,7 @@ import {
   drawableBrandImageUrl,
   fileFromDrawableLogo,
 } from '@/lib/onboarding/brandAssets';
-import { validateBrandImage } from '@/lib/onboarding/branding';
+import { validateBrandImageFile, type BrandImageKind } from '@/lib/onboarding/branding';
 
 /**
  * Copies a drawable logo into a brand image through the existing file save.
@@ -18,7 +18,8 @@ function useCopyDrawableLogo(
   uploadsBusy: boolean,
   onFile: (file: File) => void,
   onImageError: (message: string | null) => void,
-  failureMessage: string
+  failureMessage: string,
+  kind: BrandImageKind
 ) {
   const [copying, setCopying] = useState(false);
   const request = useRef(0);
@@ -37,7 +38,8 @@ function useCopyDrawableLogo(
         onImageError(failureMessage);
         return;
       }
-      const check = validateBrandImage(file);
+      const check = await validateBrandImageFile(file, kind);
+      if (request.current !== id) return;
       if (!check.ok) {
         onImageError(check.message);
         return;
@@ -64,7 +66,7 @@ export function useCopyLogoAsIcon(
   onIconFile: (file: File) => void,
   onImageError: (message: string | null) => void
 ) {
-  return useCopyDrawableLogo(logoUrl, uploadsBusy, onIconFile, onImageError, USE_LOGO_AS_ICON_ERROR);
+  return useCopyDrawableLogo(logoUrl, uploadsBusy, onIconFile, onImageError, USE_LOGO_AS_ICON_ERROR, 'icon');
 }
 
 /** Copies a drawable logo onto the splash through the existing file save. */
@@ -74,5 +76,5 @@ export function useCopyLogoAsSplash(
   onSplashFile: (file: File) => void,
   onImageError: (message: string | null) => void
 ) {
-  return useCopyDrawableLogo(logoUrl, uploadsBusy, onSplashFile, onImageError, USE_LOGO_AS_SPLASH_ERROR);
+  return useCopyDrawableLogo(logoUrl, uploadsBusy, onSplashFile, onImageError, USE_LOGO_AS_SPLASH_ERROR, 'splash');
 }

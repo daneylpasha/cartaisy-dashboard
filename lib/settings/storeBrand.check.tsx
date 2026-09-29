@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { StoreAppBrandView, applySettingsBrandProps, presentSettingsBrand, settingsBrandImageUrl } from '@/components/settings/StoreAppBrandView';
+import { BRAND_IMAGE_SIZE_GUIDE } from '@/lib/onboarding/branding';
 import { EMPTY_CATALOG } from '@/lib/onboarding/normalizers';
 import type { BrandingDraft, SyncGate } from '@/lib/onboarding/types';
 
@@ -122,6 +123,8 @@ assert.doesNotMatch(markup, /data-shopper-screen|data-launcher-mock|data-splash-
 assert.doesNotMatch(markup, /cartaisy/i);
 assert.match(markup, /Replace App icon/);
 assert.match(markup, /Replace Splash/);
+assert.ok(markup.includes(BRAND_IMAGE_SIZE_GUIDE.icon));
+assert.ok(markup.includes(BRAND_IMAGE_SIZE_GUIDE.splash));
 assert.equal(markup.match(/class="sr-only top-0 left-0"/g)?.length, 2);
 
 const hidden = renderToStaticMarkup(
@@ -257,11 +260,19 @@ assert.match(copyLogoSource, /fileFromDrawableLogo/);
 assert.match(copyLogoSource, /onFile\(file\)/);
 assert.match(
   copyLogoSource,
-  /return useCopyDrawableLogo\(logoUrl, uploadsBusy, onIconFile, onImageError, USE_LOGO_AS_ICON_ERROR\)/
+  /return useCopyDrawableLogo\(logoUrl, uploadsBusy, onIconFile, onImageError, USE_LOGO_AS_ICON_ERROR, 'icon'\)/
 );
 assert.match(
   copyLogoSource,
-  /return useCopyDrawableLogo\(logoUrl, uploadsBusy, onSplashFile, onImageError, USE_LOGO_AS_SPLASH_ERROR\)/
+  /return useCopyDrawableLogo\(logoUrl, uploadsBusy, onSplashFile, onImageError, USE_LOGO_AS_SPLASH_ERROR, 'splash'\)/
+);
+assert.match(viewSource, /kind="icon"/);
+assert.match(viewSource, /kind="splash"/);
+assert.match(viewSource, /onFile=\{onIconFile\}/);
+assert.match(viewSource, /onFile=\{onSplashFile\}/);
+assert.match(
+  viewSource,
+  /acceptBrandImageFile\(file, kind, onImageError, onFile, \(\) => pick\.current === id\)/
 );
 assert.doesNotMatch(copyLogoSource, /iconUrl|splashUrl/);
 assert.doesNotMatch(viewSource, /iconUrl:\s*(shown\.logoUrl|draft\.logoUrl|logoUrl)/);

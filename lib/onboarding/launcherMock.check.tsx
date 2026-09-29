@@ -6,6 +6,7 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { BrandingStep } from '@/components/onboarding/steps/BrandingStep';
 import { StoreAppBrandView } from '@/components/settings/StoreAppBrandView';
+import { BRAND_IMAGE_SIZE_GUIDE } from '@/lib/onboarding/branding';
 import { EMPTY_CATALOG } from '@/lib/onboarding/normalizers';
 import type { BrandingDraft, LockedCatalog, ShopifyConnectionSnapshot, SyncGate } from '@/lib/onboarding/types';
 
@@ -37,8 +38,16 @@ assert.match(
 );
 assert.match(brandSource, /useCopyLogoAsIcon/);
 assert.match(brandSource, /useCopyLogoAsSplash/);
-assert.match(brandSource, /onIconFile\(file\)/);
-assert.match(brandSource, /onSplashFile\(file\)/);
+assert.match(brandSource, /kind="logo"/);
+assert.match(brandSource, /kind="icon"/);
+assert.match(brandSource, /kind="splash"/);
+assert.match(brandSource, /onFile=\{onLogoFile\}/);
+assert.match(brandSource, /onFile=\{onIconFile\}/);
+assert.match(brandSource, /onFile=\{onSplashFile\}/);
+assert.match(
+  brandSource,
+  /acceptBrandImageFile\(file, kind, onImageError, onFile, \(\) => pick\.current === id\)/
+);
 assert.match(
   brandSource,
   /useCopyLogoAsIcon\(draft\.logoUrl, uploadsBusy, onIconFile, onImageError\)/
@@ -52,12 +61,15 @@ assert.match(copyLogoSource, /fileFromDrawableLogo/);
 assert.match(copyLogoSource, /onFile\(file\)/);
 assert.match(
   copyLogoSource,
-  /return useCopyDrawableLogo\(logoUrl, uploadsBusy, onIconFile, onImageError, USE_LOGO_AS_ICON_ERROR\)/
+  /return useCopyDrawableLogo\(logoUrl, uploadsBusy, onIconFile, onImageError, USE_LOGO_AS_ICON_ERROR, 'icon'\)/
 );
 assert.match(
   copyLogoSource,
-  /return useCopyDrawableLogo\(logoUrl, uploadsBusy, onSplashFile, onImageError, USE_LOGO_AS_SPLASH_ERROR\)/
+  /return useCopyDrawableLogo\(logoUrl, uploadsBusy, onSplashFile, onImageError, USE_LOGO_AS_SPLASH_ERROR, 'splash'\)/
 );
+const copyValidateAt = copyLogoSource.indexOf('validateBrandImageFile(file, kind)');
+const copySaveAt = copyLogoSource.indexOf('onFile(file)');
+assert.ok(copyValidateAt >= 0 && copySaveAt > copyValidateAt);
 assert.doesNotMatch(copyLogoSource, /iconUrl|splashUrl/);
 assert.match(brandSource, /showUseLogo = Boolean\(useLogo\) && !showImage && !busy/);
 assert.doesNotMatch(settingsViewSource, MOCK);
@@ -148,6 +160,12 @@ function renderBrand(
 
 const readyPage = renderBrand(draft);
 assert.doesNotMatch(readyPage, MOCK);
+assert.ok(fieldBlock(readyPage, 'brand-logo').includes(BRAND_IMAGE_SIZE_GUIDE.logo));
+assert.ok(fieldBlock(readyPage, 'brand-icon').includes(BRAND_IMAGE_SIZE_GUIDE.icon));
+assert.ok(fieldBlock(readyPage, 'brand-splash').includes(BRAND_IMAGE_SIZE_GUIDE.splash));
+assert.ok(fieldBlock(renderBrand(draft, { logoUploading: true }), 'brand-logo').includes(BRAND_IMAGE_SIZE_GUIDE.logo));
+assert.ok(fieldBlock(renderBrand(draft, { iconUploading: true }), 'brand-icon').includes(BRAND_IMAGE_SIZE_GUIDE.icon));
+assert.ok(fieldBlock(renderBrand(draft, { splashUploading: true }), 'brand-splash').includes(BRAND_IMAGE_SIZE_GUIDE.splash));
 assert.match(readyPage, /data-install-preview="instructions"/);
 assert.equal(isDisabled(continueButton(readyPage)), false);
 assert.equal(

@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { useSession, useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
-import { clearLogo, uploadLogo, validateBrandImage } from '@/lib/onboarding/branding';
+import { BRAND_IMAGE_SIZE_GUIDE, clearLogo, uploadLogo, validateBrandImageFile } from '@/lib/onboarding/branding';
 import { Upload, X, Loader2, CheckCircle2 } from 'lucide-react';
 
 interface StoreLogoUploadProps {
@@ -33,9 +33,11 @@ export function StoreLogoUpload({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const check = validateBrandImage(file);
+    const check = await validateBrandImageFile(file, 'logo');
+    if (fileInputRef.current) fileInputRef.current.value = '';
     if (!check.ok) {
-      setError(check.message ?? 'Please upload a JPG, PNG, or WebP image');
+      setSuccess(null);
+      setError(check.message);
       return;
     }
 
@@ -154,8 +156,8 @@ export function StoreLogoUpload({
         <div className="flex-1">
           <h3 className="text-sm font-medium text-slate-900 mb-1">Store Logo</h3>
           <p className="text-xs text-slate-500 mb-3">
-            Upload your store logo. This will appear in the sidebar and app header.
-            Recommended: Square image, at least 200x200 pixels.
+            Upload your store logo. This will appear in the sidebar and app header.{' '}
+            {BRAND_IMAGE_SIZE_GUIDE.logo}
           </p>
 
           <div className="flex items-center gap-3">
