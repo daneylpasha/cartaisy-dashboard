@@ -213,11 +213,12 @@ async function readBranding(storeId: string, token: string): Promise<BrandingDra
 
 /**
  * One in-flight branding GET per store id.
- * The registry lives on `globalThis` so the sidebar chunk and the Settings chunk
- * share it when the bundler duplicates this module. The key is the store id only:
- * sidebar `getToken()` and Settings `tokenStorage.getToken()` are not the same string.
+ * The registry lives on `globalThis` so duplicated chunks share it. The key is
+ * the store id only: two callers can hold different JWT strings for one store.
  * A caller that starts while that request is in flight waits on it.
  * A later call, after that request settles, fetches again.
+ * The dashboard shell keeps the settled promise for the mounted frame.
+ * This map is only the in-flight safety net.
  */
 export function fetchBranding(storeId: string, token: string): Promise<BrandingDraft | null> {
   const pending = inflightBranding.get(storeId);

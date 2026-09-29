@@ -4,6 +4,7 @@ import { useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { Sidebar } from '@/components/Sidebar';
 import { Header } from '@/components/Header';
+import { DashboardBrandingProvider } from '@/components/dashboard/DashboardBrandingProvider';
 import { ShopifyStatusProvider } from '@/components/dashboard/ShopifyStatusProvider';
 
 interface DashboardLayoutProps {
@@ -21,7 +22,9 @@ export function DashboardShell({ children }: DashboardLayoutProps) {
 
   return (
     <ShopifyStatusProvider>
-      <DashboardFrame>{children}</DashboardFrame>
+      <DashboardBrandingProvider>
+        <DashboardFrame>{children}</DashboardFrame>
+      </DashboardBrandingProvider>
     </ShopifyStatusProvider>
   );
 }
