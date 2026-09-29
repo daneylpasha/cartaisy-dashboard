@@ -4,12 +4,18 @@ import {
   SUBMIT_ACCOUNTS_UNAVAILABLE_MESSAGE,
   SUBMIT_ATTENTION_APPLE,
   SUBMIT_FAILED_FALLBACK_MESSAGE,
+  SUBMIT_FAILED_TITLE,
   SUBMIT_MISSING_GOOGLE,
   SUBMIT_NOT_READY_MESSAGE,
+  SUBMIT_QUEUED_COPY,
   SUBMIT_REVIEW_ANDROID,
   SUBMIT_REVIEW_IOS,
+  SUBMIT_SENT_ANDROID_TITLE,
+  SUBMIT_SENT_IOS_TITLE,
   SUBMIT_SIGN_IN_MESSAGE,
   SUBMIT_START_FAILED_MESSAGE,
+  homeSubmitNotices,
+  homeSubmitTitle,
   interpretSubmitStart,
   isSafeMerchantText,
   messageForSubmitFailure,
@@ -193,6 +199,11 @@ const reviewing = presentStoreSubmit({
   error: null,
 });
 assert.equal(reviewing.detail, SUBMIT_REVIEW_IOS);
+assert.equal(reviewing.headline, SUBMIT_SENT_IOS_TITLE);
+assert.equal(reviewing.nextStep, SUBMIT_REVIEW_IOS);
+assert.match(SUBMIT_REVIEW_IOS, /App Store Connect/);
+assert.match(SUBMIT_REVIEW_IOS, /day or two/);
+assert.doesNotMatch(SUBMIT_REVIEW_IOS, /https?:\/\//);
 assert.equal(reviewing.label, 'Submit again');
 assert.equal(reviewing.disabled, false);
 assert.equal(reviewing.quiet, true);
@@ -208,8 +219,11 @@ const playReview = presentStoreSubmit({
   error: null,
 });
 assert.equal(playReview.detail, SUBMIT_REVIEW_ANDROID);
+assert.equal(playReview.headline, SUBMIT_SENT_ANDROID_TITLE);
 assert.match(playReview.detail ?? '', /Play Console/);
 assert.match(playReview.detail ?? '', /internal testing track/);
+assert.match(playReview.detail ?? '', /same day/);
+assert.doesNotMatch(SUBMIT_REVIEW_ANDROID, /https?:\/\//);
 
 const failedView = presentStoreSubmit({
   platform: 'android',
@@ -221,6 +235,8 @@ const failedView = presentStoreSubmit({
   error: null,
 });
 assert.equal(failedView.alert, SUBMIT_FAILED_FALLBACK_MESSAGE);
+assert.equal(failedView.headline, SUBMIT_FAILED_TITLE);
+assert.equal(failedView.nextStep, null);
 assert.equal(failedView.label, 'Submit again');
 assert.equal(failedView.disabled, false);
 assert.equal((failedView.alert ?? '').includes('BEGIN'), false);
@@ -237,6 +253,45 @@ const sending = presentStoreSubmit({
 assert.equal(sending.state, 'submitting');
 assert.equal(sending.disabled, true);
 assert.equal(sending.statusLabel, 'Submitting');
+assert.equal(sending.headline, null);
+
+const waiting = presentStoreSubmit({
+  platform: 'ios',
+  buildStatus: 'ready',
+  credential: 'connected',
+  accountsUnavailable: false,
+  job: normalizeStoreSubmit({ data: job({ status: 'queued' }) }),
+  busy: false,
+  error: null,
+});
+assert.equal(waiting.headline, null);
+assert.equal(waiting.detail, SUBMIT_QUEUED_COPY);
+assert.equal(waiting.statusLabel, 'Queued');
+
+const iosSent = homeSubmitNotices({
+  android: null,
+  ios: normalizeStoreSubmit({ data: job({ status: 'submitted' }) }),
+});
+assert.equal(homeSubmitTitle(iosSent), 'Sent for review');
+assert.equal(iosSent[0]?.headline, SUBMIT_SENT_IOS_TITLE);
+assert.equal(iosSent[0]?.body, SUBMIT_REVIEW_IOS);
+assert.equal(JSON.stringify(iosSent).includes('http'), false);
+
+const poisonedHome = homeSubmitNotices({
+  android: normalizeStoreSubmit({ data: job({ platform: 'android', status: 'failed', message: PEM }) }),
+  ios: null,
+});
+assert.equal(homeSubmitTitle(poisonedHome), 'A submit needs another try');
+assert.equal(poisonedHome[0]?.body, SUBMIT_FAILED_FALLBACK_MESSAGE);
+assert.equal(JSON.stringify(poisonedHome).includes('BEGIN'), false);
+
+const movingHome = homeSubmitNotices({
+  android: normalizeStoreSubmit({ data: job({ platform: 'android', status: 'submitting' }) }),
+  ios: normalizeStoreSubmit({ data: job({ status: 'queued' }) }),
+});
+assert.equal(homeSubmitTitle(movingHome), 'Sending to the store');
+assert.equal(movingHome.length, 2);
+assert.equal(homeSubmitTitle([]), null);
 
 const started = interpretSubmitStart(201, {
   success: true,

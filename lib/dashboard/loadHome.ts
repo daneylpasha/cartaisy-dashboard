@@ -1,5 +1,8 @@
 import { listBuildRequests, fetchCatalogSync } from '@/lib/build/client';
+import type { BuildRequest } from '@/lib/build/contract';
 import { readyInstallsFromList, type ReadyInstall } from '@/lib/build/installPreview';
+import { listStoreSubmits } from '@/lib/storeSubmit/client';
+import { homeSubmitNotices, type HomeSubmitNotice } from '@/lib/storeSubmit/contract';
 import { fetchCollectionsCatalogBlock } from '@/lib/api/shopifyConnection';
 import { API_URL, tokenStorage } from '@/lib/api/mutator/custom-instance';
 import { fetchBranding } from '@/lib/onboarding/branding';
@@ -11,6 +14,7 @@ import {
   brandingLooksSaved,
   catalogRow,
   describeBuild,
+  focusBuildRequest,
   formatTimeAgo,
   homePreviewBuilding,
   moduleSummary,
@@ -45,6 +49,8 @@ export interface ConnectedHomeFacts {
    * Stays false when Scan to install is shown, and when Shopify needs reconnect or billing.
    */
   previewBuilding: boolean;
+  /** Store submits for the focused build. Empty hides the submit card. */
+  submitNotices: HomeSubmitNotice[];
 }
 
 async function readJson(response: Response): Promise<unknown> {
@@ -148,6 +154,7 @@ export async function loadConnectedHome(storeId: string | undefined): Promise<Co
       catalogBlock: null,
       installs: [],
       previewBuilding: false,
+      submitNotices: [],
     };
   }
 
@@ -173,6 +180,7 @@ export async function loadConnectedHome(storeId: string | undefined): Promise<Co
   const previewBuilding =
     buildList.kind === 'ok' &&
     homePreviewBuilding({ requests: buildList.requests, catalogBlocked: gated.block != null });
+  const submitNotices = await loadSubmitNotices(token, buildList.kind === 'ok' ? buildList.requests : []);
 
   return {
     syncLabel: sync.label,
@@ -188,5 +196,14 @@ export async function loadConnectedHome(storeId: string | undefined): Promise<Co
     catalogBlock: gated.block ?? null,
     installs,
     previewBuilding,
+    submitNotices,
   };
+}
+
+async function loadSubmitNotices(token: string, requests: BuildRequest[]): Promise<HomeSubmitNotice[]> {
+  const active = focusBuildRequest(requests);
+  if (!active) return [];
+  const listed = await listStoreSubmits(token, active.id);
+  if (!listed.ok) return [];
+  return homeSubmitNotices(listed.jobs);
 }
