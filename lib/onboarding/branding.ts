@@ -184,7 +184,19 @@ export function brandingFromPayload(payload: unknown, appName: string): Branding
   };
 }
 
-const inflightBranding = new Map<string, Promise<BrandingDraft | null>>();
+type InflightBrandingRegistry = Map<string, Promise<BrandingDraft | null>>;
+
+/**
+ * One map for every copy of this module. Webpack can emit `branding.ts` in
+ * both the sidebar chunk and the Settings chunk, and each copy would otherwise
+ * keep its own Map.
+ */
+interface CartaisyInflightBrandingHost {
+  __cartaisyInflightBranding?: InflightBrandingRegistry;
+}
+
+const inflightBranding: InflightBrandingRegistry = ((globalThis as CartaisyInflightBrandingHost)
+  .__cartaisyInflightBranding ??= new Map());
 
 async function readBranding(storeId: string, token: string): Promise<BrandingDraft | null> {
   try {
@@ -200,18 +212,20 @@ async function readBranding(storeId: string, token: string): Promise<BrandingDra
 }
 
 /**
- * One in-flight branding GET per store and token.
- * Settings and the sidebar logo start together; the second caller waits on the first.
+ * One in-flight branding GET per store id.
+ * The registry lives on `globalThis` so the sidebar chunk and the Settings chunk
+ * share it when the bundler duplicates this module. The key is the store id only:
+ * sidebar `getToken()` and Settings `tokenStorage.getToken()` are not the same string.
+ * A caller that starts while that request is in flight waits on it.
  * A later call, after that request settles, fetches again.
  */
 export function fetchBranding(storeId: string, token: string): Promise<BrandingDraft | null> {
-  const key = `${storeId}\n${token}`;
-  const pending = inflightBranding.get(key);
+  const pending = inflightBranding.get(storeId);
   if (pending) return pending;
   const request = readBranding(storeId, token).finally(() => {
-    if (inflightBranding.get(key) === request) inflightBranding.delete(key);
+    if (inflightBranding.get(storeId) === request) inflightBranding.delete(storeId);
   });
-  inflightBranding.set(key, request);
+  inflightBranding.set(storeId, request);
   return request;
 }
 
