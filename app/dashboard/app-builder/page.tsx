@@ -7,7 +7,6 @@ import {
   Image as ImageIcon,
   Zap,
   LayoutGrid,
-  Smartphone,
   GripVertical,
   Eye,
   EyeOff,
@@ -663,7 +662,7 @@ export default function AppBuilderPage() {
             className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800 transition-colors text-sm font-medium"
           >
             <Monitor className="w-3.5 h-3.5" />
-            Preview App
+            Preview module stack
           </Link>
           <span className="text-xs text-slate-500">
             Module order only. Publish home, then open Build my app for the install code.
@@ -800,13 +799,6 @@ export default function AppBuilderPage() {
               <li>• <span className="font-medium text-slate-700">Preview</span> the module stack before you publish. Saving a draft does not change the section order the installed app reads.</li>
             </ul>
           </div>
-          <Link
-            href="/dashboard/app-builder/preview"
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors whitespace-nowrap"
-          >
-            <Smartphone className="w-3.5 h-3.5" />
-            Preview on Mobile
-          </Link>
         </div>
       </div>
     </div>
