@@ -97,6 +97,8 @@ assert.equal(step(missingIcon, 'brand').tone, 'current');
 assert.equal(step(missingIcon, 'brand').status, 'Icon needed');
 assert.equal(missingIcon.cta?.href, '/dashboard/onboarding?step=brand');
 assert.equal(step(missingIcon, 'catalog').tone, 'done');
+assert.equal(missingIcon.support, 'The app name and icon are what the installable app shows on the device.');
+assert.equal(/\bphone\b/i.test(missingIcon.support), false);
 
 const missingName = buildGoLive(input({ brand: { known: true, displayName: null, hasIcon: true } }));
 assert.equal(step(missingName, 'brand').status, 'Name needed');

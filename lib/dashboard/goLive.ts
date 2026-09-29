@@ -331,7 +331,7 @@ function supportFor(step: GoLiveStep | undefined, input: GoLiveInput): string {
     case 'catalog':
       return 'Build uses the same catalog sync. This does not start a second sync.';
     case 'brand':
-      return 'The app name and icon are what the phone shows.';
+      return 'The app name and icon are what the installable app shows on the device.';
     case 'home':
       return step.uncertain
         ? 'Nothing here is marked published until the layout can be read.'
