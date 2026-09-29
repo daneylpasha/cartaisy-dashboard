@@ -15,7 +15,7 @@ import {
   validateBrandImage,
 } from '@/lib/onboarding/branding';
 import { BrandColorControl } from '@/components/brand/BrandColorControl';
-import { useCopyLogoAsIcon } from '@/components/brand/useCopyLogoAsIcon';
+import { useCopyLogoAsIcon, useCopyLogoAsSplash } from '@/components/brand/useCopyLogoAsIcon';
 import { drawableBrandImageUrl } from '@/lib/onboarding/brandAssets';
 import { safeImageUrl } from '@/lib/onboarding/normalizers';
 import type { BrandingDraft, LockedCatalog, ShopifyConnectionSnapshot, SyncGate } from '@/lib/onboarding/types';
@@ -81,12 +81,8 @@ export function BrandingStep({
   const uploadsBusy = logoUploading || iconUploading || splashUploading;
   const blocked =
     Boolean(loadError) || !nameReady || !primaryValid || !secondaryValid || uploadsBusy;
-  const { offerUseLogo, copyingLogo, onUseLogo } = useCopyLogoAsIcon(
-    draft.logoUrl,
-    uploadsBusy,
-    onIconFile,
-    onImageError
-  );
+  const iconLogo = useCopyLogoAsIcon(draft.logoUrl, uploadsBusy, onIconFile, onImageError);
+  const splashLogo = useCopyLogoAsSplash(draft.logoUrl, uploadsBusy, onSplashFile, onImageError);
 
   return (
     <section className="rounded-2xl border border-slate-200/80 bg-white px-5 py-8 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-10 sm:py-10">
@@ -166,7 +162,11 @@ export function BrandingStep({
                   hint={iconUploading ? 'Uploading...' : 'Home screen icon'}
                   shape="icon"
                   busy={iconUploading}
-                  useLogo={offerUseLogo ? { copying: copyingLogo, onUse: () => void onUseLogo() } : null}
+                  useLogo={
+                    iconLogo.offerUseLogo
+                      ? { copying: iconLogo.copyingLogo, onUse: () => void iconLogo.onUseLogo() }
+                      : null
+                  }
                   onFile={(file) => {
                     const check = validateBrandImage(file);
                     if (!check.ok) {
@@ -183,6 +183,12 @@ export function BrandingStep({
                   imageUrl={draft.splashUrl}
                   hint={splashUploading ? 'Uploading...' : 'Opening screen'}
                   busy={splashUploading}
+                  drawable
+                  useLogo={
+                    splashLogo.offerUseLogo
+                      ? { copying: splashLogo.copyingLogo, onUse: () => void splashLogo.onUseLogo() }
+                      : null
+                  }
                   onFile={(file) => {
                     const check = validateBrandImage(file);
                     if (!check.ok) {
@@ -271,6 +277,7 @@ function ImageField({
   fit = 'cover',
   shape = 'fill',
   busy = false,
+  drawable = false,
   useLogo = null,
   onFile,
 }: {
@@ -281,18 +288,20 @@ function ImageField({
   fit?: 'cover' | 'contain';
   shape?: 'fill' | 'icon';
   busy?: boolean;
+  drawable?: boolean;
   useLogo?: { copying: boolean; onUse: () => void } | null;
   onFile: (file: File) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const safeUrl = shape === 'icon' ? drawableBrandImageUrl(imageUrl) : safeImageUrl(imageUrl);
+  const safeUrl =
+    shape === 'icon' || drawable ? drawableBrandImageUrl(imageUrl) : safeImageUrl(imageUrl);
   const [brokenFor, setBrokenFor] = useState<string | null>(null);
   const broken = Boolean(safeUrl) && brokenFor === safeUrl;
   const showImage = Boolean(safeUrl) && !broken;
   const showUseLogo = Boolean(useLogo) && !showImage && !busy;
 
   return (
-    <div className="min-w-0">
+    <div className="min-w-0" data-brand-field={id}>
       <Label htmlFor={id}>{label}</Label>
       <button
         type="button"

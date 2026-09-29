@@ -432,6 +432,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Onboarding brand step and Settings Store Branding. No backend contract change. No Shopify token is rendered or sent. Human review is required because this is the brand image save path.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`. GitHub issue: `#114`.
 
+### Use logo saves the splash through the existing upload
+
+- Date: 2026-09-29.
+- Decision: On the brand step and Settings → Store Branding, Use logo is also shown on the Splash field when `drawableBrandImageUrl` accepts the logo and the splash is missing, unsafe, or broken. The click uses the same copy helper as the app icon and passes the file to `onSplashFile` / `uploadBrandAsset(..., 'splash', file)`. It does not assign the logo URL to `splashUrl` or `splashImageUrl`. If the fetch fails, the splash stays empty and the field asks the merchant to add an image. The control is hidden while a splash is showing or while a brand image upload is in progress. Icon Use logo is unchanged. Continue, Save, and Build stay on their existing rules.
+- Reason: Dashboard #124. A saved logo with an empty splash still asked the merchant to upload the same file again, and the Build my app strip showed the splash as missing.
+- Impact: Onboarding brand step and Settings Store Branding. No backend contract change. No Shopify token is rendered or sent. Human review is required because this is the brand image save path.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`. GitHub issue: `#124`.
+
 ### A Cartaisy-only name is not a saveable app name
 
 - Date: 2026-09-29.
