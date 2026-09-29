@@ -43,6 +43,12 @@ assert.equal(step(submitNext, 'submit').tone, 'current');
 assert.equal(submitNext.cta?.href, BUILD_MY_APP_HREF);
 assert.equal(submitNext.cta?.label, 'Open Build');
 assert.equal(submitNext.readyCount, 5);
+assert.equal(submitNext.stepCount, submitNext.steps.length);
+assert.equal(submitNext.stepCount, 7);
+assert.equal(
+  submitNext.readyCount,
+  submitNext.steps.filter((item) => item.tone === 'done').length
+);
 assert.equal(submitNext.steps.filter((item) => item.tone === 'current').length, 1);
 assert.equal(submitNext.cta?.label.includes('Submit to'), false);
 
@@ -64,6 +70,27 @@ assert.equal(accountsDoNotBlock.cta, null);
 assert.equal(step(accountsDoNotBlock, 'submit').tone, 'done');
 assert.equal(step(accountsDoNotBlock, 'accounts').tone, 'quiet');
 assert.equal(accountsDoNotBlock.headline, 'Sent for review.');
+assert.equal(accountsDoNotBlock.readyCount, 6);
+assert.equal(accountsDoNotBlock.stepCount, 7);
+
+const accountsDone = buildGoLive(
+  input({
+    accounts: { known: true, apple: 'connected', google: 'connected' },
+    submitNotices: [
+      {
+        platform: 'ios',
+        label: 'iOS',
+        tone: 'submitted',
+        headline: 'Sent to App Store Connect',
+        body: 'Apple reviews this before it is available.',
+      },
+    ],
+  })
+);
+assert.equal(step(accountsDone, 'accounts').tone, 'done');
+assert.equal(accountsDone.readyCount, 7);
+assert.equal(accountsDone.stepCount, 7);
+assert.equal(accountsDone.headline, 'Sent for review.');
 
 const missingIcon = buildGoLive(input({ brand: { known: true, displayName: 'Northwind', hasIcon: false } }));
 assert.equal(step(missingIcon, 'brand').tone, 'current');
@@ -145,6 +172,25 @@ assert.equal(step(billing, 'catalog').status, 'Blocked');
 assert.notEqual(step(billing, 'catalog').tone, 'done');
 assert.equal(billing.cta, null);
 assert.equal(billing.headline, 'Shopify billing needs attention.');
+assert.equal(billing.readyCount, billing.steps.filter((item) => item.tone === 'done').length);
+assert.equal(billing.stepCount, billing.steps.length);
+
+const publishedBilling = buildGoLive(
+  input({
+    catalogBlock: 'billing',
+    catalogEligible: false,
+    syncState: 'failed',
+    syncLabel: 'Billing needs attention',
+    brand: { known: true, displayName: null, hasIcon: false },
+    preview: 'none',
+  })
+);
+assert.equal(step(publishedBilling, 'shopify').tone, 'current');
+assert.equal(step(publishedBilling, 'home').tone, 'done');
+assert.equal(step(publishedBilling, 'accounts').tone, 'quiet');
+assert.equal(step(publishedBilling, 'submit').tone, 'waiting');
+assert.equal(publishedBilling.readyCount, 1);
+assert.equal(publishedBilling.stepCount, 7);
 
 const reconnect = buildGoLive(input({ catalogBlock: 'reconnect', catalogEligible: false }));
 assert.equal(reconnect.cta, null);

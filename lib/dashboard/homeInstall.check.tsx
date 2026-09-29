@@ -256,15 +256,49 @@ assert.match(quiet, /Not ready/);
 const billing = home([], { previewBuilding: false, catalogBlock: 'billing', buildLabel: 'Android · Queued' });
 assert.equal(billing.includes('data-home-preview-building'), false);
 assert.equal(billing.includes('Your preview is building'), false);
-assert.match(billing, /Shopify billing needs attention/);
+assert.equal((billing.match(/Shopify billing needs attention/g) ?? []).length, 1);
+assert.equal((billing.match(/Syncing again will not change that/g) ?? []).length, 1);
+assert.equal(billing.includes('This store needs an active Shopify plan'), false);
 assert.match(billing, /Reconnect Shopify/);
 assert.equal(billing.includes('Sync again'), false);
 assert.equal((billing.match(/data-go-live-cta/g) ?? []).length, 0);
+assert.equal((billing.match(/data-go-live-step=/g) ?? []).length, 7);
+assert.match(billing, /data-go-live-count="1 of 7"/);
+
+const qaBilling = home([], {
+  previewBuilding: false,
+  catalogBlock: 'billing',
+  buildLabel: 'Could not check',
+  catalogEligible: false,
+  syncState: 'failed',
+  syncLabel: 'Billing needs attention',
+  brand: { known: true, displayName: null, hasIcon: false },
+  homeLayout: {
+    status: 'published',
+    label: 'Published',
+    detail: 'The installed app reads this section order under the home header.',
+    needsPublish: false,
+  },
+  previewPhase: 'none',
+});
+assert.deepEqual(
+  [...qaBilling.matchAll(/data-go-live-step="([^"]+)"/g)].map((match) => match[1]),
+  ['shopify', 'catalog', 'brand', 'home', 'preview', 'accounts', 'submit']
+);
+assert.match(qaBilling, /data-go-live-count="1 of 7"/);
+assert.match(qaBilling, /data-home-layout="published"/);
+assert.match(qaBilling, /Name and icon needed/);
+assert.match(qaBilling, /Store accounts/);
+assert.match(qaBilling, />Submit</);
+assert.equal((qaBilling.match(/Shopify billing needs attention/g) ?? []).length, 1);
+assert.equal(qaBilling.includes('This store needs an active Shopify plan'), false);
 
 const reconnect = home([], { previewBuilding: false, catalogBlock: 'reconnect', buildLabel: 'iOS · Building' });
 assert.equal(reconnect.includes('data-home-preview-building'), false);
 assert.equal(reconnect.includes('Your preview is building'), false);
-assert.match(reconnect, /Reconnect Shopify/);
+assert.equal((reconnect.match(/Reconnect Shopify/g) ?? []).length, 1);
+assert.equal((reconnect.match(/Shopify needs to be reconnected/g) ?? []).length, 1);
+assert.equal(reconnect.includes('Reconnect to load this catalog again'), false);
 assert.equal(reconnect.includes('Shopify billing needs attention'), false);
 
 const unsafe = renderToStaticMarkup(

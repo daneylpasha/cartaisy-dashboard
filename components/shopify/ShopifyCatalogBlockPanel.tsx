@@ -21,11 +21,16 @@ export function ShopifyCatalogBlockPanel({
   block,
   shop,
   embedded = false,
+  actionOnly = false,
 }: {
   block: ShopifyCatalogBlockKind;
   shop: string | null;
   /** Sits inside another card. The outer frame stays on the parent. */
   embedded?: boolean;
+  /**
+   * Reconnect control only. The parent already states the billing or reconnect story.
+   */
+  actionOnly?: boolean;
 }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +50,37 @@ export function ShopifyCatalogBlockPanel({
     }
   };
 
+  const control = shop ? (
+    <button
+      type="button"
+      onClick={() => void reconnect()}
+      disabled={pending}
+      className={primary ? FILLED : QUIET}
+    >
+      {primary && pending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+      {pending ? 'Opening Shopify…' : 'Reconnect Shopify'}
+    </button>
+  ) : (
+    <Link href="/dashboard/settings" className={primary ? FILLED : QUIET}>
+      Reconnect Shopify
+    </Link>
+  );
+
+  const alert = error ? (
+    <p role="alert" className="mt-3 text-sm leading-6 text-slate-600">
+      {error}
+    </p>
+  ) : null;
+
+  if (actionOnly) {
+    return (
+      <div aria-live="polite">
+        {control}
+        {alert}
+      </div>
+    );
+  }
+
   return (
     <section
       className={embedded ? 'border-t border-slate-100 px-5 py-5' : 'rounded-xl border border-slate-200 bg-white px-5 py-5'}
@@ -52,26 +88,8 @@ export function ShopifyCatalogBlockPanel({
     >
       <h2 className="text-sm font-semibold text-slate-950">{copy.headline}</h2>
       <p className="mt-1 max-w-md text-sm leading-6 text-slate-600">{copy.support}</p>
-      {shop ? (
-        <button
-          type="button"
-          onClick={() => void reconnect()}
-          disabled={pending}
-          className={primary ? FILLED : QUIET}
-        >
-          {primary && pending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
-          {pending ? 'Opening Shopify…' : 'Reconnect Shopify'}
-        </button>
-      ) : (
-        <Link href="/dashboard/settings" className={primary ? FILLED : QUIET}>
-          Reconnect Shopify
-        </Link>
-      )}
-      {error && (
-        <p role="alert" className="mt-3 text-sm leading-6 text-slate-600">
-          {error}
-        </p>
-      )}
+      {control}
+      {alert}
     </section>
   );
 }

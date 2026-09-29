@@ -116,7 +116,7 @@ function StepRow({
 
 /**
  * One readiness strip for a connected store.
- * The safety notice for reconnect or billing stays the action for that block.
+ * Billing and reconnect keep one story in the lead, with the reconnect action under it.
  */
 export function GoLiveStrip({
   input,
@@ -137,7 +137,7 @@ export function GoLiveStrip({
         <div className="min-w-0">
           <div className="flex items-baseline justify-between gap-4 sm:justify-start sm:gap-3">
             <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Go live</p>
-            <p className="text-[11px] tabular-nums tracking-wide text-slate-400">
+            <p data-go-live-count={`${model.readyCount} of ${model.stepCount}`} className="text-[11px] tabular-nums tracking-wide text-slate-400">
               {model.readyCount} of {model.stepCount}
             </p>
           </div>
@@ -145,6 +145,7 @@ export function GoLiveStrip({
             {model.headline}
           </h2>
           <p className="mt-1 max-w-md text-sm leading-6 text-slate-500">{model.support}</p>
+          {safety ? <ShopifyCatalogBlockPanel block={safety} shop={shop} actionOnly /> : null}
         </div>
         {model.cta ? (
           <Button asChild data-go-live-cta="" className="h-11 w-full shrink-0 rounded-lg bg-slate-950 px-4 text-white hover:bg-slate-800 sm:w-auto">
@@ -165,7 +166,6 @@ export function GoLiveStrip({
           />
         ))}
       </ol>
-      {safety ? <ShopifyCatalogBlockPanel block={safety} shop={shop} embedded /> : null}
     </section>
   );
 }
