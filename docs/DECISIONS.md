@@ -320,6 +320,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Merchant Build my app presentation. No backend field. No Shopify token and no Expo token is rendered or sent. Human review is required because this is the merchant-facing install handoff.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#80`.
 
+### Home shows Scan to install when a build is ready
+
+- Date: 2026-09-29.
+- Decision: Home for a connected store (`/dashboard`) shows a quiet card when `GET /api/v1/build-requests` includes at least one platform that is `ready` and `installUrl` is a public https URL with no credentials and no token-shaped text. The card says Scan to install, draws a compact code for each such platform, and links to Build (`/dashboard/onboarding?step=ready`) for the larger code. A list with no ready public URL, a failed list, and the disconnected setup checklist do not show the card. The card does not invent a URL, call a QR host, or add an Expo token. Build my app stays the large code, including the wait frame before that URL exists. Brand, Preview, and Settings still hide the phone mock only under the 2026-09-29 install-preview rules.
+- Reason: Dashboard #82. Merchants land on Home after login and were missing the install handoff that already lives on Build.
+- Impact: Connected Home presentation. No backend field. No Shopify token and no Expo token is rendered or sent. Human review is required because this is the merchant-facing install handoff.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#82`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

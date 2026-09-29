@@ -1,4 +1,5 @@
 import { listBuildRequests, fetchCatalogSync } from '@/lib/build/client';
+import { readyInstallsFromList, type ReadyInstall } from '@/lib/build/installPreview';
 import { fetchCollectionsCatalogBlock } from '@/lib/api/shopifyConnection';
 import { API_URL, tokenStorage } from '@/lib/api/mutator/custom-instance';
 import { fetchBranding } from '@/lib/onboarding/branding';
@@ -36,6 +37,8 @@ export interface ConnectedHomeFacts {
   activity: HomeActivity[] | null;
   next: NextSetupAction | null;
   catalogBlock: ShopifyCatalogBlockKind | null;
+  /** Ready platforms with a public https install URL. Empty hides the install card. */
+  installs: ReadyInstall[];
 }
 
 async function readJson(response: Response): Promise<unknown> {
@@ -137,6 +140,7 @@ export async function loadConnectedHome(storeId: string | undefined): Promise<Co
       activity: null,
       next: null,
       catalogBlock: null,
+      installs: [],
     };
   }
 
@@ -156,7 +160,9 @@ export async function loadConnectedHome(storeId: string | undefined): Promise<Co
     gated.block ? null : counts.productCount,
     gated.block ? null : counts.orderCount
   );
-  const build = describeBuild(builds.kind === 'ok' ? builds : { kind: 'error' });
+  const buildList = builds.kind === 'ok' ? builds : { kind: 'error' as const };
+  const build = describeBuild(buildList);
+  const installs = buildList.kind === 'ok' ? readyInstallsFromList(buildList.requests) : [];
 
   return {
     syncLabel: sync.label,
@@ -170,5 +176,6 @@ export async function loadConnectedHome(storeId: string | undefined): Promise<Co
     activity,
     next: nextSetupAction({ brandingSaved, build: build.state }),
     catalogBlock: gated.block ?? null,
+    installs,
   };
 }
