@@ -184,7 +184,9 @@ export function brandingFromPayload(payload: unknown, appName: string): Branding
   };
 }
 
-export async function fetchBranding(storeId: string, token: string): Promise<BrandingDraft | null> {
+const inflightBranding = new Map<string, Promise<BrandingDraft | null>>();
+
+async function readBranding(storeId: string, token: string): Promise<BrandingDraft | null> {
   try {
     const response = await fetch(`${API_URL}/admin/stores/${storeId}/branding`, {
       headers: authHeaders(token),
@@ -195,6 +197,22 @@ export async function fetchBranding(storeId: string, token: string): Promise<Bra
   } catch {
     return null;
   }
+}
+
+/**
+ * One in-flight branding GET per store and token.
+ * Settings and the sidebar logo start together; the second caller waits on the first.
+ * A later call, after that request settles, fetches again.
+ */
+export function fetchBranding(storeId: string, token: string): Promise<BrandingDraft | null> {
+  const key = `${storeId}\n${token}`;
+  const pending = inflightBranding.get(key);
+  if (pending) return pending;
+  const request = readBranding(storeId, token).finally(() => {
+    if (inflightBranding.get(key) === request) inflightBranding.delete(key);
+  });
+  inflightBranding.set(key, request);
+  return request;
 }
 
 export async function fetchStoreProfile(): Promise<{ name: string | null; brandAssets: StoredBrandAssets }> {

@@ -30,10 +30,9 @@ import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { canManageTeam } from '@/lib/utils/permissions';
 import { useDashboardShopify } from '@/components/dashboard/ShopifyStatusProvider';
 import { listAdminBuildRequests } from '@/lib/build/adminClient';
+import { fetchBranding } from '@/lib/onboarding/branding';
 
 const MASTER_ADMINS = ['sufyanali@gmail.com', 'daniyal@cartaisy.com'];
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cartaisy-backend-production.up.railway.app/api/v1';
 
 type NavTier = 'primary' | 'later' | 'account';
 
@@ -82,26 +81,17 @@ function SidebarContent({
   const shopifyKnownDisconnected = !isLoading && status?.isConnected === false;
 
   useEffect(() => {
-    const fetchBranding = async () => {
-      if (!storeId) return;
-      try {
-        const token = getToken();
-        const response = await fetch(`${API_URL}/admin/stores/${storeId}/branding`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (response.ok) {
-          const data = await response.json();
-          if (data.data?.logoUrl) {
-            setStoreLogo(data.data.logoUrl);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to fetch store branding:', err);
-      }
+    if (!storeId) return;
+    const token = getToken();
+    if (!token) return;
+    let cancelled = false;
+    // Joins the Settings branding GET when both start together.
+    void fetchBranding(storeId, token).then((draft) => {
+      if (!cancelled) setStoreLogo(draft?.logoUrl ?? null);
+    });
+    return () => {
+      cancelled = true;
     };
-    fetchBranding();
     // getToken is stable enough for this mount fetch; including it retriggers on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storeId]);
