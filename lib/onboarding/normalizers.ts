@@ -1,3 +1,4 @@
+import { catalogBlockCopy, catalogBlockFromPayload, withCatalogBlock } from '../shopify/catalogBlock.ts';
 import { shopifyRecoveryView } from '../shopify/recovery.ts';
 import {
   ONBOARDING_STEPS,
@@ -6,6 +7,7 @@ import {
   type CatalogPreviewProduct,
   type LockedCatalog,
   type OnboardingStep,
+  type ShopifyCatalogBlockKind,
   type ShopifyConnectionSnapshot,
   type SyncGate,
   type SyncGateState,
@@ -190,13 +192,15 @@ function normalizeDurableCatalogSync(data: Record<string, unknown>): SyncGate | 
  * the older in-memory sync payload (`inProgress`, `lastFullSync`, `errors`).
  * The in-memory shape never sets `eligibleForBuild`.
  */
-export function normalizeSyncStatus(payload: unknown, ok: boolean): SyncGate {
+export function normalizeSyncStatus(payload: unknown, ok: boolean, status?: number): SyncGate {
+  const block = catalogBlockFromPayload(payload, ok, status);
   const data = readData(payload);
   if (data) {
     const durable = normalizeDurableCatalogSync(data);
-    if (durable) return durable;
+    if (durable) return withCatalogBlock(durable, block);
   }
 
+  if (block) return withCatalogBlock(closedGate('failed'), block);
   if (!ok || !data) return UNAVAILABLE_SYNC;
 
   const explicit =
@@ -476,9 +480,9 @@ export function previewShelf(
   pending = false
 ): PreviewShelf {
   if (pending) return { kind: 'loading', message: 'Loading your products' };
+  if (sync.state === 'in_progress') return { kind: 'loading', message: 'Syncing your catalog' };
+  if (sync.block) return { kind: 'empty', message: catalogBlockCopy(sync.block).support };
   switch (sync.state) {
-    case 'in_progress':
-      return { kind: 'loading', message: 'Syncing your catalog' };
     case 'succeeded':
       return products.length > 0
         ? { kind: 'products' }
@@ -507,6 +511,7 @@ export function previewStepDetail(
   products: readonly CatalogPreviewProduct[],
   pending = false
 ): string {
+  if (!pending && sync.block) return catalogBlockCopy(sync.block).support;
   const shelf = previewShelf(sync, products, pending);
   if (shelf.kind === 'products') return 'Featured products are from your synced catalog.';
   if (shelf.kind === 'loading') {
@@ -556,6 +561,7 @@ export function onboardingSyncWarning(input: {
   if (!input.isConnected) {
     return 'Shopify is not connected yet. You can confirm your brand. Build stays off until the store is connected and synced.';
   }
+  if (input.sync.block) return catalogBlockCopy(input.sync.block).support;
   switch (input.sync.state) {
     case 'succeeded':
       return null;
@@ -621,6 +627,14 @@ export function buildRequestAvailability(
     };
   }
 
+  if (sync.block === 'reconnect' || sync.block === 'billing') {
+    return {
+      enabled: false,
+      action: sync.block === 'reconnect' ? 'connect' : 'billing',
+      reason: catalogBlockCopy(sync.block).support,
+    };
+  }
+
   if (sync.state === 'unavailable' || (connection && !connection.statusKnown && !sync.eligibilityReason)) {
     return {
       enabled: false,
@@ -680,7 +694,11 @@ export function connectPrimaryAction(input: {
 }
 
 /** Auto-start Sync again once after OAuth return when nothing is running. */
-export function shouldAutoStartCatalogSync(state: SyncGateState): boolean {
+export function shouldAutoStartCatalogSync(
+  state: SyncGateState,
+  block?: ShopifyCatalogBlockKind | null
+): boolean {
+  if (block === 'billing' || block === 'reconnect') return false;
   return state === 'not_started' || state === 'failed';
 }
 

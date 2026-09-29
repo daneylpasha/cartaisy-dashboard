@@ -16,6 +16,9 @@ export type SyncGateState =
 
 export type BuildEligibilityReason = 'shopify_not_connected' | 'catalog_sync_not_succeeded';
 
+/** Live catalog read is blocked. Sync again does not clear a billing block. */
+export type ShopifyCatalogBlockKind = 'reconnect' | 'billing';
+
 /**
  * Normalized sync gate.
  * `eligibleForBuild` is true only when GET /shopify/sync reports
@@ -31,6 +34,11 @@ export interface SyncGate {
   finishedAt?: string | null;
   /** Present on the durable GET /shopify/sync payload. Not a success signal. */
   lastSucceededAt?: string | null;
+  /**
+   * Set when overview, sync, or collections returned reconnect or Shopify billing.
+   * Absent on a normal gate.
+   */
+  block?: ShopifyCatalogBlockKind | null;
 }
 
 /**
@@ -91,7 +99,7 @@ export interface BrandingDraft {
   iconPersisted: boolean;
 }
 
-export type BuildNextAction = 'connect' | 'sync' | 'retry';
+export type BuildNextAction = 'connect' | 'sync' | 'retry' | 'billing';
 
 export interface BuildRequestAvailability {
   /** True only when catalog sync succeeded and Shopify is connected. */

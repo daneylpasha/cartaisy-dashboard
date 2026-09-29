@@ -270,6 +270,63 @@ assert.equal(
   'connect'
 );
 
+const billingSync = normalizeSyncStatus(
+  {
+    success: false,
+    code: 'shopify_payment_required',
+    error: 'Shopify API error: Payment Required',
+  },
+  false,
+  402
+);
+assert.equal(billingSync.block, 'billing');
+assert.equal(billingSync.state, 'failed');
+assert.equal(buildRequestAvailability(billingSync, connected).action, 'billing');
+assert.equal(buildRequestAvailability(billingSync, connected).enabled, false);
+assert.match(buildRequestAvailability(billingSync, connected).reason ?? '', /will not change that/);
+assert.match(previewShelf(billingSync, []).message ?? '', /active Shopify plan/);
+assert.match(previewStepDetail(billingSync, []), /active Shopify plan/);
+
+const billingSummary = normalizeSyncStatus(
+  {
+    data: {
+      status: 'failed',
+      eligibleForBuild: false,
+      eligibilityReason: 'catalog_sync_not_succeeded',
+      errorSummary: 'Shopify API error: Payment Required',
+    },
+  },
+  true,
+  200
+);
+assert.equal(billingSummary.block, 'billing');
+assert.match(billingSummary.detail ?? '', /will not change that/);
+
+const reconnectSync = normalizeSyncStatus(
+  {
+    success: false,
+    code: 'shopify_reconnect_required',
+    error: 'Shopify access token could not be read. Reconnect the store to restore catalog sync.',
+  },
+  false,
+  409
+);
+assert.equal(reconnectSync.block, 'reconnect');
+assert.equal(buildRequestAvailability(reconnectSync, connected).action, 'connect');
+assert.match(previewShelf(reconnectSync, []).message ?? '', /Reconnect to load this catalog again/);
+
+const genericFailure = normalizeSyncStatus({ success: false, error: 'Failed to fetch collections' }, false, 500);
+assert.equal(genericFailure.block ?? null, null);
+assert.equal(genericFailure.state, 'unavailable');
+
+const stillSynced = normalizeSyncStatus(
+  { data: { status: 'succeeded', eligibleForBuild: true, errorSummary: 'Payment Required' } },
+  true,
+  200
+);
+assert.equal(stillSynced.block ?? null, null);
+assert.equal(stillSynced.eligibleForBuild, true);
+
 assert.equal(
   onboardingSyncWarning({
     statusKnown: true,
@@ -305,6 +362,8 @@ assert.deepEqual(connectPrimaryAction({ liveRedirectEnabled: false, isConnected:
 
 assert.equal(shouldAutoStartCatalogSync('not_started'), true);
 assert.equal(shouldAutoStartCatalogSync('failed'), true);
+assert.equal(shouldAutoStartCatalogSync('failed', 'billing'), false);
+assert.equal(shouldAutoStartCatalogSync('failed', 'reconnect'), false);
 assert.equal(shouldAutoStartCatalogSync('in_progress'), false);
 assert.equal(shouldAutoStartCatalogSync('succeeded'), false);
 assert.equal(shouldAutoStartCatalogSync('unavailable'), false);

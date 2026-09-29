@@ -258,6 +258,20 @@ assert.deepEqual(
 );
 assert.deepEqual(
   primaryBuildAction({
+    availability: {
+      enabled: false,
+      action: 'billing',
+      reason: 'This store needs an active Shopify plan before products and collections can load.',
+    },
+    mode: 'compose',
+    submitting: false,
+    syncBusy: false,
+    canSubmit: true,
+  }),
+  { kind: 'none', label: '', disabled: true }
+);
+assert.deepEqual(
+  primaryBuildAction({
     availability: { enabled: false, action: 'sync', reason: 'Your catalog has not synced yet. Use Sync again.' },
     mode: 'compose',
     submitting: false,

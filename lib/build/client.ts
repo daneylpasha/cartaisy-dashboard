@@ -69,7 +69,7 @@ export async function loadBuildScreen(
 export async function fetchCatalogSync(token: string): Promise<SyncGate> {
   try {
     const result = await backend(token, '/shopify/sync', { method: 'GET' });
-    return normalizeSyncStatus(result.body, result.ok);
+    return normalizeSyncStatus(result.body, result.ok, result.status);
   } catch {
     return UNAVAILABLE_SYNC;
   }
@@ -88,7 +88,7 @@ export async function syncCatalogAgain(token: string): Promise<SyncGate> {
         eligibilityReason: 'shopify_not_connected',
       };
     }
-    return normalizeSyncStatus(result.body, result.ok);
+    return normalizeSyncStatus(result.body, result.ok, result.status);
   } catch {
     return UNAVAILABLE_SYNC;
   }

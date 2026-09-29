@@ -194,6 +194,24 @@ assert.equal(
   catalogRow({ state: 'succeeded', detail: null, eligibleForBuild: true, eligibilityReason: null }, 0, 0).detail,
   'No products or orders in the catalog yet.'
 );
+assert.equal(
+  catalogRow(
+    { state: 'failed', detail: null, eligibleForBuild: false, eligibilityReason: null, block: 'billing' },
+    0,
+    0
+  ).label,
+  'Billing needs attention'
+);
+assert.match(
+  catalogSyncCopy({
+    state: 'failed',
+    detail: null,
+    eligibleForBuild: false,
+    eligibilityReason: null,
+    block: 'reconnect',
+  }).detail ?? '',
+  /Reconnect to load this catalog again/
+);
 
 assert.equal(describeBuild({ kind: 'error' }).label, 'Could not check');
 assert.equal(describeBuild({ kind: 'ok', requests: [] }).label, 'No build requested');

@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react';
 import { useSession } from '@/lib/auth';
 import { useShopifyStatus } from '@/hooks/useShopifyStatus';
 import { tokenStorage } from '@/lib/api/mutator/custom-instance';
-import { getOverviewProductCount } from '@/lib/api/shopifyConnection';
+import { fetchCollectionsCatalogBlock, getShopifyOverview } from '@/lib/api/shopifyConnection';
 import { fetchCatalogSync, syncCatalogAgain } from '@/lib/build/client';
 import { BUILD_STATUS_POLL_MS } from '@/lib/build/contract';
 import { UNAVAILABLE_SYNC } from '@/lib/onboarding/normalizers';
 import type { SyncGate } from '@/lib/onboarding/types';
+import { withCatalogBlock } from '@/lib/shopify/catalogBlock';
 import { shopifyRecoveryView } from '@/lib/shopify/recovery';
 import * as shopifyService from '@/lib/services/shopify';
 import { ShopifyRecoveryStatus } from '@/components/shopify/ShopifyRecoveryStatus';
@@ -56,10 +57,14 @@ export function ConnectShopify() {
         if (!cancelled) setSyncReady(true);
         return;
       }
-      const [next, count] = await Promise.all([fetchCatalogSync(token), getOverviewProductCount()]);
+      const [next, overview, collectionsBlock] = await Promise.all([
+        fetchCatalogSync(token),
+        getShopifyOverview(),
+        fetchCollectionsCatalogBlock(),
+      ]);
       if (cancelled) return;
-      setSync(next);
-      setProductCount(count);
+      setSync(withCatalogBlock(withCatalogBlock(next, overview.block), collectionsBlock));
+      setProductCount(overview.productCount);
       setSyncReady(true);
     })();
 
@@ -78,9 +83,15 @@ export function ConnectShopify() {
         if (!token || cancelled) return;
         const next = await fetchCatalogSync(token);
         if (cancelled || next.state === 'unavailable' || next.state === 'in_progress') return;
-        setSync(next);
-        if (next.state === 'succeeded') {
-          setProductCount(await getOverviewProductCount());
+        const [overview, collectionsBlock] = await Promise.all([
+          getShopifyOverview(),
+          fetchCollectionsCatalogBlock(),
+        ]);
+        if (cancelled) return;
+        const merged = withCatalogBlock(withCatalogBlock(next, overview.block), collectionsBlock);
+        setSync(merged);
+        if (merged.state === 'succeeded' && !merged.block) {
+          setProductCount(overview.productCount);
         }
         await refetch();
       })();
@@ -133,8 +144,14 @@ export function ConnectShopify() {
     }));
     const next = await syncCatalogAgain(token);
     setSync(next.state === 'unavailable' ? { ...next, state: 'failed', detail: "We couldn't sync your store. Try again." } : next);
-    if (next.state === 'succeeded') {
-      setProductCount(await getOverviewProductCount());
+    if (next.state === 'succeeded' && !next.block) {
+      const [overview, collectionsBlock] = await Promise.all([
+        getShopifyOverview(),
+        fetchCollectionsCatalogBlock(),
+      ]);
+      const merged = withCatalogBlock(withCatalogBlock(next, overview.block), collectionsBlock);
+      setSync(merged);
+      setProductCount(merged.block ? null : overview.productCount);
     }
     if (next.eligibilityReason === 'shopify_not_connected' || next.state === 'succeeded') {
       await refetch();
@@ -188,7 +205,7 @@ export function ConnectShopify() {
               <ShopifyRecoveryStatus
                 shopDomain={status?.shop ?? null}
                 view={view}
-                pending={pending === 'sync'}
+                pending={pending != null}
                 onSyncAgain={() => void handleSync()}
                 onReconnect={() => void beginConnect(status?.shop ?? '')}
               />

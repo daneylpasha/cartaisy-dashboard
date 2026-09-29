@@ -444,7 +444,7 @@ export function SmartHomePreview({
                   <HomeBody
                     shelfKind={shelf.kind}
                     shelfMessage={shelf.kind === 'products' ? null : shelf.message}
-                    syncSucceeded={sync.state === 'succeeded'}
+                    syncSucceeded={sync.state === 'succeeded' && !sync.block}
                     title={shopperHeroTitle(draft.appName)}
                     name={name}
                     logoUrl={logoUrl}

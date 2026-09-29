@@ -117,3 +117,34 @@ assert.equal(
   }).control,
   null
 );
+
+const reconnectBlock = shopifyRecoveryView({
+  ...connected,
+  sync: gate({
+    state: 'failed',
+    block: 'reconnect',
+    detail: 'Reconnect to load this catalog again.',
+    eligibilityReason: 'catalog_sync_not_succeeded',
+  }),
+  productCount: 4,
+});
+assert.equal(reconnectBlock.headline, 'Reconnect Shopify');
+assert.equal(reconnectBlock.control?.kind, 'reconnect');
+assert.equal(reconnectBlock.runAgain, false);
+assert.equal(reconnectBlock.productCount, null);
+
+const billingBlock = shopifyRecoveryView({
+  ...connected,
+  sync: gate({
+    state: 'failed',
+    block: 'billing',
+    eligibleForBuild: false,
+    eligibilityReason: 'catalog_sync_not_succeeded',
+  }),
+  productCount: 4,
+});
+assert.equal(billingBlock.headline, 'Shopify billing needs attention');
+assert.equal(billingBlock.control?.kind, 'billing');
+assert.equal(billingBlock.runAgain, false);
+assert.match(billingBlock.support ?? '', /Syncing again will not change that/);
+assert.equal(billingBlock.productCount, null);

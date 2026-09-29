@@ -296,6 +296,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Auth/session only. Login, invite signup, Google sign-in, store ownership, and Shopify are unchanged. Human review is required because this stores a new session after a password change.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`. GitHub issue: `#68`. Backend issue: cartaisy-backend `#188`.
 
+### Shopify billing is not a sync retry
+
+- Date: 2026-09-29.
+- Decision: Overview, Settings sync, onboarding catalog sync, Build my app, Collections, and the collection picker read a structured Shopify failure before they show an empty catalog. `shopify_reconnect_required` uses the existing Reconnect Shopify action (`POST /api/v1/shopify/oauth/connect`). `shopify_payment_required` and `shopify_store_billing_required` say the Shopify plan needs attention. HTTP 402 and a "Payment Required" summary are accepted until cartaisy-backend #194 settles on one code. Billing does not offer Sync again and does not auto-start a sync. Reconnect on that state is secondary. Build my app stays off while either block is on the catalog snapshot. The dashboard does not show tokens or raw Shopify bodies.
+- Reason: Dashboard #75. A store on Shopify Payment Required, or a token that must be reconnected, was a generic error or an empty catalog.
+- Impact: Shopify catalog presentation and the build gate while a live catalog read is blocked. Backend eligibility fields are unchanged. Human review is required because this is Shopify recovery and it keeps Build my app off during the block.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/RELEASE_CHECKLIST.md`, `docs/HOME_MODULE_EDITOR_CONTRACT.md`. GitHub issue: `#75`. Backend issue: cartaisy-backend `#194`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

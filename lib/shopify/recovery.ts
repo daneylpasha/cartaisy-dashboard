@@ -1,4 +1,5 @@
-import type { SyncGate } from '@/lib/onboarding/types';
+import type { SyncGate } from '../onboarding/types.ts';
+import { catalogBlockCopy } from './catalogBlock.ts';
 
 export interface RecoveryControlSync {
   kind: 'sync';
@@ -9,7 +10,12 @@ export interface RecoveryControlReconnect {
   kind: 'reconnect';
 }
 
-export type RecoveryControl = RecoveryControlSync | RecoveryControlReconnect;
+/** Billing copy, with reconnect only as a secondary action. */
+export interface RecoveryControlBilling {
+  kind: 'billing';
+}
+
+export type RecoveryControl = RecoveryControlSync | RecoveryControlReconnect | RecoveryControlBilling;
 
 export interface ShopifyRecoveryView {
   tone: 'ready' | 'attention' | 'working' | 'disconnected' | 'unknown';
@@ -107,6 +113,30 @@ export function shopifyRecoveryView(input: {
       headline: 'Syncing your catalog…',
       support: 'Not synced yet. You can continue to Brand.',
       control: { kind: 'sync', disabled: true },
+      ...CLEARED,
+      webhookNote,
+    };
+  }
+
+  if (input.sync.block === 'reconnect') {
+    const copy = catalogBlockCopy('reconnect');
+    return {
+      tone: 'attention',
+      headline: copy.headline,
+      support: copy.support,
+      control: { kind: 'reconnect' },
+      ...CLEARED,
+      webhookNote,
+    };
+  }
+
+  if (input.sync.block === 'billing') {
+    const copy = catalogBlockCopy('billing');
+    return {
+      tone: 'attention',
+      headline: copy.headline,
+      support: copy.support,
+      control: { kind: 'billing' },
       ...CLEARED,
       webhookNote,
     };

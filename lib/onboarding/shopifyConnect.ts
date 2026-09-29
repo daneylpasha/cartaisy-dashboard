@@ -10,6 +10,7 @@ import {
   readAuthorizationUrl,
 } from '@/lib/onboarding/normalizers';
 import type { ShopifySnapshot } from '@/lib/onboarding/types';
+import { catalogBlockFromPayload, withCatalogBlock } from '@/lib/shopify/catalogBlock';
 import { merchantMessageForShopifyAction } from '@/lib/shopify/merchantCopy';
 
 /**
@@ -71,16 +72,16 @@ async function getBackend(
   path: string,
   token: string,
   storeId?: string | null
-): Promise<{ ok: boolean; body: unknown }> {
+): Promise<{ ok: boolean; status: number; body: unknown }> {
   try {
     const response = await fetch(`${API_URL}${path}`, {
       method: 'GET',
       headers: { ...authHeaders(token), ...storeHeader(storeId) },
     });
     const body = await readJson(response);
-    return { ok: response.ok, body };
+    return { ok: response.ok, status: response.status, body };
   } catch {
-    return { ok: false, body: null };
+    return { ok: false, status: 0, body: null };
   }
 }
 
@@ -91,19 +92,18 @@ export async function loadShopifySnapshot(token: string, storeId?: string | null
   ]);
 
   const connection = normalizeConnectionStatus(status.body, status.ok);
-  const syncGate = normalizeSyncStatus(sync.body, sync.ok);
+  const syncGate = normalizeSyncStatus(sync.body, sync.ok, sync.status);
 
   const overview = await getBackend(ENDPOINTS.overview, token);
   const counts = normalizeCatalog(overview.body, overview.ok);
+  const overviewBlock = catalogBlockFromPayload(overview.body, overview.ok, overview.status);
   const overviewProducts =
     syncGate.state === 'succeeded' ? normalizePreviewProducts(overview.body, overview.ok) : [];
 
-  const [collections, products] = await Promise.all([
+  const [collectionsResponse, products] = await Promise.all([
     connection.isConnected
-      ? getBackend(ENDPOINTS.collections, token).then((response) =>
-          normalizeCollectionNames(response.body, response.ok)
-        )
-      : Promise.resolve([] as string[]),
+      ? getBackend(ENDPOINTS.collections, token)
+      : Promise.resolve(null),
     syncGate.state === 'succeeded' && overviewProducts.length === 0
       ? getBackend(
           `${ENDPOINTS.products}?limit=${PREVIEW_PRODUCT_LIMIT}&sortBy=newest`,
@@ -113,14 +113,22 @@ export async function loadShopifySnapshot(token: string, storeId?: string | null
       : Promise.resolve(overviewProducts),
   ]);
 
+  const collections = collectionsResponse
+    ? normalizeCollectionNames(collectionsResponse.body, collectionsResponse.ok)
+    : [];
+  const collectionsBlock = collectionsResponse
+    ? catalogBlockFromPayload(collectionsResponse.body, collectionsResponse.ok, collectionsResponse.status)
+    : null;
+  const syncWithBlock = withCatalogBlock(withCatalogBlock(syncGate, overviewBlock), collectionsBlock);
+
   return {
     connection,
-    sync: syncGate,
+    sync: syncWithBlock,
     catalog: {
       ...EMPTY_CATALOG,
       ...counts,
-      collections,
-      products: syncGate.state === 'succeeded' ? products : [],
+      collections: syncWithBlock.block ? [] : collections,
+      products: syncWithBlock.block || syncWithBlock.state !== 'succeeded' ? [] : products,
     },
   };
 }
