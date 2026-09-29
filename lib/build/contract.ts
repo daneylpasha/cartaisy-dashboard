@@ -347,6 +347,9 @@ export function primaryBuildAction(input: {
     if (input.availability.action === 'retry') {
       return { kind: 'retry', label: 'Try again', disabled: false };
     }
+    if (input.availability.action === 'billing') {
+      return { kind: 'none', label: '', disabled: true };
+    }
     return { kind: 'sync', label: 'Sync again', disabled: input.syncBusy };
   }
   return {

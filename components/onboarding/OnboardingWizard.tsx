@@ -33,6 +33,7 @@ import {
   startShopifyConnect,
 } from '@/lib/onboarding/shopifyConnect';
 import { fetchCatalogSync, syncCatalogAgain } from '@/lib/build/client';
+import { withCatalogBlock } from '@/lib/shopify/catalogBlock';
 import { BUILD_STATUS_POLL_MS } from '@/lib/build/contract';
 import type {
   BrandingDraft,
@@ -242,7 +243,7 @@ export function OnboardingWizard() {
       setConnection(snapshot.connection);
       setCatalog(snapshot.catalog);
       const terminal = snapshot.sync.state === 'succeeded' || snapshot.sync.state === 'failed';
-      setSync(terminal ? snapshot.sync : next);
+      setSync(withCatalogBlock(terminal ? snapshot.sync : next, next.block ?? null));
     } finally {
       syncLock.current = false;
       setSyncing(false);
@@ -252,10 +253,10 @@ export function OnboardingWizard() {
   useEffect(() => {
     if (loading || syncing || !returnedConnected.current || autoSyncStarted.current) return;
     if (!connection.statusKnown || !connection.isConnected) return;
-    if (!shouldAutoStartCatalogSync(sync.state)) return;
+    if (!shouldAutoStartCatalogSync(sync.state, sync.block)) return;
     autoSyncStarted.current = true;
     void runCatalogSync();
-  }, [loading, syncing, connection.statusKnown, connection.isConnected, sync.state, runCatalogSync]);
+  }, [loading, syncing, connection.statusKnown, connection.isConnected, sync.state, sync.block, runCatalogSync]);
 
   useEffect(() => {
     if (syncing || sync.state !== 'in_progress') return;
@@ -272,7 +273,7 @@ export function OnboardingWizard() {
         setConnection(snapshot.connection);
         setCatalog(snapshot.catalog);
         const terminal = snapshot.sync.state === 'succeeded' || snapshot.sync.state === 'failed';
-        setSync(terminal ? snapshot.sync : next);
+        setSync(withCatalogBlock(terminal ? snapshot.sync : next, next.block ?? null));
       })();
     }, BUILD_STATUS_POLL_MS);
 

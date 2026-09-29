@@ -29,6 +29,10 @@ function buttons(markup: string, label: string): number {
   return markup.split(`>${label}<`).length - 1;
 }
 
+function buttonCount(markup: string, label: string): number {
+  return markup.match(new RegExp(`<button[^>]*>${label}</button>`, 'g'))?.length ?? 0;
+}
+
 const forbidden = ['shpat_', 'accessToken', 'Admin API', 'api key', 'API key'];
 
 const connected = html(
@@ -85,7 +89,38 @@ assert.equal(buttons(disconnected, 'Reconnect Shopify'), 1);
 assert.equal(buttons(disconnected, 'Sync again'), 0);
 assert.equal(disconnected.includes('should not show'), false);
 
-for (const markup of [connected, failed, disconnected]) {
+const reconnectBlock = html(
+  shopifyRecoveryView({
+    statusKnown: true,
+    isConnected: true,
+    sync: gate({ state: 'failed', block: 'reconnect' }),
+    productCount: 8,
+    webhookError: null,
+  }),
+  'northline.myshopify.com'
+);
+assert.equal(buttonCount(reconnectBlock, 'Reconnect Shopify'), 1);
+assert.equal(buttons(reconnectBlock, 'Sync again'), 0);
+assert.ok(reconnectBlock.includes('Reconnect to load this catalog again.'));
+
+const billing = html(
+  shopifyRecoveryView({
+    statusKnown: true,
+    isConnected: true,
+    sync: gate({ state: 'failed', block: 'billing' }),
+    productCount: 8,
+    webhookError: null,
+  }),
+  'northline.myshopify.com'
+);
+assert.equal(buttonCount(billing, 'Reconnect Shopify'), 1);
+assert.equal(buttons(billing, 'Sync again'), 0);
+assert.ok(billing.includes('Shopify billing needs attention'));
+assert.ok(billing.includes('Syncing again will not change that'));
+assert.equal(billing.includes('bg-slate-950'), false);
+assert.equal(reconnectBlock.includes('bg-slate-950'), true);
+
+for (const markup of [connected, failed, disconnected, reconnectBlock, billing]) {
   for (const word of forbidden) {
     assert.equal(markup.toLowerCase().includes(word.toLowerCase()), false, markup);
   }

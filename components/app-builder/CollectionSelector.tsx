@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from '@/lib/auth';
+import { useShopifyStatus } from '@/hooks/useShopifyStatus';
+import { ShopifyCatalogBlockPanel } from '@/components/shopify/ShopifyCatalogBlockPanel';
+import { catalogBlockFromPayload } from '@/lib/shopify/catalogBlock';
+import type { ShopifyCatalogBlockKind } from '@/lib/onboarding/types';
 import {
   Select,
   SelectContent,
@@ -27,20 +31,29 @@ export function CollectionSelector({
   disabled = false,
 }: CollectionSelectorProps) {
   const { data: session } = useSession();
+  const { status: shopifyStatus } = useShopifyStatus();
   const [collections, setCollections] = useState<ShopifyCollection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [block, setBlock] = useState<ShopifyCatalogBlockKind | null>(null);
 
   useEffect(() => {
     const fetchCollections = async () => {
       try {
         setIsLoading(true);
         setError('');
+        setBlock(null);
 
         const response = await fetch('/api/shopify/collections');
         const data = await response.json().catch(() => ({}));
+        const nextBlock = catalogBlockFromPayload(data, response.ok, response.status);
 
         if (!response.ok) {
+          if (nextBlock) {
+            setBlock(nextBlock);
+            setCollections([]);
+            return;
+          }
           const message =
             typeof data.error === 'string'
               ? data.error
@@ -70,41 +83,47 @@ export function CollectionSelector({
     <div className="space-y-2">
       <Label className="text-sm font-medium">{label}</Label>
 
-      {error && (
-        <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <AlertTriangle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-yellow-700">{error}</p>
-        </div>
-      )}
-
-      {isLoading && !error ? (
-        <div className="flex items-center gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
-          <Loader2 className="w-4 h-4 animate-spin text-slate-600" />
-          <p className="text-sm text-slate-600">Loading collections...</p>
-        </div>
-      ) : collections.length === 0 && !error ? (
-        <div className="flex items-start gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
-          <AlertCircle className="w-4 h-4 text-slate-600 flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-slate-600">No collections available</p>
-        </div>
+      {block ? (
+        <ShopifyCatalogBlockPanel block={block} shop={shopifyStatus?.shop ?? null} />
       ) : (
-        <Select value={value} onValueChange={onChange} disabled={disabled || isLoading || error !== ''}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select a collection" />
-          </SelectTrigger>
-          <SelectContent>
-            {collections.map((collection) => (
-              <SelectItem key={collection.id} value={collection.id}>
-                {collection.title}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
+        <>
+          {error && (
+            <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-yellow-700">{error}</p>
+            </div>
+          )}
 
-      <p className="text-xs text-slate-500">
-        Select which Shopify collection this carousel links to
-      </p>
+          {isLoading && !error ? (
+            <div className="flex items-center gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+              <Loader2 className="w-4 h-4 animate-spin text-slate-600" />
+              <p className="text-sm text-slate-600">Loading collections...</p>
+            </div>
+          ) : collections.length === 0 && !error ? (
+            <div className="flex items-start gap-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+              <AlertCircle className="w-4 h-4 text-slate-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-slate-600">No collections available</p>
+            </div>
+          ) : (
+            <Select value={value} onValueChange={onChange} disabled={disabled || isLoading || error !== ''}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a collection" />
+              </SelectTrigger>
+              <SelectContent>
+                {collections.map((collection) => (
+                  <SelectItem key={collection.id} value={collection.id}>
+                    {collection.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          <p className="text-xs text-slate-500">
+            Select which Shopify collection this carousel links to
+          </p>
+        </>
+      )}
     </div>
   );
 }

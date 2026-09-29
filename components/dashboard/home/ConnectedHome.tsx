@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ShopifyCatalogBlockPanel } from '@/components/shopify/ShopifyCatalogBlockPanel';
 import type { ConnectedHomeFacts } from '@/lib/dashboard/loadHome';
 
 export function ConnectedHome({
@@ -38,6 +39,12 @@ export function ConnectedHome({
             <Link href={facts.next.href}>{facts.next.action}</Link>
           </Button>
         </section>
+      )}
+
+      {facts.catalogBlock && (
+        <div className="mt-8">
+          <ShopifyCatalogBlockPanel block={facts.catalogBlock} shop={shop} />
+        </div>
       )}
 
       <div className="mt-6 divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white">

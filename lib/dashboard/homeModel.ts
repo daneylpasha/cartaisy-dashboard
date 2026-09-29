@@ -5,6 +5,7 @@ import {
   shouldPollBuildRequest,
   type BuildRequest,
 } from '../build/contract.ts';
+import { catalogBlockCopy } from '../shopify/catalogBlock.ts';
 import type { SyncGate } from '../onboarding/types.ts';
 
 /** Matches `DEFAULT_PRIMARY_COLOR` in the branding helper. A saved default alone is not brand evidence. */
@@ -118,6 +119,12 @@ export function nextSetupAction(input: {
 }
 
 export function catalogSyncCopy(sync: SyncGate): { label: string; detail: string | null } {
+  if (sync.block === 'reconnect') {
+    return { label: 'Reconnect Shopify', detail: catalogBlockCopy('reconnect').support };
+  }
+  if (sync.block === 'billing') {
+    return { label: 'Billing needs attention', detail: catalogBlockCopy('billing').support };
+  }
   switch (sync.state) {
     case 'succeeded':
       return { label: 'Synced', detail: null };

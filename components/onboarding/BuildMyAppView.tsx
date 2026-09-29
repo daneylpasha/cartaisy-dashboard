@@ -351,6 +351,11 @@ export function BuildMyAppView({
       {mode === 'compose' && webhookNote && (
         <p className="mt-2 text-sm leading-6 text-slate-600">{webhookNote}</p>
       )}
+      {mode === 'compose' && availability.action === 'billing' && (
+        <button type="button" onClick={() => onPrimary('connect')} className={QUIET_BUTTON}>
+          Reconnect Shopify
+        </button>
+      )}
       {mode === 'compose' && webhookNote && availability.enabled && (
         <button type="button" onClick={() => onPrimary('connect')} className={QUIET_BUTTON}>
           Reconnect Shopify

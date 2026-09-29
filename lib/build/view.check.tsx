@@ -92,6 +92,19 @@ assert.ok(disconnected.includes('Shopify is disconnected. Reconnect before reque
 assert.equal(disconnected.includes('>Build my app<'), false);
 assertCalm(disconnected);
 
+const billingBlocked = html({
+  availability: {
+    enabled: false,
+    action: 'billing',
+    reason: 'This store needs an active Shopify plan before products and collections can load. Syncing again will not change that.',
+  },
+});
+assert.equal(billingBlocked.includes('>Sync again<'), false);
+assert.equal(billingBlocked.includes('>Build my app<'), false);
+assert.ok(billingBlocked.includes('Reconnect Shopify'));
+assert.ok(billingBlocked.includes('will not change that'));
+assertCalm(billingBlocked);
+
 const needsSync = html({
   availability: {
     enabled: false,

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useShopifyCollections } from '@/hooks/useShopifyCollections';
 import { useShopifyStatus } from '@/hooks/useShopifyStatus';
+import { ShopifyCatalogBlockPanel } from '@/components/shopify/ShopifyCatalogBlockPanel';
 import { Button } from '@/components/ui/button';
 import {
   RefreshCw,
@@ -25,7 +26,7 @@ import Link from 'next/link';
 type ViewMode = 'grid' | 'list';
 
 export default function CollectionsPage() {
-  const { collections, isLoading, error, refetch } = useShopifyCollections();
+  const { collections, isLoading, error, block, refetch } = useShopifyCollections();
   const { status: shopifyStatus, isLoading: statusLoading } = useShopifyStatus();
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [searchQuery, setSearchQuery] = useState('');
@@ -88,6 +89,22 @@ export default function CollectionsPage() {
               </Button>
             </Link>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (block) {
+    return (
+      <div className="mx-auto w-full max-w-3xl pb-8">
+        <h1 className="font-heading text-[1.75rem] font-semibold tracking-tight text-slate-950 sm:text-[2rem]">
+          Collections
+        </h1>
+        <p className="mt-2 max-w-md text-sm leading-6 text-slate-600">
+          From the Shopify store this app sells from.
+        </p>
+        <div className="mt-8">
+          <ShopifyCatalogBlockPanel block={block} shop={shopifyStatus?.shop ?? null} />
         </div>
       </div>
     );

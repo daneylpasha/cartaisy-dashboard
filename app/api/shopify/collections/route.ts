@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthToken } from '@/lib/auth/server';
+import { catalogBlockCopy, catalogBlockFromPayload, normalizeShopifyErrorCode } from '@/lib/shopify/catalogBlock';
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
@@ -71,10 +72,20 @@ export async function GET() {
     });
 
     const body = (await response.json().catch(() => null)) as
-      | { data?: { collections?: BackendCollection[] }; error?: unknown }
+      | { data?: { collections?: BackendCollection[]; code?: unknown }; error?: unknown; code?: unknown }
       | null;
 
     if (!response.ok) {
+      const block = catalogBlockFromPayload(body, false, response.status);
+      if (block) {
+        const code =
+          normalizeShopifyErrorCode(body?.code) ??
+          (block === 'reconnect' ? 'shopify_reconnect_required' : 'shopify_payment_required');
+        return NextResponse.json(
+          { error: catalogBlockCopy(block).support, code },
+          { status: response.status }
+        );
+      }
       const notConnected = response.status === 400 || response.status === 409;
       return NextResponse.json(
         {

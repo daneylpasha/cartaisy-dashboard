@@ -37,6 +37,7 @@ export function ShopifyRecoveryStatus({
   const showFilledSync = view.control?.kind === 'sync';
   const showQuietSync = view.runAgain && !view.control;
   const showReconnect = view.control?.kind === 'reconnect';
+  const showBillingReconnect = view.control?.kind === 'billing';
   const domain =
     shopDomain ?? (view.tone === 'disconnected' ? 'No store linked' : 'Shopify');
 
@@ -77,6 +78,18 @@ export function ShopifyRecoveryStatus({
               className={FILLED}
             >
               {pending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}
+              {pending ? 'Opening Shopify…' : 'Reconnect Shopify'}
+            </button>
+          </div>
+        )}
+        {showBillingReconnect && onReconnect && (
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={onReconnect}
+              disabled={pending || reconnectDisabled}
+              className={QUIET}
+            >
               {pending ? 'Opening Shopify…' : 'Reconnect Shopify'}
             </button>
           </div>

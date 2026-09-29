@@ -12,6 +12,9 @@
  */
 
 import { API_URL, tokenStorage } from '@/lib/api/mutator/custom-instance';
+import { normalizeCatalog } from '@/lib/onboarding/normalizers';
+import { catalogBlockFromPayload } from '@/lib/shopify/catalogBlock';
+import type { ShopifyCatalogBlockKind } from '@/lib/onboarding/types';
 import {
   isShopifyAuthorizeUrl,
   merchantMessageForShopifyAction,
@@ -162,16 +165,51 @@ export async function getShopifyConnectionStatus(): Promise<ShopifyConnectionSta
   };
 }
 
+export interface ShopifyOverviewRead {
+  productCount: number | null;
+  block: ShopifyCatalogBlockKind | null;
+}
+
+/**
+ * Product total and catalog block from GET /shopify/overview.
+ * A failed overview keeps the block when the body has a reconnect or billing code.
+ */
+export async function getShopifyOverview(): Promise<ShopifyOverviewRead> {
+  const token = tokenStorage.getToken();
+  if (!token) return { productCount: null, block: null };
+
+  try {
+    const response = await fetch(`${API_URL}/shopify/overview`, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const body = (await response.json().catch(() => null)) as unknown;
+    const block = catalogBlockFromPayload(body, response.ok, response.status);
+    if (!response.ok || block) return { productCount: null, block };
+    return { productCount: normalizeCatalog(body, true).productCount, block: null };
+  } catch {
+    return { productCount: null, block: null };
+  }
+}
+
 /** Product total from GET /shopify/overview. Null when the overview cannot be read. */
 export async function getOverviewProductCount(): Promise<number | null> {
+  const overview = await getShopifyOverview();
+  return overview.productCount;
+}
+
+/** Catalog block from the collections proxy. Null when the list loaded or the failure is generic. */
+export async function fetchCollectionsCatalogBlock(): Promise<ShopifyCatalogBlockKind | null> {
   try {
-    const body = await backendRequest('status', '/shopify/overview', { method: 'GET' });
-    const data = asRecord(body.data);
-    const products = data ? asRecord(data.products) : null;
-    const fromProducts = products ? products.total : undefined;
-    const total = typeof fromProducts === 'number' ? fromProducts : data ? data.productCount : undefined;
-    if (typeof total !== 'number' || !Number.isFinite(total) || total < 0) return null;
-    return Math.floor(total);
+    const response = await fetch('/api/shopify/collections', {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    });
+    const body = (await response.json().catch(() => null)) as unknown;
+    return catalogBlockFromPayload(body, response.ok, response.status);
   } catch {
     return null;
   }

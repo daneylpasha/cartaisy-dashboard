@@ -2,12 +2,15 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useSession } from '@/lib/auth';
+import { catalogBlockFromPayload } from '@/lib/shopify/catalogBlock';
+import type { ShopifyCatalogBlockKind } from '@/lib/onboarding/types';
 import { ShopifyCollection } from '@/types';
 
 export interface UseShopifyCollectionsReturn {
   collections: ShopifyCollection[];
   isLoading: boolean;
   error: string | null;
+  block: ShopifyCatalogBlockKind | null;
   refetch: () => Promise<void>;
 }
 
@@ -16,16 +19,20 @@ export function useShopifyCollections(): UseShopifyCollectionsReturn {
   const [collections, setCollections] = useState<ShopifyCollection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [block, setBlock] = useState<ShopifyCatalogBlockKind | null>(null);
 
   const fetchCollections = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
+      setBlock(null);
 
       const response = await fetch('/api/shopify/collections');
       const data = await response.json().catch(() => ({}));
+      const nextBlock = catalogBlockFromPayload(data, response.ok, response.status);
 
       if (!response.ok) {
+        setBlock(nextBlock);
         throw new Error(
           typeof data.error === 'string'
             ? data.error
@@ -54,6 +61,7 @@ export function useShopifyCollections(): UseShopifyCollectionsReturn {
     collections,
     isLoading,
     error,
+    block,
     refetch: fetchCollections,
   };
 }

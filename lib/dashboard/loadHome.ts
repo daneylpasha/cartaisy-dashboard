@@ -1,7 +1,10 @@
 import { listBuildRequests, fetchCatalogSync } from '@/lib/build/client';
+import { fetchCollectionsCatalogBlock } from '@/lib/api/shopifyConnection';
 import { API_URL, tokenStorage } from '@/lib/api/mutator/custom-instance';
 import { fetchBranding } from '@/lib/onboarding/branding';
 import { normalizeCatalog, UNAVAILABLE_SYNC } from '@/lib/onboarding/normalizers';
+import { catalogBlockFromPayload, withCatalogBlock } from '@/lib/shopify/catalogBlock';
+import type { ShopifyCatalogBlockKind } from '@/lib/onboarding/types';
 import {
   activityLine,
   brandingLooksSaved,
@@ -32,6 +35,7 @@ export interface ConnectedHomeFacts {
   modules: ModuleSummary;
   activity: HomeActivity[] | null;
   next: NextSetupAction | null;
+  catalogBlock: ShopifyCatalogBlockKind | null;
 }
 
 async function readJson(response: Response): Promise<unknown> {
@@ -59,15 +63,20 @@ export async function loadBrandingSaved(storeId: string | undefined): Promise<Br
   });
 }
 
-async function loadOverviewCounts(token: string): Promise<{ productCount: number | null; orderCount: number | null }> {
+async function loadOverviewCounts(
+  token: string
+): Promise<{ productCount: number | null; orderCount: number | null; block: ShopifyCatalogBlockKind | null }> {
   try {
     const response = await fetch(`${API_URL}/shopify/overview`, {
       headers: { Accept: 'application/json', Authorization: `Bearer ${token}` },
     });
     const body = await readJson(response);
-    return normalizeCatalog(body, response.ok);
+    return {
+      ...normalizeCatalog(body, response.ok),
+      block: catalogBlockFromPayload(body, response.ok, response.status),
+    };
   } catch {
-    return { productCount: null, orderCount: null };
+    return { productCount: null, orderCount: null, block: null };
   }
 }
 
@@ -127,19 +136,26 @@ export async function loadConnectedHome(storeId: string | undefined): Promise<Co
       modules: { kind: 'unknown' },
       activity: null,
       next: null,
+      catalogBlock: null,
     };
   }
 
-  const [syncGate, builds, counts, brandingSaved, modules, activity] = await Promise.all([
+  const [syncGate, builds, counts, collectionsBlock, brandingSaved, modules, activity] = await Promise.all([
     fetchCatalogSync(token),
     listBuildRequests(token),
     loadOverviewCounts(token),
+    fetchCollectionsCatalogBlock(),
     loadBrandingSaved(storeId),
     loadModuleStats(),
     loadActivity(now),
   ]);
 
-  const sync = catalogRow(syncGate, counts.productCount, counts.orderCount);
+  const gated = withCatalogBlock(withCatalogBlock(syncGate, counts.block), collectionsBlock);
+  const sync = catalogRow(
+    gated,
+    gated.block ? null : counts.productCount,
+    gated.block ? null : counts.orderCount
+  );
   const build = describeBuild(builds.kind === 'ok' ? builds : { kind: 'error' });
 
   return {
@@ -148,10 +164,11 @@ export async function loadConnectedHome(storeId: string | undefined): Promise<Co
     buildLabel: build.label,
     buildDetail: build.detail,
     buildState: build.state,
-    productCount: counts.productCount,
-    orderCount: counts.orderCount,
+    productCount: gated.block ? null : counts.productCount,
+    orderCount: gated.block ? null : counts.orderCount,
     modules,
     activity,
     next: nextSetupAction({ brandingSaved, build: build.state }),
+    catalogBlock: gated.block ?? null,
   };
 }
