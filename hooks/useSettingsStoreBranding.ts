@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSession } from '@/lib/auth';
 import { tokenStorage } from '@/lib/api/mutator/custom-instance';
+import { useDashboardBranding } from '@/components/dashboard/DashboardBrandingProvider';
 import { loadSettingsBrandingDraft } from '@/lib/settings/storeBranding';
 import type { BrandingDraft } from '@/lib/onboarding/types';
 
@@ -10,8 +11,11 @@ import type { BrandingDraft } from '@/lib/onboarding/types';
  * Shared Settings → Store Branding draft.
  * `appName` and `fallbackLogo` are read when the load runs. Changing them
  * does not send another branding GET.
+ * The shell promise is reused when it is in flight or already settled.
+ * `retry` asks the shell to reload, which may fetch again.
  */
 export function useSettingsStoreBranding(appName: string, fallbackLogo: string | null) {
+  const { storeId: shellStoreId, request: shellRequest, reload } = useDashboardBranding();
   const { data: session, status } = useSession();
   const storeId = session?.user?.storeId?.trim() || null;
   const appNameRef = useRef(appName);
@@ -39,12 +43,16 @@ export function useSettingsStoreBranding(appName: string, fallbackLogo: string |
         return;
       }
 
+      // The shell owns this store's GET. Wait until that promise is published.
+      if (!shellRequest || shellStoreId !== storeId) return;
+
       setLoading(true);
       const next = await loadSettingsBrandingDraft({
         storeId,
         token,
         appName: appNameRef.current,
         fallbackLogo: fallbackLogoRef.current,
+        loadBranding: () => shellRequest,
       });
       if (cancelled) return;
       if (!next) {
@@ -61,11 +69,12 @@ export function useSettingsStoreBranding(appName: string, fallbackLogo: string |
     return () => {
       cancelled = true;
     };
-  }, [status, storeId, refreshKey]);
+  }, [status, storeId, shellStoreId, shellRequest]);
 
   const retry = useCallback(() => {
+    reload();
     setRefreshKey((key) => key + 1);
-  }, []);
+  }, [reload]);
 
   return { draft, setDraft, loading, loadError, refreshKey, retry };
 }

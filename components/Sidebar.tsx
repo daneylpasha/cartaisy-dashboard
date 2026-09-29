@@ -28,9 +28,9 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { canManageTeam } from '@/lib/utils/permissions';
+import { useDashboardBranding } from '@/components/dashboard/DashboardBrandingProvider';
 import { useDashboardShopify } from '@/components/dashboard/ShopifyStatusProvider';
 import { listAdminBuildRequests } from '@/lib/build/adminClient';
-import { fetchBranding } from '@/lib/onboarding/branding';
 
 const MASTER_ADMINS = ['sufyanali@gmail.com', 'daniyal@cartaisy.com'];
 
@@ -70,31 +70,14 @@ function SidebarContent({
   onNavigate,
 }: SidebarContentProps) {
   const { data: session } = useSession();
-  const { logout, getToken } = useAuth();
+  const { logout } = useAuth();
   const { status, isLoading } = useDashboardShopify();
-  const [storeLogo, setStoreLogo] = useState<string | null>(null);
+  const { logoUrl } = useDashboardBranding();
 
-  const storeId = session?.user?.storeId;
   const storeName = session?.user?.storeName || 'Your store';
   const userName = session?.user?.name || session?.user?.email || 'Account';
   const storeInitial = storeName.charAt(0).toUpperCase();
   const shopifyKnownDisconnected = !isLoading && status?.isConnected === false;
-
-  useEffect(() => {
-    if (!storeId) return;
-    const token = getToken();
-    if (!token) return;
-    let cancelled = false;
-    // Joins the Settings branding GET when both start together.
-    void fetchBranding(storeId, token).then((draft) => {
-      if (!cancelled) setStoreLogo(draft?.logoUrl ?? null);
-    });
-    return () => {
-      cancelled = true;
-    };
-    // getToken is stable enough for this mount fetch; including it retriggers on every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [storeId]);
 
   const baseNavItems: NavItem[] = [
     { href: '/dashboard', label: 'Home', icon: <House className="size-4" />, tier: 'primary', group: 'Primary' },
@@ -232,11 +215,11 @@ function SidebarContent({
             className="size-8 rounded-lg p-0 hover:bg-slate-100"
             aria-label="Expand sidebar"
           >
-            <StoreMark logo={storeLogo} initial={storeInitial} />
+            <StoreMark logo={logoUrl} initial={storeInitial} />
           </Button>
         ) : (
           <>
-            <StoreMark logo={storeLogo} initial={storeInitial} />
+            <StoreMark logo={logoUrl} initial={storeInitial} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-[13px] font-semibold text-slate-950">{storeName}</p>
               <p className="truncate text-xs text-slate-500">{userName}</p>
@@ -438,13 +421,15 @@ export function Sidebar({ mobileOpen, onMobileOpenChange }: SidebarProps) {
       <Sheet open={mobileOpen} onOpenChange={onMobileOpenChange}>
         <SheetContent side="left" className="w-64 gap-0 bg-white p-0">
           <SheetTitle className="sr-only">Navigation</SheetTitle>
-          <SidebarContent
-            collapsed={false}
-            platformOps={platformOps}
-            showSignOut
-            inSheet
-            onNavigate={() => onMobileOpenChange(false)}
-          />
+          {mobileOpen ? (
+            <SidebarContent
+              collapsed={false}
+              platformOps={platformOps}
+              showSignOut
+              inSheet
+              onNavigate={() => onMobileOpenChange(false)}
+            />
+          ) : null}
         </SheetContent>
       </Sheet>
     </>

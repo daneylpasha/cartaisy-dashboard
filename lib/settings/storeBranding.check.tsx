@@ -9,6 +9,7 @@ import { EMPTY_CATALOG } from '@/lib/onboarding/normalizers';
 import { DEFAULT_PRIMARY_COLOR } from '@/lib/onboarding/branding';
 import type { BrandingDraft, SyncGate } from '@/lib/onboarding/types';
 import { fetchBranding } from '@/lib/onboarding/branding';
+import { nextShellBrandingRequest } from '@/lib/dashboard/shellBranding';
 import { applySettingsColors, applySettingsLogo, loadSettingsBrandingDraft } from '@/lib/settings/storeBranding';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -26,13 +27,20 @@ const hookSource = source('../../hooks/useSettingsStoreBranding.ts');
 const loaderSource = source('./storeBranding.ts');
 const sidebarSource = source('../../components/Sidebar.tsx');
 const brandingHelperSource = source('../onboarding/branding.ts');
+const shellSource = source('../../components/dashboard/DashboardShell.tsx');
+const providerSource = source('../../components/dashboard/DashboardBrandingProvider.tsx');
+const shellLoadSource = source('../dashboard/shellBranding.ts');
 
 for (const file of [logoSource, colorsSource, appBrandSource, pageSource]) {
   assert.doesNotMatch(file, /fetchBranding/);
 }
 assert.doesNotMatch(hookSource, /fetchBranding/);
 assert.equal(hookSource.match(/loadSettingsBrandingDraft\(/g)?.length, 1);
-assert.match(hookSource, /\[status, storeId, refreshKey\]/);
+assert.match(hookSource, /loadBranding: \(\) => shellRequest/);
+assert.match(hookSource, /if \(!shellRequest \|\| shellStoreId !== storeId\) return/);
+assert.match(hookSource, /\[status, storeId, shellStoreId, shellRequest\]/);
+assert.match(hookSource, /reload\(\)/);
+assert.match(hookSource, /setRefreshKey/);
 assert.equal(loaderSource.match(/loadBranding\(/g)?.length, 1);
 assert.match(loaderSource, /loadBranding \?\? fetchBranding/);
 assert.match(loaderSource, /loadProfile \?\? fetchStoreProfile/);
@@ -51,9 +59,18 @@ assert.match(appBrandSource, /uploadBrandAsset/);
 assert.doesNotMatch(appBrandSource, /iconUrl:\s*logoUrl|splashUrl:\s*logoUrl/);
 assert.doesNotMatch(`${logoSource}\n${colorsSource}\n${appBrandSource}\n${sectionSource}\n${hookSource}`, /shpat_|accessToken|access_token/);
 assert.doesNotMatch(pageSource, /fetchBranding|\/admin\/stores\/\$\{storeId\}\/branding/);
-assert.match(sidebarSource, /fetchBranding\(storeId, token\)/);
+assert.doesNotMatch(sidebarSource, /fetchBranding/);
 assert.doesNotMatch(sidebarSource, /\/admin\/stores\/\$\{storeId\}\/branding/);
 assert.doesNotMatch(sidebarSource, /console\.(log|debug|info|error|warn)/);
+assert.match(sidebarSource, /useDashboardBranding/);
+assert.equal(sidebarSource.match(/<SidebarContent/g)?.length, 2);
+assert.match(sidebarSource, /\{mobileOpen \? \([\s\S]*<SidebarContent/);
+assert.match(shellSource, /<DashboardBrandingProvider>/);
+assert.match(providerSource, /nextShellBrandingRequest\([\s\S]*fetchBranding\)/);
+assert.equal(providerSource.match(/fetchBranding\(/g)?.length ?? 0, 0);
+assert.doesNotMatch(providerSource, /useEffect\(\(\) => \{[\s\S]*nextShellBrandingRequest/);
+assert.match(shellLoadSource, /current\.reloadKey === reloadKey\) return current/);
+assert.match(shellLoadSource, /promise: load\(storeId, token\)/);
 assert.match(brandingHelperSource, /inflightBranding/);
 assert.match(brandingHelperSource, /if \(pending\) return pending/);
 assert.match(brandingHelperSource, /globalThis/);
@@ -330,8 +347,54 @@ async function checkSharedNetworkGet() {
   }
 }
 
+async function checkShellKeepsSettledLoad() {
+  let brandingGets = 0;
+  const load = async () => {
+    brandingGets += 1;
+    return {
+      ...saved,
+      logoUrl: 'https://cdn.example/logo.png',
+      splashUrl: null,
+    };
+  };
+
+  const first = nextShellBrandingRequest(null, 'store-1', 'sidebar-token', 0, load);
+  assert.ok(first);
+  const joined = nextShellBrandingRequest(first, 'store-1', 'settings-token', 0, load);
+  assert.equal(joined, first);
+  await first.promise;
+  const afterSettle = nextShellBrandingRequest(joined, 'store-1', 'settings-token', 0, load);
+  assert.equal(afterSettle, first);
+  assert.equal(brandingGets, 1);
+
+  const drafted = await loadSettingsBrandingDraft({
+    storeId: 'store-1',
+    token: 'settings-token',
+    appName: 'Harbor',
+    fallbackLogo: null,
+    loadBranding: () => afterSettle.promise,
+    loadProfile: async () => ({
+      name: 'Harbor',
+      brandAssets: { iconUrl: null, splashUrl: 'https://cdn.example/stored-splash.png' },
+    }),
+  });
+  assert.equal(brandingGets, 1);
+  assert.equal(drafted?.logoUrl, 'https://cdn.example/logo.png');
+  assert.equal(drafted?.splashUrl, 'https://cdn.example/stored-splash.png');
+  assert.equal(drafted?.appName, 'Northwind');
+
+  const retried = nextShellBrandingRequest(afterSettle, 'store-1', 'settings-token', 1, load);
+  assert.notEqual(retried, first);
+  await retried?.promise;
+  assert.equal(brandingGets, 2);
+
+  assert.equal(nextShellBrandingRequest(first, null, 'settings-token', 0, load), null);
+  assert.equal(brandingGets, 2);
+}
+
 checkSingleLoad()
   .then(() => checkSharedNetworkGet())
+  .then(() => checkShellKeepsSettledLoad())
   .then(() => {
     console.log('settings branding check ok');
   })
