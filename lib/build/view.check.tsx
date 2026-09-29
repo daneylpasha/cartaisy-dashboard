@@ -538,6 +538,23 @@ assert.ok(draftBuild.includes('Install iOS build'));
 assert.ok(draftBuild.includes(`href="${ANDROID_INSTALL}"`));
 assertCalm(draftBuild);
 
+const offlineDraftLayout = homeLayoutOverviewFromPayload({
+  data: {
+    status: 'draft',
+    sections: [{ type: 'carousel', isVisible: true, position: 0 }],
+    publishedSections: [],
+    publishedAt: null,
+  },
+});
+const offlineDraftBuild = html({ homeLayout: offlineDraftLayout });
+assert.ok(offlineDraftBuild.includes('data-home-publish="draft"'));
+assert.ok(offlineDraftBuild.includes('>Draft<'));
+assert.ok(offlineDraftBuild.includes('smart default'));
+assert.ok(offlineDraftBuild.includes(`href="${APP_BUILDER_PUBLISH_HREF}"`));
+assert.ok(offlineDraftBuild.includes('You can request a build, install, and submit either way.'));
+assert.equal(isDisabled(buttonTag(offlineDraftBuild, 'Build my app')), false);
+assertCalm(offlineDraftBuild);
+
 const publishedBuild = html({ homeLayout: publishedLayout });
 assert.equal(publishedBuild.includes('data-home-publish'), false);
 assert.equal(publishedBuild.includes('Publish home'), false);

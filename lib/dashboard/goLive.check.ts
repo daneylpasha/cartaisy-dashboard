@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { buildGoLive, type GoLiveInput } from './goLive';
-import { APP_BUILDER_PUBLISH_HREF } from '@/lib/homeLayout/publish';
+import { APP_BUILDER_PUBLISH_HREF, homeLayoutOverviewFromPayload } from '@/lib/homeLayout/publish';
 import { BUILD_MY_APP_HREF } from '@/lib/storeCredentials/contract';
 
 function input(extra?: Partial<GoLiveInput>): GoLiveInput {
@@ -136,6 +136,22 @@ const unpublished = buildGoLive(
 );
 assert.equal(step(unpublished, 'home').status, 'Not published yet');
 assert.notEqual(step(unpublished, 'home').tone, 'done');
+
+const offlineDraft = homeLayoutOverviewFromPayload({
+  data: {
+    status: 'draft',
+    sections: [{ type: 'carousel', isVisible: true, position: 0 }],
+    publishedSections: [],
+    publishedAt: null,
+  },
+});
+assert.ok(offlineDraft);
+const offlineHome = buildGoLive(input({ homeLayout: offlineDraft }));
+assert.equal(step(offlineHome, 'home').status, 'Draft');
+assert.match(step(offlineHome, 'home').detail ?? '', /smart default/);
+assert.equal(step(offlineHome, 'home').tone, 'current');
+assert.equal(offlineHome.cta?.label, 'Publish home');
+assert.equal(offlineHome.cta?.href, APP_BUILDER_PUBLISH_HREF);
 
 const homeUnknown = buildGoLive(input({ homeLayout: null }));
 assert.equal(step(homeUnknown, 'home').status, 'Could not check');

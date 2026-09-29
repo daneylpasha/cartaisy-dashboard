@@ -3,9 +3,12 @@
  *
  * The editor works on a draft. Publish copies that draft into `sections`,
  * which is the list the installed app can read. A draft save does not
- * overwrite `sections`. A document that already has sections but no
+ * overwrite `sections`. Unpublish clears `sections` and `publishedAt` and
+ * leaves the draft. A document that already has sections but no
  * `publishedAt` was live under the old save-writes-sections model and stays
- * published. Only a store with no saved sections is "not published yet".
+ * published until unpublish. A saved draft with an empty live snapshot is
+ * Draft. Only a store with no saved sections and no saved draft is
+ * "not published yet".
  */
 
 export type HomePublishStatus = 'not_published' | 'published' | 'draft';
@@ -36,6 +39,11 @@ export const HOME_PUBLISH_COPY = {
     detail:
       'These edits are not in the section order the installed app reads. It still uses the last published layout.',
   },
+  draftOffline: {
+    label: 'Draft',
+    detail:
+      'Your draft is still here. The installed app uses the smart default until you publish again.',
+  },
   success:
     'Published. The installed app reads this section order under the home header. A later draft does not replace it until you publish again.',
   successEmpty:
@@ -44,6 +52,15 @@ export const HOME_PUBLISH_COPY = {
   publishing: 'Publishing...',
   saveDraft: 'Save draft',
   draftSaved: 'Draft saved. This does not change the section order the installed app reads.',
+  unpublish: 'Unpublish home',
+  unpublishing: 'Unpublishing...',
+  unpublishConfirm:
+    'The installed app will show the smart default home until you publish again. Your draft stays in the editor.',
+  unpublishCancel: 'Keep it published',
+  reorderLive:
+    'Drag to reorder the draft. The installed app keeps reading the last published section order until you publish again.',
+  reorderOffline:
+    'Drag to reorder the draft. The installed app uses the smart default until you publish again.',
 } as const;
 
 export function normalizeLayoutSections(
@@ -88,7 +105,7 @@ export function isPublishedAt(value: string | Date | null | undefined): boolean 
 /**
  * A non-empty `sections` list with no `publishedAt` was already the live
  * order under the old model. It stays published. An empty list with no
- * `publishedAt` has never been saved for the app.
+ * `publishedAt` is not live, including after unpublish.
  */
 export function homeLayoutIsLive(
   publishedAt: string | Date | null | undefined,
@@ -96,6 +113,33 @@ export function homeLayoutIsLive(
 ): boolean {
   if (isPublishedAt(publishedAt)) return true;
   return sortByPosition(storedSections).length > 0;
+}
+
+/**
+ * Same live check as `homeLayoutIsLive`, for a JSON payload whose section
+ * list may not be a typed snapshot. A missing list counts as empty.
+ */
+export function publishedSnapshotIsLive(publishedAt: unknown, publishedSections: unknown): boolean {
+  const at = typeof publishedAt === 'string' || publishedAt instanceof Date ? publishedAt : null;
+  const count = Array.isArray(publishedSections) ? publishedSections.length : 0;
+  if (isPublishedAt(at)) return true;
+  return count > 0;
+}
+
+/**
+ * Draft to write when clearing the live snapshot.
+ * Null leaves `draftSections` unchanged. A non-empty draft stays.
+ * An empty draft takes the live list the editor was already showing.
+ */
+export function draftToKeepOnUnpublish(
+  storedSections: readonly HomeLayoutSectionSnapshot[] | null | undefined,
+  draftSections: readonly HomeLayoutSectionSnapshot[] | null | undefined
+): HomeLayoutSectionSnapshot[] | null {
+  const draft = sortByPosition(draftSections);
+  if (draft.length > 0) return null;
+  const stored = sortByPosition(storedSections);
+  if (stored.length === 0) return null;
+  return normalizeLayoutSections(stored);
 }
 
 /** True when a one-time backfill should set `publishedAt` and leave `sections` alone. */
@@ -122,6 +166,7 @@ export function legacyPublishedAt(
 /**
  * Editor draft plus the snapshot the installed app can read from `sections`.
  * Legacy documents with saved sections and no `publishedAt` count as published.
+ * A saved draft with nothing live is Draft, so the editor does not say nothing is saved.
  */
 export function resolveHomeLayoutView(input: {
   storedSections?: readonly HomeLayoutSectionSnapshot[] | null;
@@ -148,7 +193,9 @@ export function resolveHomeLayoutView(input: {
   }
 
   const status: HomePublishStatus = !live
-    ? 'not_published'
+    ? savedDraft.length > 0
+      ? 'draft'
+      : 'not_published'
     : layoutsEqual(draft, published)
       ? 'published'
       : 'draft';
@@ -183,10 +230,11 @@ export function visiblePublishStatus(
 
 export function publishStatusCopy(
   status: HomePublishStatus,
-  sections: readonly { isVisible: boolean }[]
+  sections: readonly { isVisible: boolean }[],
+  live = true
 ): { label: string; detail: string } {
   if (status === 'not_published') return HOME_PUBLISH_COPY.notPublished;
-  if (status === 'draft') return HOME_PUBLISH_COPY.draft;
+  if (status === 'draft') return live ? HOME_PUBLISH_COPY.draft : HOME_PUBLISH_COPY.draftOffline;
   const visible = sections.some((section) => section.isVisible);
   return visible ? HOME_PUBLISH_COPY.published : HOME_PUBLISH_COPY.publishedEmpty;
 }
@@ -233,6 +281,7 @@ export function homeLayoutOverviewFromPayload(payload: unknown): HomeLayoutOverv
     status?: unknown;
     sections?: unknown;
     publishedSections?: unknown;
+    publishedAt?: unknown;
   };
   if (!isHomePublishStatus(record.status)) return null;
 
@@ -240,7 +289,11 @@ export function homeLayoutOverviewFromPayload(payload: unknown): HomeLayoutOverv
     record.status === 'published' && Array.isArray(record.publishedSections)
       ? sectionVisibility(record.publishedSections)
       : sectionVisibility(record.sections);
-  const copy = publishStatusCopy(record.status, sections);
+  const offlineDraft =
+    record.status === 'draft' &&
+    Array.isArray(record.publishedSections) &&
+    !publishedSnapshotIsLive(record.publishedAt, record.publishedSections);
+  const copy = publishStatusCopy(record.status, sections, !offlineDraft);
 
   return {
     status: record.status,

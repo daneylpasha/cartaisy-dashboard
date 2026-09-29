@@ -10,6 +10,7 @@ import {
   needsLegacyPublishBackfill,
   publishedFeedSections,
   homeLayoutOverviewFromPayload,
+  draftToKeepOnUnpublish,
   publishStatusCopy,
   publishSuccessCopy,
   resolveHomeLayoutView,
@@ -93,6 +94,28 @@ assert.deepEqual(
   ['promo_banners', 'carousel']
 );
 
+const offlineDraft = resolveHomeLayoutView({
+  storedSections: [],
+  draftSections: saved,
+  publishedAt: null,
+  fallback,
+});
+assert.equal(offlineDraft.status, 'draft');
+assert.deepEqual(offlineDraft.published, []);
+assert.deepEqual(
+  offlineDraft.draft.map((section) => section.type),
+  ['promo_banners', 'carousel']
+);
+assert.equal(homeLayoutIsLive(null, []), false);
+assert.deepEqual(publishedFeedSections(null, []), []);
+assert.equal(draftToKeepOnUnpublish(saved, saved), null);
+assert.equal(draftToKeepOnUnpublish([], saved), null);
+assert.equal(draftToKeepOnUnpublish([], []), null);
+assert.deepEqual(
+  draftToKeepOnUnpublish(saved, [])?.map((section) => section.type),
+  ['promo_banners', 'carousel']
+);
+
 assert.equal(visiblePublishStatus('published', false), 'published');
 assert.equal(visiblePublishStatus('published', true), 'draft');
 assert.equal(visiblePublishStatus('not_published', true), 'not_published');
@@ -103,6 +126,9 @@ assert.match(publishStatusCopy('not_published', saved).detail, /Nothing is saved
 assert.match(publishStatusCopy('published', saved).detail, /home header/);
 assert.match(publishStatusCopy('published', [{ isVisible: false }]).detail, /default home/);
 assert.match(publishStatusCopy('draft', saved).detail, /last published layout/);
+assert.equal(publishStatusCopy('draft', saved, false).label, 'Draft');
+assert.match(publishStatusCopy('draft', saved, false).detail, /smart default/);
+assert.match(publishStatusCopy('draft', saved, false).detail, /draft is still here/);
 assert.match(publishStatusCopy('not_published', []).detail, /Nothing is saved/);
 assert.doesNotMatch(publishStatusCopy('published', saved).detail, /publishedAt/);
 assert.doesNotMatch(publishSuccessCopy(saved), /publishedAt/);
@@ -113,6 +139,7 @@ for (const value of Object.values(HOME_PUBLISH_COPY)) {
   const text = typeof value === 'string' ? value : `${value.label} ${value.detail}`;
   assert.equal(/cartaisy/i.test(text), false);
   assert.equal(/shpat_|access token|api key/i.test(text), false);
+  assert.equal(/delete|warning|permanent|cannot be undone|irreversible/i.test(text), false);
 }
 
 const selector = readFileSync(join(here, '../../components/app-builder/CollectionSelector.tsx'), 'utf8');
@@ -132,7 +159,18 @@ assert.match(feed, /published: false/);
 const service = readFileSync(join(here, '../../lib/services/homeLayout.ts'), 'utf8');
 assert.match(service, /needsLegacyPublishBackfill/);
 assert.match(service, /\$set: \{ publishedAt \}/);
-assert.doesNotMatch(service, /sections:\s*\[\]/);
+const unpublishAt = service.indexOf('export async function unpublishHomeLayout');
+assert.ok(unpublishAt > 0);
+assert.doesNotMatch(service.slice(0, unpublishAt), /sections:\s*\[\]/);
+const unpublishSource = service.slice(unpublishAt);
+assert.match(unpublishSource, /sections:\s*\[\]/);
+assert.match(unpublishSource, /publishedAt:\s*null/);
+assert.match(unpublishSource, /draftToKeepOnUnpublish/);
+assert.doesNotMatch(unpublishSource, /deleteMany|findOneAndDelete|CarouselItem|PromoBanner/);
+
+const unpublishRoute = readFileSync(join(here, '../../app/api/home-layout/unpublish/route.ts'), 'utf8');
+assert.match(unpublishRoute, /unpublishHomeLayout\(session\.user\.storeId\)/);
+assert.doesNotMatch(unpublishRoute, /request\.json|accessToken|shpat_/);
 
 const preview = readFileSync(join(here, '../../app/dashboard/app-builder/preview/page.tsx'), 'utf8');
 assert.doesNotMatch(preview, /Module order for a published home/);
@@ -141,6 +179,8 @@ assert.doesNotMatch(preview, /cartaisy/i);
 const builder = readFileSync(join(here, '../../app/dashboard/app-builder/page.tsx'), 'utf8');
 assert.match(builder, /HomePublishBar/);
 assert.match(builder, /\/api\/home-layout\/publish/);
+assert.match(builder, /\/api\/home-layout\/unpublish/);
+assert.match(builder, /reorderOffline/);
 
 const publishBar = readFileSync(join(here, '../../components/app-builder/HomePublishBar.tsx'), 'utf8');
 assert.match(publishBar, /id="publish-home"/);
@@ -186,6 +226,20 @@ assert.equal(draftOverview?.status, 'draft');
 assert.equal(draftOverview?.label, 'Draft');
 assert.equal(draftOverview?.needsPublish, true);
 assert.match(draftOverview?.detail ?? '', /last published layout/);
+
+const offlineOverview = homeLayoutOverviewFromPayload({
+  data: {
+    status: 'draft',
+    sections: [{ type: 'carousel', isVisible: true, position: 0 }],
+    publishedSections: [],
+    publishedAt: null,
+  },
+});
+assert.equal(offlineOverview?.status, 'draft');
+assert.equal(offlineOverview?.label, 'Draft');
+assert.equal(offlineOverview?.needsPublish, true);
+assert.match(offlineOverview?.detail ?? '', /smart default/);
+assert.doesNotMatch(offlineOverview?.detail ?? '', /last published layout/);
 
 assert.equal(homeLayoutOverviewFromPayload(null), null);
 assert.equal(homeLayoutOverviewFromPayload({ success: true }), null);

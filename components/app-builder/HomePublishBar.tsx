@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,6 +16,12 @@ interface HomePublishBarProps {
   isPublishing: boolean;
   canPublish: boolean;
   onPublish: () => void;
+  /** True while a live snapshot is still what the installed app can read. */
+  live: boolean;
+  isUnpublishing: boolean;
+  onUnpublish: () => void;
+  /** Opens the confirmation on first render. Used by the view check. */
+  initialConfirming?: boolean;
 }
 
 const PILL: Record<HomePublishStatus, string> = {
@@ -31,8 +37,14 @@ export function HomePublishBar({
   isPublishing,
   canPublish,
   onPublish,
+  live,
+  isUnpublishing,
+  onUnpublish,
+  initialConfirming = false,
 }: HomePublishBarProps) {
-  const copy = publishStatusCopy(status, sections);
+  const copy = publishStatusCopy(status, sections, live);
+  const [confirming, setConfirming] = useState(initialConfirming);
+  const unpublishLock = useRef(false);
 
   useEffect(() => {
     if (window.location.hash !== '#publish-home') return;
@@ -41,6 +53,20 @@ export function HomePublishBar({
     node.scrollIntoView({ block: 'center' });
     node.focus({ preventScroll: true });
   }, []);
+
+  useEffect(() => {
+    if (!live) setConfirming(false);
+  }, [live]);
+
+  useEffect(() => {
+    if (!isUnpublishing) unpublishLock.current = false;
+  }, [isUnpublishing]);
+
+  function confirmUnpublish() {
+    if (unpublishLock.current || isUnpublishing) return;
+    unpublishLock.current = true;
+    onUnpublish();
+  }
 
   return (
     <div
@@ -54,28 +80,74 @@ export function HomePublishBar({
             {copy.label}
           </span>
         </div>
-        <p className="mt-2 text-sm text-slate-600">{successMessage ?? copy.detail}</p>
+        <p className="mt-2 text-sm text-slate-600">
+          {confirming ? HOME_PUBLISH_COPY.unpublishConfirm : (successMessage ?? copy.detail)}
+        </p>
       </div>
-      <Button
-        type="button"
-        onClick={onPublish}
-        disabled={!canPublish || isPublishing}
-        className="h-10 shrink-0 gap-2 bg-slate-900 px-4 text-sm text-white hover:bg-slate-800"
-      >
-        {isPublishing ? (
+      <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
+        {live && confirming ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin" />
-            {HOME_PUBLISH_COPY.publishing}
-          </>
-        ) : status === 'published' && !canPublish ? (
-          <>
-            <CheckCircle2 className="h-4 w-4" />
-            {HOME_PUBLISH_COPY.published.label}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setConfirming(false)}
+              disabled={isUnpublishing}
+              className="h-10 px-4 text-sm"
+            >
+              {HOME_PUBLISH_COPY.unpublishCancel}
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmUnpublish}
+              disabled={isUnpublishing}
+              className="h-10 gap-2 bg-slate-900 px-4 text-sm text-white hover:bg-slate-800"
+            >
+              {isUnpublishing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {HOME_PUBLISH_COPY.unpublishing}
+                </>
+              ) : (
+                HOME_PUBLISH_COPY.unpublish
+              )}
+            </Button>
           </>
         ) : (
-          HOME_PUBLISH_COPY.action
+          <>
+            {live ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setConfirming(true)}
+                disabled={isUnpublishing || isPublishing}
+                className="h-10 px-4 text-sm"
+              >
+                {HOME_PUBLISH_COPY.unpublish}
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              onClick={onPublish}
+              disabled={!canPublish || isPublishing}
+              className="h-10 gap-2 bg-slate-900 px-4 text-sm text-white hover:bg-slate-800"
+            >
+              {isPublishing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {HOME_PUBLISH_COPY.publishing}
+                </>
+              ) : status === 'published' && !canPublish ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4" />
+                  {HOME_PUBLISH_COPY.published.label}
+                </>
+              ) : (
+                HOME_PUBLISH_COPY.action
+              )}
+            </Button>
+          </>
         )}
-      </Button>
+      </div>
     </div>
   );
 }
