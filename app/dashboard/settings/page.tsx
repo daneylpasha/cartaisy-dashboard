@@ -318,10 +318,10 @@ function SettingsContent() {
           <div className="rounded-xl border border-red-200 bg-red-50 p-5">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div>
-                <h3 className="text-sm font-semibold text-red-900 mb-1">Delete Store</h3>
+                <h3 className="text-sm font-semibold text-red-900 mb-1">Delete this app</h3>
                 <p className="text-xs text-red-700">
-                  Permanently delete your store, including all data, team members, and configurations.
-                  This action cannot be undone.
+                  Removes this app from your account. The store is turned off and leaves Switch app.
+                  You keep at least one app.
                 </p>
               </div>
               <Button
@@ -330,7 +330,7 @@ function SettingsContent() {
                 className="gap-2 whitespace-nowrap"
               >
                 <Trash2 className="w-4 h-4" />
-                Delete Store
+                Delete this app
               </Button>
             </div>
           </div>
@@ -338,11 +338,12 @@ function SettingsContent() {
       )}
 
       {/* Delete Store Dialog */}
-      {store && (
+      {store && session?.user?.storeId && (
         <DeleteStoreDialog
           open={showDeleteDialog}
           onOpenChange={setShowDeleteDialog}
-          storeName={store.name}
+          storeName={typeof store.name === 'string' ? store.name : ''}
+          storeId={session.user.storeId}
         />
       )}
     </div>

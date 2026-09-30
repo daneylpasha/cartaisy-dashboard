@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { AppSwitcherPanel } from '@/components/dashboard/AppSwitcher';
+import { AppSwitcherPanel, DeleteAppConfirm } from '@/components/dashboard/AppSwitcher';
 import { clearStoreScopedClientCaches } from '@/lib/dashboard/storeCaches';
 import { resetShellBrandingSessions, type ShellBrandingSession } from '@/lib/dashboard/shellBranding';
 import {
@@ -12,11 +12,17 @@ import {
   SWITCH_APP_PATH,
   appSwitcherModel,
   canAddApp,
+  confirmAppName,
   createStoreBody,
+  deleteAppAvailability,
+  deleteFailureMessage,
+  deleteStoreBody,
+  ONLY_APP_NOTE,
   otherApps,
   parseActiveStore,
   parseStoreList,
   readAppName,
+  readDeleteErrorCode,
   safeStoreLabel,
   sessionWithActiveStore,
   storeFailureMessage,
@@ -147,6 +153,37 @@ assert.match(storeFailureMessage(409, 'switch'), /this email/);
 assert.equal(SWITCH_APP_PATH, '/dashboard');
 assert.equal(NEW_APP_PATH, '/dashboard/onboarding');
 
+assert.deepEqual(deleteAppAvailability({ canOwn: true, storeCount: 2 }), {
+  canDelete: true,
+  onlyAppNote: null,
+});
+assert.deepEqual(deleteAppAvailability({ canOwn: true, storeCount: 1 }), {
+  canDelete: false,
+  onlyAppNote: ONLY_APP_NOTE,
+});
+assert.deepEqual(deleteAppAvailability({ canOwn: false, storeCount: 3 }), {
+  canDelete: false,
+  onlyAppNote: null,
+});
+assert.deepEqual(deleteAppAvailability({ canOwn: true, storeCount: null }), {
+  canDelete: false,
+  onlyAppNote: null,
+});
+assert.equal(confirmAppName('  Northwind  ', 'Northwind'), true);
+assert.equal(confirmAppName('northwind', 'Northwind'), false);
+assert.equal(confirmAppName('Northwind', 'shpat_secret'), false);
+assert.deepEqual(deleteStoreBody(`  ${SOUTH}  `, '  Second app  '), { name: 'Second app' });
+assert.equal(deleteStoreBody('not-an-id', 'Second app'), null);
+assert.equal(deleteStoreBody(SOUTH, 'shpat_secret'), null);
+assert.equal(deleteStoreBody(SOUTH, '   '), null);
+assert.equal(readDeleteErrorCode({ code: 'LAST_STORE' }), 'LAST_STORE');
+assert.equal(readDeleteErrorCode({ code: 'LEAK_TOKEN' }), undefined);
+assert.match(deleteFailureMessage(409, 'LAST_STORE'), /at least one app/);
+assert.match(deleteFailureMessage(400, 'NAME_MISMATCH'), /exactly/);
+assert.match(deleteFailureMessage(403, 'NOT_OWNER'), /can't remove/);
+assert.match(deleteFailureMessage(502, 'SHOPIFY_DISCONNECT_FAILED'), /not removed/);
+assert.match(deleteFailureMessage(500), /could not be removed/);
+
 const shellHost = globalThis as { __cartaisyShellBranding?: Map<string, ShellBrandingSession> };
 resetShellBrandingSessions();
 shellHost.__cartaisyShellBranding?.set(NORTH, {
@@ -182,6 +219,10 @@ function panel(props: Partial<Parameters<typeof AppSwitcherPanel>[0]>) {
       onToggleOpen: () => undefined,
       onSelect: () => undefined,
       onAdd: () => undefined,
+      currentApp: null,
+      canDelete: false,
+      onlyAppNote: null,
+      onDelete: () => undefined,
       ...props,
     }),
   );
@@ -214,22 +255,95 @@ assert.match(addOnly, /aria-label="Add app"/);
 assert.match(addOnly, />Add app</);
 assert.doesNotMatch(addOnly, /Switch app/);
 
-const collapsed = panel({ collapsed: true, mode: 'menu', open: true, showAdd: true, showSwitchLabel: true });
-assert.match(collapsed, /Expand sidebar/);
+const collapsed = panel({
+  collapsed: true,
+  mode: 'menu',
+  open: true,
+  showAdd: true,
+  showSwitchLabel: true,
+  onToggleCollapse: () => undefined,
+});
+assert.match(collapsed, /aria-label="Expand sidebar"/);
+assert.match(collapsed, /data-sidebar-toggle="expand"/);
 assert.doesNotMatch(collapsed, /Switch app|Add app/);
 
-const forbidden = [nameOnly, switchMenu, addOnly, collapsed].join('\n');
+const withCollapse = panel({ onToggleCollapse: () => undefined });
+assert.match(withCollapse, /aria-label="Collapse sidebar"/);
+assert.match(withCollapse, /data-sidebar-toggle="collapse"/);
+
+const deletable = panel({
+  mode: 'menu',
+  open: true,
+  triggerLabel: 'Switch app',
+  others: [{ id: SOUTH, name: 'Second app' }],
+  showSwitchLabel: true,
+  canDelete: true,
+  currentApp: { id: NORTH, name: 'Northwind' },
+});
+assert.match(deletable, /Delete this app/);
+assert.match(deletable, /aria-label="Delete Second app"/);
+assert.match(deletable, /text-rose-700/);
+
+const onlyApp = panel({
+  mode: 'menu',
+  open: true,
+  showAdd: true,
+  onlyAppNote: ONLY_APP_NOTE,
+});
+assert.match(onlyApp, /only app/);
+assert.doesNotMatch(onlyApp, /Delete this app|aria-label="Delete /);
+
+const blockedConfirm = renderToStaticMarkup(
+  createElement(DeleteAppConfirm, {
+    appName: 'Northwind',
+    typed: 'northwind',
+    error: null,
+    pending: false,
+    onTyped: () => undefined,
+    onCancel: () => undefined,
+    onConfirm: () => undefined,
+  }),
+);
+assert.match(blockedConfirm, /turned off/);
+assert.match(blockedConfirm, /Switch app/);
+assert.match(blockedConfirm, /disabled=""/);
+assert.doesNotMatch(blockedConfirm, /Cartaisy|shpat_|access_token/);
+
+const readyConfirm = renderToStaticMarkup(
+  createElement(DeleteAppConfirm, {
+    appName: 'Northwind',
+    typed: 'Northwind',
+    error: null,
+    pending: false,
+    onTyped: () => undefined,
+    onCancel: () => undefined,
+    onConfirm: () => undefined,
+  }),
+);
+assert.match(readyConfirm, /variant="destructive"|bg-destructive/);
+assert.doesNotMatch(readyConfirm, /type="submit"[^>]*disabled/);
+
+const forbidden = [nameOnly, switchMenu, addOnly, collapsed, deletable, onlyApp, blockedConfirm].join('\n');
 assert.doesNotMatch(forbidden, /Cartaisy|EXPO_TOKEN|shpat_|access_token|refreshToken/);
 
 const authSource = readFileSync(join(here, 'auth-context.tsx'), 'utf8');
 assert.match(authSource, /clearStoreScopedClientCaches\(\)/);
 assert.match(authSource, /openAppDestination\(SWITCH_APP_PATH\)/);
 assert.match(authSource, /openAppDestination\(NEW_APP_PATH\)/);
+assert.match(authSource, /deleteMerchantStore/);
+assert.doesNotMatch(authSource, /method:\s*'DELETE'[\s\S]{0,80}\/api\/store/);
 assert.match(authSource, /event\.persisted/);
 assert.doesNotMatch(authSource, /EXPO_TOKEN|shpat_/);
 
+const settingsDelete = readFileSync(join(here, '../../components/settings/DeleteStoreDialog.tsx'), 'utf8');
+assert.match(settingsDelete, /deleteApp\(/);
+assert.match(settingsDelete, /ONLY_APP_NOTE/);
+assert.doesNotMatch(settingsDelete, /\/api\/store/);
+
 const sidebarSource = readFileSync(join(here, '../../components/Sidebar.tsx'), 'utf8');
 assert.match(sidebarSource, /AppSwitcher/);
+assert.match(sidebarSource, /cartaisy_sidebar_collapsed/);
+assert.match(sidebarSource, /sessionStorage/);
 assert.doesNotMatch(sidebarSource, /EXPO_TOKEN|shpat_|phone mock|simulator/);
 
 console.log('auth store switcher checks passed');

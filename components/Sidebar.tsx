@@ -329,6 +329,16 @@ interface SidebarProps {
   onMobileOpenChange: (open: boolean) => void;
 }
 
+const SIDEBAR_COLLAPSED_KEY = 'cartaisy_sidebar_collapsed';
+
+function writeSidebarCollapsed(collapsed: boolean) {
+  try {
+    window.sessionStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? '1' : '0');
+  } catch {
+    // Private mode can block session storage. The rail still toggles in memory.
+  }
+}
+
 function usePlatformOpsNav(): boolean {
   const { getToken } = useAuth();
   const [allowed, setAllowed] = useState(false);
@@ -355,6 +365,22 @@ export function Sidebar({ mobileOpen, onMobileOpenChange }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const platformOps = usePlatformOpsNav();
 
+  useEffect(() => {
+    try {
+      setCollapsed(window.sessionStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1');
+    } catch {
+      setCollapsed(false);
+    }
+  }, []);
+
+  function toggleCollapsed() {
+    setCollapsed((value) => {
+      const next = !value;
+      writeSidebarCollapsed(next);
+      return next;
+    });
+  }
+
   return (
     <>
       <aside
@@ -366,7 +392,7 @@ export function Sidebar({ mobileOpen, onMobileOpenChange }: SidebarProps) {
         <SidebarContent
           collapsed={collapsed}
           platformOps={platformOps}
-          onToggleCollapse={() => setCollapsed((value) => !value)}
+          onToggleCollapse={toggleCollapsed}
         />
       </aside>
 

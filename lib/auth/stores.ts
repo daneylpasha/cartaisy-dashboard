@@ -1,5 +1,5 @@
 /**
- * Merchant app list, switch, and create.
+ * Merchant app list, switch, create, and remove.
  *
  * These routes are user-scoped. The bearer token already on the session is
  * sent by `customInstance`. Responses do not include a new access token.
@@ -94,6 +94,74 @@ export function appSwitcherModel(input: {
     showAdd: input.canAdd,
     showSwitchLabel,
   };
+}
+
+export const ONLY_APP_NOTE =
+  'This is your only app, so it stays. Add another before removing it.';
+
+const DELETE_ERROR_CODES = [
+  'LAST_STORE',
+  'NAME_MISMATCH',
+  'NOT_OWNER',
+  'STORE_ACCESS_DENIED',
+  'SHOPIFY_DISCONNECT_FAILED',
+  'ACTIVE_STORE_CONFLICT',
+  'STORE_NOT_FOUND',
+] as const;
+
+export type DeleteErrorCode = (typeof DELETE_ERROR_CODES)[number];
+
+/**
+ * Owners with two or more apps may remove one. The last app stays, because
+ * creating an app still requires a membership.
+ */
+export function deleteAppAvailability(input: {
+  canOwn: boolean;
+  storeCount: number | null;
+}): { canDelete: boolean; onlyAppNote: string | null } {
+  if (!input.canOwn || input.storeCount === null) {
+    return { canDelete: false, onlyAppNote: null };
+  }
+  if (input.storeCount < 2) {
+    return { canDelete: false, onlyAppNote: ONLY_APP_NOTE };
+  }
+  return { canDelete: true, onlyAppNote: null };
+}
+
+/** Typed confirmation must match the stored app name exactly, after trim. */
+export function confirmAppName(typed: string, appName: string): boolean {
+  const expected = appName.trim();
+  const given = typed.trim();
+  if (!expected || !given) return false;
+  if (TOKEN_SHAPED.test(expected) || TOKEN_SHAPED.test(given)) return false;
+  return given === expected;
+}
+
+export function deleteStoreBody(storeId: string, name: string): { name: string } | null {
+  const id = storeId.trim();
+  const confirmed = name.trim();
+  if (!/^[0-9a-fA-F]{24}$/.test(id) || TOKEN_SHAPED.test(id)) return null;
+  if (!confirmed || confirmed.length > 100 || TOKEN_SHAPED.test(confirmed)) return null;
+  return { name: confirmed };
+}
+
+export function readDeleteErrorCode(body: unknown): DeleteErrorCode | undefined {
+  if (!body || typeof body !== 'object') return undefined;
+  const code = (body as { code?: unknown }).code;
+  if (typeof code !== 'string') return undefined;
+  return DELETE_ERROR_CODES.find((known) => known === code);
+}
+
+export function deleteFailureMessage(status: number, code?: DeleteErrorCode): string {
+  if (code === 'LAST_STORE') return 'Keep at least one app. Add another before removing this one.';
+  if (code === 'NAME_MISMATCH') return 'Type the app name exactly to confirm.';
+  if (code === 'SHOPIFY_DISCONNECT_FAILED') {
+    return 'Shopify could not be disconnected. This app was not removed.';
+  }
+  if (code === 'ACTIVE_STORE_CONFLICT') return "This app can't be removed with this email.";
+  if (status === 403) return "You can't remove this app.";
+  if (status === 404) return 'That app is no longer available.';
+  return 'That app could not be removed. Try again.';
 }
 
 export function storeFailureMessage(status: number, action: 'list' | 'switch' | 'create'): string {
@@ -253,6 +321,37 @@ export async function createMerchantStore(name: string): Promise<StoreCallResult
     return { ok: true, value: parsed };
   } catch {
     return { ok: false, status: 0, message: storeFailureMessage(0, 'create') };
+  }
+}
+
+export async function deleteMerchantStore(
+  storeId: string,
+  name: string,
+): Promise<StoreCallResult<ActiveStoreFields>> {
+  const body = deleteStoreBody(storeId, name);
+  if (!body) {
+    return { ok: false, status: 400, message: deleteFailureMessage(400, 'NAME_MISMATCH') };
+  }
+  try {
+    const response = await customInstance<{ data: unknown; status: number }>(
+      `${API_URL}/auth/stores/${encodeURIComponent(storeId.trim())}`,
+      {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      },
+    );
+    if (!isSuccessStatus(response.status)) {
+      const code = readDeleteErrorCode(response.data);
+      return { ok: false, status: response.status, message: deleteFailureMessage(response.status, code) };
+    }
+    const parsed = parseActiveStore(response.data, name);
+    if (!parsed) {
+      return { ok: false, status: response.status, message: deleteFailureMessage(response.status) };
+    }
+    return { ok: true, value: parsed };
+  } catch {
+    return { ok: false, status: 0, message: deleteFailureMessage(0) };
   }
 }
 

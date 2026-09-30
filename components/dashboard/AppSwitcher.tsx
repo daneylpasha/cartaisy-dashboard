@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
-import { ChevronDown, ChevronLeft, Plus } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { useAuth, useSession } from '@/lib/auth';
 import {
   appSwitcherModel,
   canAddApp,
+  confirmAppName,
+  deleteAppAvailability,
   listMerchantStores,
   readAppName,
   type MerchantStore,
@@ -38,10 +40,14 @@ export interface AppSwitcherPanelProps {
   pendingId: string | null;
   note: string | null;
   listNote: string | null;
+  currentApp: MerchantStore | null;
+  canDelete: boolean;
+  onlyAppNote: string | null;
   onToggleOpen: () => void;
   onToggleCollapse?: () => void;
   onSelect: (storeId: string) => void;
   onAdd: () => void;
+  onDelete: (store: MerchantStore) => void;
 }
 
 export function AppSwitcherPanel({
@@ -59,10 +65,14 @@ export function AppSwitcherPanel({
   pendingId,
   note,
   listNote,
+  currentApp,
+  canDelete,
+  onlyAppNote,
   onToggleOpen,
   onToggleCollapse,
   onSelect,
   onAdd,
+  onDelete,
 }: AppSwitcherPanelProps) {
   const menuOpen = mode === 'menu' && open && !collapsed;
 
@@ -70,20 +80,27 @@ export function AppSwitcherPanel({
     <div className={cn('shrink-0 border-b border-slate-200', inSheet && 'pr-10')} data-app-switcher={mode}>
       <div
         className={cn(
-          'flex h-14 items-center',
-          collapsed ? 'justify-center px-2' : 'gap-2.5 px-3',
+          'flex items-center',
+          collapsed ? 'flex-col justify-center gap-1.5 px-2 py-2.5' : 'h-14 gap-2.5 px-3',
         )}
       >
         {collapsed ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToggleCollapse}
-            className="size-8 rounded-lg p-0 hover:bg-slate-100"
-            aria-label="Expand sidebar"
-          >
+          <>
             <StoreMark logo={logoUrl} initial={storeName.charAt(0).toUpperCase()} />
-          </Button>
+            {onToggleCollapse && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onToggleCollapse}
+                className="size-8 rounded-lg border-slate-200 p-0 text-slate-700 hover:bg-slate-50"
+                aria-label="Expand sidebar"
+                title="Expand sidebar"
+                data-sidebar-toggle="expand"
+              >
+                <ChevronRight className="size-4" />
+              </Button>
+            )}
+          </>
         ) : mode === 'menu' ? (
           <>
             <button
@@ -108,6 +125,8 @@ export function AppSwitcherPanel({
                 onClick={onToggleCollapse}
                 className="size-7 shrink-0 p-0 text-slate-500 hover:bg-slate-100 hover:text-slate-950"
                 aria-label="Collapse sidebar"
+                title="Collapse sidebar"
+                data-sidebar-toggle="collapse"
               >
                 <ChevronLeft className="size-3.5" />
               </Button>
@@ -127,6 +146,8 @@ export function AppSwitcherPanel({
                 onClick={onToggleCollapse}
                 className="size-7 shrink-0 p-0 text-slate-500 hover:bg-slate-100 hover:text-slate-950"
                 aria-label="Collapse sidebar"
+                title="Collapse sidebar"
+                data-sidebar-toggle="collapse"
               >
                 <ChevronLeft className="size-3.5" />
               </Button>
@@ -145,15 +166,26 @@ export function AppSwitcherPanel({
           {others.length > 0 && (
             <ul className="max-h-48 space-y-0.5 overflow-y-auto">
               {others.map((store) => (
-                <li key={store.id}>
+                <li key={store.id} className="flex items-center">
                   <button
                     type="button"
                     disabled={pendingId !== null}
                     onClick={() => onSelect(store.id)}
-                    className="flex w-full items-center rounded-md px-2.5 py-2 text-left text-[13px] text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:opacity-50"
+                    className="flex min-w-0 flex-1 items-center rounded-md px-2.5 py-2 text-left text-[13px] text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:opacity-50"
                   >
                     <span className="truncate">{pendingId === store.id ? 'Opening…' : store.name}</span>
                   </button>
+                  {canDelete && (
+                    <button
+                      type="button"
+                      disabled={pendingId !== null}
+                      onClick={() => onDelete(store)}
+                      aria-label={`Delete ${store.name}`}
+                      className="flex size-8 shrink-0 items-center justify-center rounded-md text-rose-700 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 disabled:opacity-50"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>
@@ -169,6 +201,20 @@ export function AppSwitcherPanel({
               <span>Add app</span>
             </button>
           )}
+          {canDelete && currentApp && (
+            <div className="mt-1 border-t border-slate-200 pt-1">
+              <button
+                type="button"
+                disabled={pendingId !== null}
+                onClick={() => onDelete(currentApp)}
+                className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[13px] text-rose-700 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 disabled:opacity-50"
+              >
+                <Trash2 className="size-3.5 shrink-0" />
+                <span>Delete this app</span>
+              </button>
+            </div>
+          )}
+          {onlyAppNote && <p className="px-2.5 pt-1 text-xs leading-5 text-slate-500">{onlyAppNote}</p>}
           {listNote && <p className="px-2.5 pt-1 text-xs leading-5 text-slate-500">{listNote}</p>}
         </div>
       )}
@@ -194,6 +240,56 @@ function StoreMark({ logo, initial }: { logo: string | null; initial: string }) 
   );
 }
 
+export function DeleteAppConfirm({
+  appName,
+  typed,
+  error,
+  pending,
+  onTyped,
+  onCancel,
+  onConfirm,
+}: {
+  appName: string;
+  typed: string;
+  error: string | null;
+  pending: boolean;
+  onTyped: (value: string) => void;
+  onCancel: () => void;
+  onConfirm: (event: FormEvent) => void;
+}) {
+  const confirmed = confirmAppName(typed, appName);
+
+  return (
+    <form onSubmit={onConfirm} className="grid gap-3" data-delete-app-confirm="">
+      <p className="text-sm leading-6 text-slate-600">
+        This removes {appName} from your account and from anyone invited to it. It leaves Switch app. The store is
+        turned off and its Shopify connection is disconnected. You can&apos;t restore it here.
+      </p>
+      <div className="grid gap-1.5">
+        <Label htmlFor="delete-app-name">Type {appName} to confirm</Label>
+        <Input
+          id="delete-app-name"
+          value={typed}
+          maxLength={100}
+          autoComplete="off"
+          autoFocus
+          disabled={pending}
+          onChange={(event) => onTyped(event.target.value)}
+        />
+        {error && <p className="text-xs leading-5 text-rose-700">{error}</p>}
+      </div>
+      <DialogFooter>
+        <Button type="button" variant="outline" disabled={pending} onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" variant="destructive" disabled={pending || !confirmed}>
+          {pending ? 'Removing…' : 'Delete app'}
+        </Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
 interface AppSwitcherProps {
   collapsed: boolean;
   inSheet?: boolean;
@@ -212,7 +308,7 @@ export function AppSwitcher({
   onToggleCollapse,
 }: AppSwitcherProps) {
   const { data: session, status } = useSession();
-  const { switchApp, addApp } = useAuth();
+  const { switchApp, addApp, deleteApp } = useAuth();
   const storeId = session?.user?.storeId;
   const role = session?.user?.role;
   const [stores, setStores] = useState<MerchantStore[] | null>(null);
@@ -225,6 +321,10 @@ export function AppSwitcher({
   const [switchError, setSwitchError] = useState<string | null>(null);
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<MerchantStore | null>(null);
+  const [confirmName, setConfirmName] = useState('');
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (status !== 'authenticated') return;
@@ -253,11 +353,17 @@ export function AppSwitcher({
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
+  const canOwn = canAddApp(role, storeId) && !addRevoked;
   const model = appSwitcherModel({
     stores,
     activeStoreId: storeId,
-    canAdd: canAddApp(role, storeId) && !addRevoked,
+    canAdd: canOwn,
   });
+  const removal = deleteAppAvailability({
+    canOwn,
+    storeCount: stores ? stores.length : null,
+  });
+  const currentApp = stores?.find((store) => store.id === storeId) ?? null;
 
   async function onSelect(id: string) {
     const chosen = stores?.find((store) => store.id === id);
@@ -275,6 +381,43 @@ export function AppSwitcher({
     setAddError(null);
     setName('');
     setAddOpen(true);
+  }
+
+  function onDelete(store: MerchantStore) {
+    setOpen(false);
+    setDeleteError(null);
+    setConfirmName('');
+    setDeleteTarget(store);
+  }
+
+  function onDeleteOpenChange(next: boolean) {
+    if (deleting) return;
+    if (!next) {
+      setDeleteTarget(null);
+      setConfirmName('');
+      setDeleteError(null);
+    }
+  }
+
+  async function onConfirmDelete(event: FormEvent) {
+    event.preventDefault();
+    if (!deleteTarget || !confirmAppName(confirmName, deleteTarget.name)) {
+      setDeleteError('Type the app name exactly to confirm.');
+      return;
+    }
+    setDeleting(true);
+    setDeleteError(null);
+    const result = await deleteApp(deleteTarget.id, deleteTarget.name);
+    if (!result.success) {
+      setDeleting(false);
+      setDeleteError(result.error ?? 'That app could not be removed. Try again.');
+      return;
+    }
+    const removedId = deleteTarget.id;
+    setStores((current) => current?.filter((store) => store.id !== removedId) ?? current);
+    setDeleting(false);
+    setDeleteTarget(null);
+    setConfirmName('');
   }
 
   function onDialogOpenChange(next: boolean) {
@@ -325,12 +468,16 @@ export function AppSwitcher({
         pendingId={pendingId}
         note={switchError}
         listNote={listFailed ? 'Apps could not be loaded.' : null}
+        currentApp={currentApp}
+        canDelete={removal.canDelete}
+        onlyAppNote={removal.onlyAppNote}
         onToggleOpen={() => setOpen((value) => !value)}
         onToggleCollapse={onToggleCollapse}
         onSelect={(id) => {
           void onSelect(id);
         }}
         onAdd={onAdd}
+        onDelete={onDelete}
       />
       <Dialog open={addOpen} onOpenChange={onDialogOpenChange}>
         <DialogContent className="sm:max-w-sm" showCloseButton={!adding}>
@@ -362,6 +509,29 @@ export function AppSwitcher({
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={deleteTarget !== null} onOpenChange={onDeleteOpenChange}>
+        <DialogContent className="sm:max-w-sm" showCloseButton={!deleting}>
+          <DialogHeader>
+            <DialogTitle>Delete {deleteTarget?.name}?</DialogTitle>
+            <DialogDescription className="sr-only">
+              Confirm by typing the app name. This turns the store off and removes it from your account.
+            </DialogDescription>
+          </DialogHeader>
+          {deleteTarget && (
+            <DeleteAppConfirm
+              appName={deleteTarget.name}
+              typed={confirmName}
+              error={deleteError}
+              pending={deleting}
+              onTyped={setConfirmName}
+              onCancel={() => onDeleteOpenChange(false)}
+              onConfirm={(event) => {
+                void onConfirmDelete(event);
+              }}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </>

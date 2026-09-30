@@ -496,6 +496,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Auth session and the dashboard shell. Store-scoped reads keep using the active `storeId` from profile and from the stored user. No org hierarchy, billing split, team invite, Shopify token, or Expo token is added. Human review is required because this changes the active store without signing out.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`. GitHub issue: `#131`.
 
+### A store owner can remove an app, and the last app stays
+
+- Date: 2026-09-30.
+- Decision: Switch app can delete an app the owner belongs to. The dialog asks for the app name and calls `DELETE /api/v1/auth/stores/:storeId` with `{ name }`. The same access token stays. The store is turned off and removed from membership, including people invited to it, and its Shopify connection is disconnected. If that app was active, the session takes the remaining app and the browser loads `/dashboard`. The last app cannot be deleted. The menu explains that another app has to be added first, and a direct call gets `409` `LAST_STORE`. An invited admin does not see Delete. The dashboard does not call `DELETE /api/store`, which deletes users for the active store id. Settings → Delete this app uses the same confirm and the same route. The desktop sidebar collapse choice is kept in `sessionStorage` for the tab. The collapsed rail shows Expand sidebar as its own button, next to the app mark.
+- Reason: Add app left unfinished apps in Switch app with no way to remove them. Deleting the last app would also remove the membership create still requires. The collapsed rail used the app mark as the only expand control, which is easy to miss.
+- Impact: Auth session and the dashboard shell. Human review is required because this changes membership and can disconnect Shopify. No Shopify token or Expo token is stored or rendered. The last-app block is the merchant-facing choice: the owner always keeps a working app, and Add app still works. The backend route is not deployed yet. `docs/backend-remove-merchant-store.patch` applies on cartaisy-backend `main`.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/backend-remove-merchant-store.patch`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.
