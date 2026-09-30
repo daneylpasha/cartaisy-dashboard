@@ -1,138 +1,107 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
+import { DeleteAppConfirm } from '@/components/dashboard/AppSwitcher';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { AlertCircle, Loader2, Trash2 } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
+import { listMerchantStores, ONLY_APP_NOTE } from '@/lib/auth/stores';
 
 interface DeleteStoreDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   storeName: string;
+  storeId: string;
 }
 
-export function DeleteStoreDialog({ open, onOpenChange, storeName }: DeleteStoreDialogProps) {
-  const [confirmName, setConfirmName] = useState('');
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [error, setError] = useState('');
+export function DeleteStoreDialog({ open, onOpenChange, storeName, storeId }: DeleteStoreDialogProps) {
+  const { deleteApp } = useAuth();
+  const [appName, setAppName] = useState(storeName);
+  const [typed, setTyped] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+  const [onlyApp, setOnlyApp] = useState(false);
+  const [checked, setChecked] = useState(false);
 
-  const isConfirmed = confirmName === storeName;
-
-  const handleDelete = async () => {
-    if (!isConfirmed) return;
-
-    setError('');
-    setIsDeleting(true);
-
-    try {
-      const response = await fetch('/api/store', {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        setError(data.error || 'Failed to delete store');
-        return;
+  useEffect(() => {
+    if (!open) return;
+    setTyped('');
+    setError(null);
+    setAppName(storeName);
+    setOnlyApp(false);
+    setChecked(false);
+    let cancelled = false;
+    listMerchantStores().then((result) => {
+      if (cancelled) return;
+      if (result.ok) {
+        const match = result.value.stores.find((store) => store.id === storeId);
+        if (match) setAppName(match.name);
+        setOnlyApp(result.value.stores.length < 2);
       }
+      setChecked(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, storeId, storeName]);
 
-      // Redirect to login after deletion
-      window.location.href = '/login';
-    } catch (err) {
-      setError('An error occurred. Please try again.');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+  function handleOpenChange(next: boolean) {
+    if (pending) return;
+    onOpenChange(next);
+  }
 
-  const handleOpenChange = (newOpen: boolean) => {
-    if (newOpen) {
-      setConfirmName('');
-      setError('');
+  async function onConfirm(event: FormEvent) {
+    event.preventDefault();
+    setPending(true);
+    setError(null);
+    const result = await deleteApp(storeId, appName);
+    if (!result.success) {
+      setPending(false);
+      setError(result.error ?? 'That app could not be removed. Try again.');
     }
-    onOpenChange(newOpen);
-  };
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogTitle className="text-red-600 flex items-center gap-2">
-          <AlertCircle className="w-5 h-5" />
-          Delete Store
-        </DialogTitle>
-        <DialogDescription>
-          This action cannot be undone. This will permanently delete your store and all associated data.
-        </DialogDescription>
-
-        <div className="space-y-4 py-4">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-sm text-red-900 font-medium">Warning</p>
-            <p className="text-sm text-red-700 mt-1">
-              Deleting your store will:
-            </p>
-            <ul className="text-sm text-red-700 mt-2 ml-4 list-disc space-y-1">
-              <li>Remove all team members and invitations</li>
-              <li>Delete all components and configurations</li>
-              <li>Disconnect Shopify integration</li>
-              <li>Remove all store data permanently</li>
-            </ul>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="storeName" className="text-sm font-medium">
-              To confirm, type the store name: <span className="font-mono text-red-600">{storeName}</span>
-            </Label>
-            <Input
-              id="storeName"
-              placeholder="Enter store name to confirm"
-              value={confirmName}
-              onChange={(e) => setConfirmName(e.target.value)}
-              disabled={isDeleting}
-              className="font-mono"
-            />
-          </div>
-
-          {error && (
-            <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-700">{error}</p>
+      <DialogContent className="sm:max-w-sm" showCloseButton={!pending}>
+        <DialogHeader>
+          <DialogTitle>{onlyApp ? 'This app stays' : `Delete ${appName}?`}</DialogTitle>
+          <DialogDescription className="sr-only">
+            {onlyApp
+              ? 'The last app cannot be removed.'
+              : 'Confirm by typing the app name. This turns the store off and removes it from your account.'}
+          </DialogDescription>
+        </DialogHeader>
+        {!checked ? (
+          <p className="text-sm leading-6 text-slate-600">Checking your apps…</p>
+        ) : onlyApp ? (
+          <div className="grid gap-3">
+            <p className="text-sm leading-6 text-slate-600">{ONLY_APP_NOTE}</p>
+            <div className="flex justify-end">
+              <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
+                Close
+              </Button>
             </div>
-          )}
-
-          <div className="flex gap-3 justify-end pt-4">
-            <Button
-              variant="outline"
-              onClick={() => handleOpenChange(false)}
-              disabled={isDeleting}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={!isConfirmed || isDeleting}
-              className="gap-2"
-            >
-              {isDeleting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="w-4 h-4" />
-                  Delete Store
-                </>
-              )}
-            </Button>
           </div>
-        </div>
+        ) : (
+          <DeleteAppConfirm
+            appName={appName}
+            typed={typed}
+            error={error}
+            pending={pending}
+            onTyped={setTyped}
+            onCancel={() => handleOpenChange(false)}
+            onConfirm={(event) => {
+              void onConfirm(event);
+            }}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

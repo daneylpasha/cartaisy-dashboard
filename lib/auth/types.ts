@@ -83,6 +83,7 @@ export interface AuthContextValue extends AuthState {
   getToken: () => string | null;
   switchApp: (storeId: string, fallbackName?: string) => Promise<StoreActionResult>;
   addApp: (name: string) => Promise<StoreActionResult>;
+  deleteApp: (storeId: string, name: string) => Promise<StoreActionResult>;
 }
 
 /**

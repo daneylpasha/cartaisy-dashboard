@@ -26,6 +26,7 @@ import {
   NEW_APP_PATH,
   SWITCH_APP_PATH,
   createMerchantStore,
+  deleteMerchantStore,
   openAppDestination,
   sessionWithActiveStore,
   switchActiveStore,
@@ -462,6 +463,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [adoptActiveStore],
   );
 
+  const deleteApp = useCallback(
+    async (storeId: string, name: string): Promise<StoreActionResult> => {
+      const current = tokenStorage.getUser<AuthUser>();
+      if (!current?.storeId) return { success: false, error: 'Sign in to continue.' };
+      const removingActive = current.storeId === storeId.trim();
+      const result = await deleteMerchantStore(storeId, name);
+      if (!result.ok) return { success: false, error: result.message };
+      const activeChanged = removingActive || result.value.storeId !== current.storeId;
+      if (!activeChanged) return { success: true };
+      if (!adoptActiveStore(result.value)) return { success: false, error: 'Sign in to continue.' };
+      openAppDestination(SWITCH_APP_PATH);
+      return { success: true };
+    },
+    [adoptActiveStore],
+  );
+
   return (
     <AuthContext.Provider
       value={{
@@ -474,6 +491,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         getToken,
         switchApp,
         addApp,
+        deleteApp,
       }}
     >
       {children}
