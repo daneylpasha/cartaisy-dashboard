@@ -51,6 +51,7 @@ import { ConnectStep } from '@/components/onboarding/steps/ConnectStep';
 import { BrandingStep } from '@/components/onboarding/steps/BrandingStep';
 import { PreviewStep } from '@/components/onboarding/steps/PreviewStep';
 import { ReadyStep } from '@/components/onboarding/steps/ReadyStep';
+import { usePendingShopifyClaim } from '@/hooks/usePendingShopifyClaim';
 import { merchantMessageForShopifyAction, shopifyReturnCopy, type ShopifyReturnCopy } from '@/lib/shopify/merchantCopy';
 
 const EMPTY_CONNECTION: ShopifyConnectionSnapshot = {
@@ -71,6 +72,7 @@ export function OnboardingWizard() {
   const storeId = session?.user?.storeId;
   const sessionNameRef = useRef(session?.user?.storeName ?? '');
   sessionNameRef.current = session?.user?.storeName ?? '';
+  const claim = usePendingShopifyClaim();
   const stepParam = searchParams.get('step');
   const step: OnboardingStep = isOnboardingStep(stepParam) ? stepParam : 'connect';
   const installPreview = useReadyInstallPreview(step === 'brand' || step === 'preview' ? 'brand-preview' : step);
@@ -100,20 +102,28 @@ export function OnboardingWizard() {
   const assetRequestRef = useRef({ icon: 0, splash: 0 });
   const [reloadKey, setReloadKey] = useState(0);
   const [returnNotice, setReturnNotice] = useState<ShopifyReturnCopy | null>(() =>
-    shopifyReturnCopy(searchParams.get('shopify'), searchParams.get('reason') ?? searchParams.get('error'))
+    searchParams.get('claim') === 'pending'
+      ? null
+      : shopifyReturnCopy(searchParams.get('shopify'), searchParams.get('reason') ?? searchParams.get('error'))
   );
   const [returnedShop, setReturnedShop] = useState<string | null>(() =>
     safeReturnedShop(searchParams.get('shop'))
   );
   const [syncing, setSyncing] = useState(false);
-  const returnedConnected = useRef(searchParams.get('shopify') === 'connected');
+  const returnedConnected = useRef(
+    searchParams.get('shopify') === 'connected' && searchParams.get('claim') !== 'pending'
+  );
   const autoSyncStarted = useRef(false);
   const syncLock = useRef(false);
-  if (searchParams.get('shopify') === 'connected') {
+  if (searchParams.get('shopify') === 'connected' && searchParams.get('claim') !== 'pending') {
+    returnedConnected.current = true;
+  }
+  if (claim.notice?.tone === 'success') {
     returnedConnected.current = true;
   }
 
   useEffect(() => {
+    if (searchParams.get('claim') === 'pending') return;
     const current = searchParams.toString();
     const consumed = consumeShopifyReturnQuery(current);
     if (!consumed.changed) return;
@@ -144,7 +154,7 @@ export function OnboardingWizard() {
   }, []);
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (status === 'loading' || claim.claiming) return;
 
     let cancelled = false;
     const token = tokenStorage.getToken();
@@ -205,7 +215,7 @@ export function OnboardingWizard() {
     return () => {
       cancelled = true;
     };
-  }, [status, storeId, reloadKey]);
+  }, [status, storeId, reloadKey, claim.claiming]);
 
   const runCatalogSync = useCallback(async () => {
     if (syncLock.current) return;
@@ -294,7 +304,7 @@ export function OnboardingWizard() {
     isConnected: connection.isConnected,
     sync,
   });
-  const connectNotice = step === 'connect' ? returnNotice : null;
+  const connectNotice = step === 'connect' ? (claim.notice ?? returnNotice) : null;
 
   const handleBrandAsset = async (kind: 'icon' | 'splash', file: File) => {
     const token = tokenStorage.getToken();
@@ -503,7 +513,9 @@ export function OnboardingWizard() {
         <motion.div key={loading ? 'loading' : step} {...motionProps}>
           {loading ? (
             <section className="rounded-2xl border border-slate-200/80 bg-white px-6 py-16 text-center shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-              <p className="text-sm text-slate-600">Loading your store...</p>
+              <p className="text-sm text-slate-600">
+                {claim.claiming ? 'Finishing your Shopify connection...' : 'Loading your store...'}
+              </p>
             </section>
           ) : brandingError && !storeId ? (
             <section className="rounded-2xl border border-slate-200/80 bg-white px-6 py-10 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">

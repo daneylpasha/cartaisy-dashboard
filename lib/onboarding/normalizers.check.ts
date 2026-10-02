@@ -414,6 +414,24 @@ assert.deepEqual(
   consumeShopifyReturnQuery('step=connect&shopify=connected&shop=northline.myshopify.com'),
   { query: 'step=connect', changed: true }
 );
+assert.deepEqual(
+  consumeShopifyReturnQuery(
+    'step=connect&shopify=connected&shop=northline.myshopify.com&claim=pending'
+  ),
+  { query: 'step=connect', changed: true }
+);
+assert.deepEqual(
+  consumeShopifyReturnQuery('shopify=connected&shop=northline.myshopify.com&claim=pending', {
+    fallbackStep: null,
+  }),
+  { query: '', changed: true }
+);
+assert.equal(
+  consumeShopifyReturnQuery(
+    'step=connect&shopify=connected&claim=pending&claim_token=abababababababababababababababababababababababababababababababab'
+  ).query.includes('claim_token'),
+  false
+);
 assert.deepEqual(consumeShopifyReturnQuery('shopify=error&reason=invalid_state&error=legacy'), {
   query: 'step=connect',
   changed: true,

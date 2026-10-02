@@ -465,20 +465,30 @@ export function connectCatalogView(sync: SyncGate, productCount: number | null):
 }
 
 /**
- * Drops the OAuth return query after the wizard has read it.
- * `shop` is removed only together with `shopify`, so an unrelated query stays.
+ * Drops the OAuth return query after it has been read.
+ * `shop` is removed only together with `shopify` or a pending claim, so an
+ * unrelated query stays. `claim` is removed with that return.
+ * `fallbackStep` defaults to `connect` for the wizard. Pass null to keep a
+ * URL that has no step param (settings).
  */
-export function consumeShopifyReturnQuery(search: string): { query: string; changed: boolean } {
+export function consumeShopifyReturnQuery(
+  search: string,
+  options?: { fallbackStep?: string | null }
+): { query: string; changed: boolean } {
   const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
   const outcome = params.get('shopify');
-  if (outcome !== 'connected' && outcome !== 'error') {
+  const claimPending = params.get('claim') === 'pending';
+  if (outcome !== 'connected' && outcome !== 'error' && !claimPending) {
     return { query: params.toString(), changed: false };
   }
   params.delete('shopify');
   params.delete('reason');
   params.delete('shop');
   params.delete('error');
-  if (!params.get('step')) params.set('step', 'connect');
+  params.delete('claim');
+  params.delete('claim_token');
+  const fallbackStep = options && 'fallbackStep' in options ? options.fallbackStep : 'connect';
+  if (fallbackStep && !params.get('step')) params.set('step', fallbackStep);
   return { query: params.toString(), changed: true };
 }
 

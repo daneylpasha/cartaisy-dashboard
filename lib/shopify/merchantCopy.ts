@@ -108,6 +108,17 @@ export function shopifyReturnCopy(
   return null;
 }
 
+/**
+ * App Store install return could not be claimed (missing fragment, or the
+ * one-time nonce was expired or invalid). The merchant can open Cartaisy
+ * from Shopify again or reconnect from the dashboard. No nonce is included.
+ */
+export const shopifyClaimRetryCopy: ShopifyReturnCopy = {
+  tone: 'error',
+  title: "Couldn't connect",
+  body: 'This connection link is no longer valid. Open Cartaisy from Shopify again, or reconnect from this page.',
+};
+
 export function merchantMessageForShopifyAction(
   action: ShopifyAction,
   status: number,

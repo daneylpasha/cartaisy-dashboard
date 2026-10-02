@@ -18,6 +18,9 @@ import { merchantMessageForShopifyAction } from '@/lib/shopify/merchantCopy';
  * write `shopify.accessToken`. Live redirect is on. The merged backend
  * (cartaisy-backend #157) ignores a client `returnTo` and sends the browser
  * to `SHOPIFY_OAUTH_RETURN_URL` with `shopify=connected` or `shopify=error`.
+ * An App Store install adds `claim=pending` and a `#claim_token=` fragment.
+ * That fragment is claimed by `lib/shopify/installClaim.ts`, not by this
+ * connect call. `POST /shopify/oauth/connect` stays the dashboard Connect path.
  *
  * Expected backend contract:
  * - POST /shopify/oauth/connect { shop } -> { data: { authorizationUrl } }

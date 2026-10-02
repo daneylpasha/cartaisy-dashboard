@@ -18,20 +18,27 @@ export function useShopifyStatus(): UseShopifyStatusReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const hasFetched = useRef(false);
+  const requestSeq = useRef(0);
 
   const fetchStatus = useCallback(async (quiet = false) => {
+    const requestId = ++requestSeq.current;
     try {
       if (!quiet) setIsLoading(true);
       setError(null);
       const data = await shopifyService.getConnectionStatus();
+      if (requestId !== requestSeq.current) return;
       setStatus(data);
     } catch (err) {
+      if (requestId !== requestSeq.current) return;
       setError(err instanceof Error ? err.message : "We couldn't check your Shopify connection. Refresh and try again.");
       setStatus(null);
     } finally {
+      if (requestId !== requestSeq.current) return;
       if (!quiet) setIsLoading(false);
     }
   }, []);
+
+  const refetch = useCallback(() => fetchStatus(true), [fetchStatus]);
 
   useEffect(() => {
     // Only fetch once when session is authenticated
@@ -47,6 +54,6 @@ export function useShopifyStatus(): UseShopifyStatusReturn {
     status,
     isLoading,
     error,
-    refetch: () => fetchStatus(true),
+    refetch,
   };
 }
