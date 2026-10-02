@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { SHOPIFY_CLAIMED_EVENT } from '@/lib/shopify/installClaim';
 import { useSession } from '@/lib/auth';
 import { useShopifyStatus } from '@/hooks/useShopifyStatus';
 import { tokenStorage } from '@/lib/api/mutator/custom-instance';
@@ -39,6 +40,14 @@ export function ConnectShopify() {
   const [isDisconnecting, setIsDisconnecting] = useState(false);
 
   const connected = Boolean(status?.isConnected && status.shop);
+
+  useEffect(() => {
+    const onClaimed = () => {
+      void refetch();
+    };
+    window.addEventListener(SHOPIFY_CLAIMED_EVENT, onClaimed);
+    return () => window.removeEventListener(SHOPIFY_CLAIMED_EVENT, onClaimed);
+  }, [refetch]);
 
   useEffect(() => {
     if (isLoading) return;

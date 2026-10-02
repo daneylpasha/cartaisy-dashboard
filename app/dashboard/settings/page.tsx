@@ -31,23 +31,34 @@ import {
 } from 'lucide-react';
 import { canManageSettings } from '@/lib/utils/permissions';
 import { useStoreStats } from '@/hooks/useStoreStats';
+import { usePendingShopifyClaim } from '@/hooks/usePendingShopifyClaim';
 import { shopifyReturnCopy } from '@/lib/shopify/merchantCopy';
 
 function SettingsContent() {
   const searchParams = useSearchParams();
   const { data: session } = useSession();
   const { stats, isLoading: statsLoading } = useStoreStats();
-  const { status: shopifyStatus } = useShopifyStatus();
+  const { status: shopifyStatus, refetch: refetchShopify } = useShopifyStatus();
+  const claim = usePendingShopifyClaim();
 
   const [store, setStore] = useState<any>(null);
   const [isLoadingStore, setIsLoadingStore] = useState(true);
   const [storeError, setStoreError] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const returnCopy = shopifyReturnCopy(
-    searchParams?.get('shopify') ?? null,
-    searchParams?.get('reason') ?? searchParams?.get('error')
-  );
+  const queryCopy =
+    searchParams?.get('claim') === 'pending'
+      ? null
+      : shopifyReturnCopy(
+          searchParams?.get('shopify') ?? null,
+          searchParams?.get('reason') ?? searchParams?.get('error')
+        );
+  const returnCopy = claim.notice ?? queryCopy;
+
+  useEffect(() => {
+    if (claim.notice?.tone !== 'success') return;
+    void refetchShopify();
+  }, [claim.notice, refetchShopify]);
 
   const canManage = canManageSettings(session?.user?.role);
 
@@ -130,6 +141,21 @@ function SettingsContent() {
           </div>
         </div>
       </div>
+
+      {claim.claiming && (
+        <div
+          role="status"
+          className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4"
+        >
+          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-slate-100">
+            <RefreshCw className="h-4 w-4 animate-spin text-slate-700" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-slate-900">Finishing your Shopify connection</p>
+            <p className="text-sm text-slate-600">This takes a moment.</p>
+          </div>
+        </div>
+      )}
 
       {returnCopy && (
         <div

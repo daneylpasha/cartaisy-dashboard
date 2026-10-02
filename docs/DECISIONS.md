@@ -64,6 +64,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Reconnect is the same connect call, not a second token path. The backend ignores a client `returnTo` and redirects only to `SHOPIFY_OAUTH_RETURN_URL`. Point that at `/dashboard/onboarding?step=connect` so new merchants return to the wizard. Settings understands the same `shopify` and `reason` query if the URL points there instead. Historical dashboard tokens are left in place until a separate migration. Shopify, auth, and store-ownership changes still need human review.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, backend `docs/cartaisy/SHOPIFY_API_POLICY.md`.
 
+### App Store install is claimed on the return URL
+
+- Date: 2026-10-02.
+- Decision: When the signed-in merchant returns with `claim=pending`, the dashboard reads the one-time `claim_token` from the URL fragment and posts `{ shop, claimToken }` to `POST /api/v1/shopify/oauth/claim` for the current session. Success and failure use the same Connect return copy as `shopify=connected` and `shopify=error`. A missing fragment, or a claim the backend rejects as expired or unknown, tells the merchant to open Cartaisy from Shopify again or reconnect from the page. The fragment is removed before analytics, and it is not copied into the query. `POST /api/v1/shopify/oauth/connect` is unchanged.
+- Reason: Backend PR #208 (issue #207) finishes App Store install on a pending record. The Admin token is not on the signed-in store until that claim. The nonce is in the fragment so it is not sent on Referer.
+- Impact: Onboarding and Settings both handle the return. The wizard waits to read Shopify status until the claim settles, then follows the existing catalog-sync path. No Shopify Admin token is stored in the dashboard. This is a Shopify and store-ownership path and needs human review.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, backend `docs/cartaisy/SHOPIFY_API_POLICY.md`. Backend PR `#208`.
+
 ### Onboarding wizard does not store Shopify access tokens
 
 - Date: 2026-09-23. Updated the same day after backend #157 merged.

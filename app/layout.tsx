@@ -4,6 +4,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import { SessionProvider } from "@/components/SessionProvider";
 import { OrganizationSchema, SoftwareApplicationSchema } from "@/components/landing/StructuredData";
 import { GoogleAnalytics, AnalyticsProvider, VercelAnalytics, VercelSpeedInsights } from "@/components/analytics";
+import { ShopifyClaimFragmentBoot } from "@/components/shopify/ShopifyClaimFragmentBoot";
 import { CookieConsentProvider, CookieBanner } from "@/components/cookies";
 import { siteConfig } from "@/lib/seo";
 import "./globals.css";
@@ -74,6 +75,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} ${plusJakarta.variable}`} suppressHydrationWarning>
       <head>
+        <ShopifyClaimFragmentBoot />
         <GoogleAnalytics />
       </head>
       <body
