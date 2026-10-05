@@ -16,7 +16,7 @@ The public site now describes one managed offer, an invite-only handoff, a no-lo
 
 Persistence is implemented against the dashboard Mongo database. A local check without a reachable Mongo returned HTTP 503 and did not invent a saved lead. The three fit outcomes are covered by `npm run test:c01`. They were not shown in the browser in this pass because the save failed first.
 
-The operator lead inbox is implemented and guarded by the existing platform-operator check. It was not opened with a real operator session.
+The operator lead inbox lists fit checks, walkthrough requests, and contact-form submissions on one page, newest first. The same session and platform-operator gate covers all three. Contact rows stay in `ContactSubmission`. `POST /api/contact` still saves and still sends the existing Resend mail. The inbox was not opened with a live operator session.
 
 Founder manual QA is still required before merge or any production deploy.
 
@@ -31,7 +31,7 @@ Founder manual QA is still required before merge or any production deploy.
 | C01-R05 | `/pricing` one managed offer | Done. Setup, then a recurring fee. No dollar amount. Includes and exclusions come from `lib/marketing/offer.ts`. |
 | C01-R06 | `/demo` real screens | Done. `/product-tour` aliases the same page. The page mounts the real Connect and Brand steps. No YouTube embed and no public install link. |
 | C01-R07 | Walkthrough request | Done. `/schedule-demo` is a form. Calendly components are removed. |
-| C01-R08 | Operator-only lead inbox | Implemented. `/dashboard/admin/leads` and `GET /api/admin/leads` require a session and a successful platform-operator check. Not exercised with an operator login in this pass. |
+| C01-R08 | Operator-only lead inbox | COMPLETE. `/dashboard/admin/leads` and `GET /api/admin/leads` require a session and a successful platform-operator check. The list includes `ProspectLead` fit and walkthrough rows and `ContactSubmission` contact rows, tagged Fit check, Walkthrough, or Contact, newest first. A signed-out caller and a non-operator are refused before either collection is read. Contact persistence and Resend email on `POST /api/contact` are unchanged. Not opened with a live operator or merchant session. |
 | C01-R09 | Ownership and prerequisites | Done. Merchant-owned Apple and Google accounts, fees not quoted as Cartaisy prices, Cartaisy-managed Expo project. |
 | C01-R10 | Shopify-hosted checkout wording | Done. The decided sentence is the shared `checkoutWording`. |
 | C01-R11 | Features, FAQ, docs, about, footer, SEO | Done. FAQ includes offer, trial, account, checkout, ownership, iOS, App Store, scopes, stopping, and sales. |
@@ -78,7 +78,9 @@ If Mongo is unreachable, the API returns 503: “We could not save this fit chec
 
 If `RESEND_API_KEY` is set, a saved lead also emails `sales@rendernext.io`. Email failure is logged and does not fail the save. This environment did not prove that the production key is set or that the mailbox receives mail.
 
-`GET /api/admin/leads` requires a dashboard session and `isPlatformOperator`, which calls backend `GET /api/v1/admin/build-requests` and ignores the body. A store owner who gets 403 from that route gets 403 here. The sidebar shows Leads only as a link; the page itself is the guard.
+`GET /api/admin/leads` requires a dashboard session and `isPlatformOperator`, which calls backend `GET /api/v1/admin/build-requests` and ignores the body. That check runs before either collection is read. A store owner who gets 403 from that route gets 403 here and sees no fit, walkthrough, or contact fields. The response merges the latest 100 fit and walkthrough rows with the latest 100 contact rows, newest first. Each row is labeled Fit check, Walkthrough, or Contact. Contact rows show subject and message. Fit and walkthrough rows show outcome, stage, goal, store URL, preferred window, and note. IP addresses are not returned. The sidebar shows Leads only as a link; the page itself is the guard.
+
+`POST /api/contact` still writes `ContactSubmission` and, when `RESEND_API_KEY` is set, still emails `sales@rendernext.io` and the visitor. The inbox does not replace that path.
 
 No backend repository change was required. The operator check reuses the existing build-request route.
 
@@ -114,7 +116,7 @@ Not verified in this pass:
 
 - The three outcome screens after a successful Mongo save.
 - A walkthrough row actually stored.
-- The operator inbox with a platform-operator session, and the 403 state with a store-owner session.
+- The operator inbox with a platform-operator session, including a real contact row next to fit and walkthrough rows, and the 403 state with a store-owner session. Unit checks cover the access decision and the merged list without Mongo.
 - Resend delivery.
 - A production or Vercel preview against a real database.
 - Full keyboard and screen-reader pass.
@@ -142,11 +144,12 @@ Local browser captures from 5 October 2026. No tokens, emails from real customer
 
 1. With dashboard Mongo available, submit `/fit` three times: operating store plus branded app; planning a store with no URL; not Shopify, or a goal other than a branded app. Confirm the three titles and that each row appears in Mongo.
 2. Submit `/schedule-demo` and confirm the row and, if `RESEND_API_KEY` is configured on the preview, the email to `sales@rendernext.io`.
-3. Sign in as a platform operator and open `/dashboard/admin/leads`. Confirm the rows and that no Shopify token is shown.
-4. Sign in as a store owner and confirm the same page is forbidden.
-5. On `/demo`, confirm Connect does not start OAuth until the existing store-address validation passes, and that Brand does not publish.
-6. Read `/pricing`, `/terms`, and `/privacy` and confirm you are willing to leave amounts and cancellation terms off the site.
-7. Do not merge and do not promote a preview to production until that review is done.
+3. Submit `/contact` and confirm the row is stored and, if `RESEND_API_KEY` is configured, that the existing sales and visitor emails still send.
+4. Sign in as a platform operator and open `/dashboard/admin/leads`. Confirm fit, walkthrough, and contact rows appear together, newest first, with type, name, email, subject or outcome, and message. Confirm no Shopify token and no IP address.
+5. Sign in as a store owner and while signed out. Confirm the same page is forbidden and the API returns 403 or 401 with no lead fields.
+6. On `/demo`, confirm Connect does not start OAuth until the existing store-address validation passes, and that Brand does not publish.
+7. Read `/pricing`, `/terms`, and `/privacy` and confirm you are willing to leave amounts and cancellation terms off the site.
+8. Do not merge and do not promote a preview to production until that review is done.
 
 ## J. Pull request and deploy
 
@@ -159,6 +162,6 @@ npm ci
 npm run dev
 ```
 
-Then open `http://127.0.0.1:3002/`, `/fit`, `/pricing`, `/demo`, `/schedule-demo`, `/signup`, and `/login`. Fit and walkthrough saves need `MONGODB_URI`. The lead inbox also needs a signed-in platform operator and `NEXT_PUBLIC_API_URL` pointing at a backend that answers `GET /api/v1/admin/build-requests`.
+Then open `http://127.0.0.1:3002/`, `/fit`, `/pricing`, `/demo`, `/schedule-demo`, `/contact`, `/signup`, and `/login`. Fit, walkthrough, and contact saves need `MONGODB_URI`. The lead inbox also needs a signed-in platform operator and `NEXT_PUBLIC_API_URL` pointing at a backend that answers `GET /api/v1/admin/build-requests`. A store owner or a signed-out visit must not see the rows.
 
 No production deploy was performed.

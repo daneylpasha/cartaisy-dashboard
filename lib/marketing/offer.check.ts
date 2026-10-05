@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resolveFitOutcome } from '@/lib/marketing/fitCheck';
 import { parseFitLead, parseWalkthroughLead } from '@/lib/marketing/leadPayload';
+import { leadInboxAccess, leadKindLabel, mergeOperatorLeads } from '@/lib/marketing/leadInbox';
 import { checkoutWording, iosReadiness, offerPositioning, publicFaqs } from '@/lib/marketing/offer';
 import { consumeRateLimit, resetRateLimitForTests } from '@/lib/marketing/rateLimit';
 
@@ -80,6 +81,75 @@ const walkRoute = readFileSync(join(root, 'app/api/walkthrough/route.ts'), 'utf8
 assert.equal(/calendly/i.test(walkRoute), false);
 const leadsRoute = readFileSync(join(root, 'app/api/admin/leads/route.ts'), 'utf8');
 assert.match(leadsRoute, /isPlatformOperator/);
+assert.match(leadsRoute, /leadInboxAccess/);
+assert.match(leadsRoute, /ContactSubmission/);
+assert.match(leadsRoute, /mergeOperatorLeads/);
+assert.equal(leadsRoute.includes('ipAddress'), false);
+const leadsPage = readFileSync(join(root, 'app/dashboard/admin/leads/page.tsx'), 'utf8');
+assert.match(leadsPage, /leadKindLabel/);
+assert.match(leadsPage, /Subject or outcome/);
+assert.match(leadsPage, /contact messages/);
+assert.equal(leadKindLabel.fit, 'Fit check');
+assert.equal(leadKindLabel.walkthrough, 'Walkthrough');
+assert.equal(leadKindLabel.contact, 'Contact');
+const contactRoute = readFileSync(join(root, 'app/api/contact/route.ts'), 'utf8');
+assert.match(contactRoute, /ContactSubmission\.create/);
+assert.match(contactRoute, /resend\.emails\.send/);
+
+const signedOut = leadInboxAccess({ hasSession: false, hasToken: false, operator: false });
+const tokenOnly = leadInboxAccess({ hasSession: false, hasToken: true, operator: true });
+const merchant = leadInboxAccess({ hasSession: true, hasToken: true, operator: false });
+const operator = leadInboxAccess({ hasSession: true, hasToken: true, operator: true });
+assert.equal(signedOut.ok, false);
+assert.equal(tokenOnly.ok, false);
+assert.equal(merchant.ok, false);
+assert.equal(operator.ok, true);
+if (!signedOut.ok) assert.equal(signedOut.status, 401);
+if (!tokenOnly.ok) assert.equal(tokenOnly.status, 401);
+if (!merchant.ok) assert.equal(merchant.status, 403);
+
+const merged = mergeOperatorLeads(
+  [
+    {
+      _id: 'fit-1',
+      kind: 'fit',
+      name: 'Amina',
+      email: 'amina@example.com',
+      createdAt: new Date('2026-10-01T00:00:00.000Z'),
+      outcome: 'prelaunch_fit',
+      outcomeTitle: 'Start with the Shopify store',
+      stage: 'prelaunch',
+    },
+    {
+      _id: 'walk-1',
+      kind: 'walkthrough',
+      name: 'Noor',
+      email: 'noor@example.com',
+      createdAt: new Date('2026-10-03T00:00:00.000Z'),
+      preferredWindow: 'Tuesday morning',
+      note: 'Please walk through Connect.',
+    },
+  ],
+  [
+    {
+      _id: 'contact-1',
+      name: 'Sam',
+      email: 'sam@example.com',
+      subject: 'Sales',
+      message: 'Can you tell me about setup?',
+      createdAt: new Date('2026-10-05T00:00:00.000Z'),
+    },
+  ]
+);
+assert.deepEqual(
+  merged.map((row) => row.kind),
+  ['contact', 'walkthrough', 'fit']
+);
+assert.equal(merged[0]?.subject, 'Sales');
+assert.equal(merged[0]?.message, 'Can you tell me about setup?');
+assert.equal(merged[1]?.preferredWindow, 'Tuesday morning');
+assert.equal(merged[2]?.outcome, 'prelaunch_fit');
+assert.equal(JSON.stringify(merged).includes('ipAddress'), false);
 const shopifyDocs = readFileSync(join(root, 'app/docs/shopify/page.tsx'), 'utf8');
 assert.equal(shopifyDocs.includes('read_products'), false);
 assert.match(shopifyDocs, /shopifyScopesDisclosure/);

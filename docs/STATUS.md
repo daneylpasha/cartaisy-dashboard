@@ -7,7 +7,7 @@ Last updated: 2026-10-05.
 - Public commercial facts live in `lib/marketing/offer.ts`. The homepage, pricing, features, FAQ, docs, and SEO read that module.
 - The public offer is one managed engagement: setup, then a recurring fee, with no dollar amount on the site. Unsupported counts, ratings, trials, card and PayPal claims, and the old JSON-LD price and rating are removed.
 - `/fit` saves a no-login fit check. `/schedule-demo` saves a walkthrough request. Neither starts Shopify OAuth. `/demo` shows the real Connect and Brand dashboard steps and does not offer an install link.
-- Operators with a successful `GET /api/v1/admin/build-requests` can open `/dashboard/admin/leads`. Store owners see an empty forbidden state.
+- Operators with a successful `GET /api/v1/admin/build-requests` can open `/dashboard/admin/leads`. That inbox lists fit checks, walkthrough requests, and contact-form submissions, newest first. Contact rows stay in `ContactSubmission`; the contact form still saves and still emails when Resend is configured. Store owners see a forbidden state and no lead fields.
 - iOS is documented as not production-ready in `docs/IOS_READINESS.md`. A public App Store install that creates an account is a TODO, not a funnel.
 - Do not deploy this change to production without founder approval. The earlier hold on the store-delete route still applies.
 
