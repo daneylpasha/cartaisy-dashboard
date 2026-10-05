@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2>Hi ${sanitizedData.name},</h2>
-            <p>Thank you for reaching out to us! We've received your message and will get back to you within 24 hours.</p>
+            <p>Thank you for reaching out. We received your message and will reply by email.</p>
             <p><strong>Your message:</strong></p>
             <blockquote style="border-left: 3px solid #9333ea; padding-left: 12px; color: #555;">
               ${sanitizedData.message.replace(/\n/g, "<br>")}

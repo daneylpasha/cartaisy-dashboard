@@ -97,8 +97,6 @@ export async function generateMetadata({
       title,
       description,
       images: image ? [image] : undefined,
-      creator: siteConfig.twitterHandle,
-      site: siteConfig.twitterHandle,
     },
   };
 }

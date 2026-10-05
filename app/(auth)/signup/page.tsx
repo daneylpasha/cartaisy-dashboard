@@ -282,22 +282,25 @@ function SignupForm() {
             </h1>
             <p className="text-sm leading-6 text-slate-600">
               {missing
-                ? 'Signup is invite-only. You need a valid onboarding link to create an account.'
+                ? 'Cartaisy accounts are invite-only. Check whether the offer fits your store, or request a walkthrough. An operator sends a signup link if we proceed.'
                 : expired
-                  ? 'This signup link has expired. Contact us for a new onboarding link.'
+                  ? 'This signup link has expired. Request a walkthrough and an operator can send a new link.'
                   : tokenError === 'Token has already been used'
-                    ? 'This signup link has already been used.'
-                    : 'This signup link is invalid or has been revoked.'}
+                    ? 'This signup link has already been used. Sign in if this is your account.'
+                    : 'This signup link is invalid or has been revoked. Request a walkthrough if you still want to talk.'}
             </p>
           </div>
-          {missing && (
-            <div className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm leading-6 text-slate-600">
-              If you are a store owner and would like to use Cartaisy, contact us for an onboarding link.
-            </div>
-          )}
-          <Button variant="outline" className="h-11 w-full" asChild>
-            <Link href="/login">Go to login</Link>
-          </Button>
+          <div className="flex w-full flex-col gap-2">
+            <Button className="h-11 w-full" asChild>
+              <Link href="/fit">Check if Cartaisy fits your store</Link>
+            </Button>
+            <Button variant="outline" className="h-11 w-full" asChild>
+              <Link href="/schedule-demo">Request a walkthrough</Link>
+            </Button>
+            <Button variant="outline" className="h-11 w-full" asChild>
+              <Link href="/login">Go to login</Link>
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );

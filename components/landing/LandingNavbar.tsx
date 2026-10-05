@@ -6,7 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const MotionLink = motion.create(Link);
 import Image from "next/image";
-import { Sparkles, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import { offerPaths } from "@/lib/marketing/offer";
 
 export default function LandingNavbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -21,11 +22,11 @@ export default function LandingNavbar() {
   }, []);
 
   const navLinks = [
-    { href: "/features", label: "Features" },
-    { href: "/pricing", label: "Pricing" },
-    { href: "/docs", label: "Docs" },
-    { href: "/about", label: "About" },
-    { href: "/contact", label: "Contact" },
+    { href: offerPaths.fit, label: "Fit" },
+    { href: offerPaths.pricing, label: "Pricing" },
+    { href: offerPaths.demo, label: "Product tour" },
+    { href: offerPaths.features, label: "Features" },
+    { href: offerPaths.docs, label: "Docs" },
   ];
 
   return (
@@ -115,13 +116,13 @@ export default function LandingNavbar() {
             </Link>
 
             {/* Get Started - Primary CTA */}
-            <Link href="/contact">
+            <Link href={offerPaths.fit}>
               <motion.button
                 className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold text-white shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
               >
-                Get Started
+                Check fit
               </motion.button>
             </Link>
           </motion.div>
@@ -131,6 +132,9 @@ export default function LandingNavbar() {
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="md:hidden relative p-2 text-white"
             whileTap={{ scale: 0.95 }}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-nav"
+            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
           >
             <AnimatePresence mode="wait">
               {isMobileMenuOpen ? (
@@ -168,7 +172,7 @@ export default function LandingNavbar() {
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
             >
-              <div className="px-6 py-6 space-y-1">
+              <div id="mobile-nav" className="px-6 py-6 space-y-1">
                 {navLinks.map((link, index) => (
                   <MotionLink
                     key={link.href}
@@ -192,11 +196,11 @@ export default function LandingNavbar() {
                     Sign In
                   </Link>
                   <Link
-                    href="/contact"
+                    href={offerPaths.fit}
                     className="block text-center px-5 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full font-semibold text-white"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Get Started
+                    Check fit
                   </Link>
                 </div>
               </div>

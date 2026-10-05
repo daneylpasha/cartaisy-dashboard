@@ -5,7 +5,7 @@ import { generateMetadata as genMeta } from '@/lib/seo';
 
 export const metadata: Metadata = genMeta({
   title: 'Contact Us',
-  description: 'Get in touch with Cartaisy. We\'re here to help you launch your Shopify mobile app. Response within 24 hours.',
+  description: 'Contact Cartaisy about fit, a walkthrough, or an existing invite. This form does not start checkout.',
   keywords: ['contact', 'support', 'help', 'customer service'],
 });
 

@@ -12,6 +12,7 @@
     "test:auth-google": "tsx lib/auth/googleSignup.check.ts",
     "test:auth-password-reset": "tsx lib/auth/passwordReset.check.ts",
     "test:auth-stores": "tsx lib/auth/stores.check.tsx",
+    "test:c01": "tsx lib/marketing/offer.check.ts",
     "generate:api": "orval"
   },
   "dependencies": {

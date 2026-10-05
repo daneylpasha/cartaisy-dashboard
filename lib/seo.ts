@@ -1,26 +1,12 @@
 import { Metadata } from 'next';
+import { offerSeo } from '@/lib/marketing/offer';
 
 export const siteConfig = {
   name: 'Cartaisy',
-  description: 'Transform your Shopify store into a powerful native mobile app. Boost sales with push notifications, Apple Pay, and seamless shopping experiences.',
+  description: offerSeo.description,
   url: 'https://cartaisy.com',
   ogImage: 'https://cartaisy.com/og-image.png',
-  twitterHandle: '@cartaisy',
-  keywords: [
-    'Shopify mobile app',
-    'mobile app builder',
-    'Shopify app',
-    'ecommerce mobile app',
-    'push notifications',
-    'Apple Pay',
-    'Google Pay',
-    'mobile commerce',
-    'mcommerce',
-    'Shopify integration',
-    'native mobile app',
-    'iOS app builder',
-    'Android app builder',
-  ],
+  keywords: [...offerSeo.keywords],
 };
 
 export type PageSEO = {
@@ -33,7 +19,7 @@ export type PageSEO = {
 
 export function generateMetadata(page: PageSEO): Metadata {
   const title = page.title === 'Home'
-    ? `${siteConfig.name} - Mobile App Builder for Shopify`
+    ? `${siteConfig.name} — ${offerSeo.title}`
     : `${page.title} | ${siteConfig.name}`;
 
   return {
@@ -65,8 +51,6 @@ export function generateMetadata(page: PageSEO): Metadata {
       title,
       description: page.description,
       images: [page.ogImage || siteConfig.ogImage],
-      creator: siteConfig.twitterHandle,
-      site: siteConfig.twitterHandle,
     },
   };
 }

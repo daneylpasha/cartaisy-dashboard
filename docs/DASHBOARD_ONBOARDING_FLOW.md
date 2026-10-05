@@ -2,7 +2,7 @@
 
 ## Current state:
 
-- Dashboard signup is invitation-only.
+- Dashboard signup is invitation-only. As of 2026-10-05, `/signup` without a token and `/login` point a new merchant to `/fit` and `/schedule-demo`. Those pages do not create an account. An operator still issues the invite from `/dashboard/admin/onboarding`.
 - Master-admin access to onboarding token management is implemented in `app/dashboard/admin/onboarding/page.tsx` using a hard-coded master admin email list.
 - Onboarding tokens are stored in `models/OnboardingToken.ts` with `pending`, `used`, `expired`, and `revoked` statuses.
 - `app/api/admin/onboarding-tokens/route.ts` can list, create, expire, and revoke onboarding tokens for master admins.

@@ -3,16 +3,18 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Sparkles, Twitter, Linkedin, Github, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
+import { offerPaths, offerPositioning, supportEmail } from "@/lib/marketing/offer";
 import NewsletterForm from "./NewsletterForm";
 import { CookieSettingsButton } from "@/components/cookies";
 
 export default function LandingFooter() {
   const footerLinks = {
     product: [
-      { label: "Features", href: "/features" },
-      { label: "Shopify Integration", href: "/features#shopify-integration" },
-      { label: "Pricing", href: "/pricing" },
+      { label: "Fit check", href: offerPaths.fit },
+      { label: "Pricing", href: offerPaths.pricing },
+      { label: "Product tour", href: offerPaths.demo },
+      { label: "Features", href: offerPaths.features },
     ],
     company: [
       { label: "About Us", href: "/about" },
@@ -24,6 +26,7 @@ export default function LandingFooter() {
       { label: "Documentation", href: "/docs" },
       { label: "API Reference", href: "/docs/api" },
       { label: "FAQ", href: "/docs/faq" },
+      { label: "Walkthrough", href: offerPaths.walkthrough },
       { label: "Newsletter", href: "/newsletter" },
       { label: "Support", href: "/contact" },
     ],
@@ -36,26 +39,8 @@ export default function LandingFooter() {
 
   const socialLinks = [
     {
-      icon: Twitter,
-      href: "#",
-      label: "Twitter",
-      gradient: "from-blue-400 to-cyan-400",
-    },
-    {
-      icon: Linkedin,
-      href: "#",
-      label: "LinkedIn",
-      gradient: "from-blue-600 to-blue-400",
-    },
-    {
-      icon: Github,
-      href: "#",
-      label: "GitHub",
-      gradient: "from-gray-600 to-gray-400",
-    },
-    {
       icon: Mail,
-      href: "mailto:support@cartaisy.com",
+      href: `mailto:${supportEmail}`,
       label: "Email",
       gradient: "from-purple-500 to-pink-500",
     },
@@ -104,9 +89,8 @@ export default function LandingFooter() {
             </Link>
 
             {/* Tagline */}
-            <p className="text-gray-400 max-w-sm leading-relaxed">
-              The complete platform to design, manage, and optimize your Shopify
-              mobile app experience.
+            <p className="text-gray-300 max-w-sm leading-relaxed">
+              {offerPositioning.eyebrow}. Shoppers pay on Shopify hosted checkout.
             </p>
 
             {/* Social Links */}
@@ -218,15 +202,7 @@ export default function LandingFooter() {
             </p>
 
             {/* Status indicator */}
-            <div className="flex items-center gap-6 text-sm text-gray-400">
-              <span className="flex items-center gap-2">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
-                </span>
-                All systems operational
-              </span>
-            </div>
+            <p className="text-sm text-gray-400">Invite-only. No public price.</p>
           </div>
         </div>
       </div>

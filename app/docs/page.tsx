@@ -16,19 +16,19 @@ import { generateMetadata as genMeta } from '@/lib/seo';
 
 export const metadata: Metadata = genMeta({
   title: 'Documentation',
-  description: 'Cartaisy documentation - guides, tutorials, and API reference to help you build and manage your Shopify mobile app.',
+  description: 'How Cartaisy onboarding, Shopify connection, and the managed offer work. No public API product.',
   keywords: ['documentation', 'guides', 'tutorials', 'API', 'help'],
 });
 
 const docSections = [
   {
     title: 'Getting Started',
-    description: 'Everything you need to launch your mobile app',
+    description: 'The path from a fit check to an invited dashboard',
     links: [
       {
         icon: Rocket,
         title: 'Quick Start Guide',
-        description: 'Get up and running in minutes',
+        description: 'Fit check, walkthrough, invite, then setup',
         href: '/docs/quickstart',
       },
       {
@@ -61,12 +61,12 @@ const docSections = [
   },
   {
     title: 'API',
-    description: 'For developers building custom integrations',
+    description: 'Not a public custom-integration product',
     links: [
       {
         icon: Code,
         title: 'API Reference',
-        description: 'REST API endpoints and authentication',
+        description: 'Why this offer has no public API',
         href: '/docs/api',
       },
       {

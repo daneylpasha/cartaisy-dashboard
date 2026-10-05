@@ -4,6 +4,7 @@
 
 - Dashboard release readiness was not previously documented in a repo-level checklist.
 - Verified commands include `npm run lint`, `npm run type-check`, `npm run build`, `npm run dev`, `npm run start`, `npm run test:api`, and `npm run generate:api`.
+- C01 (2026-10-05) changes public marketing and adds fit and walkthrough persistence. Do not deploy it to production or merge it without founder approval. CI also runs `npm run test:c01`.
 - CI exists as of 2026-07-28: `.github/workflows/ci.yml` runs `npm ci`, `npm run lint`, `npm run type-check`, `npm run test:auth-google`, and `npm run test:auth-password-reset` on every pull request against `main`, on Node 20, with actions pinned by commit SHA. The Google check covers the invite signup decision. The password-reset check covers token shape and public copy. There is still no general automated test suite.
 - No environment example file was found during the audit.
 - The dashboard currently includes settings, Shopify connection, store branding/logo upload, app-builder modules, homescreen preview, admin onboarding token pages, and a post-signup setup wizard at `/dashboard/onboarding`. The wizard ready step submits a tracked build request when the catalog sync succeeded and Shopify is connected.

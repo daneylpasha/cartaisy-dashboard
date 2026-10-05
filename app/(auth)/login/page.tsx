@@ -174,9 +174,18 @@ function LoginForm() {
             </Button>
           </form>
 
-          <p className="mt-6 border-t border-slate-100 pt-5 text-center text-xs leading-5 text-slate-500">
-            Access requires an invitation from your store administrator
-          </p>
+          <div className="mt-6 space-y-3 border-t border-slate-100 pt-5 text-center text-xs leading-5 text-slate-500">
+            <p>Accounts are invite-only. This page is for people who already have one.</p>
+            <p>
+              <Link href="/fit" className="font-medium text-slate-950 underline-offset-4 hover:underline">
+                Check if Cartaisy fits your store
+              </Link>
+              {' · '}
+              <Link href="/schedule-demo" className="font-medium text-slate-950 underline-offset-4 hover:underline">
+                Request a walkthrough
+              </Link>
+            </p>
+          </div>
         </CardContent>
       </Card>
 

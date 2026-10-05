@@ -144,13 +144,11 @@ export default function ContactForm() {
                 className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <option value="" className="bg-slate-900">Select a subject</option>
-                <option value="General Inquiry" className="bg-slate-900">General Inquiry</option>
-                <option value="Technical Support" className="bg-slate-900">Technical Support</option>
-                <option value="Sales" className="bg-slate-900">Sales</option>
-                <option value="Billing" className="bg-slate-900">Billing Question</option>
-                <option value="Partnership" className="bg-slate-900">Partnership</option>
-                <option value="Feature Request" className="bg-slate-900">Feature Request</option>
-                <option value="Feedback" className="bg-slate-900">Feedback</option>
+                <option value="General Inquiry" className="bg-slate-900">General question</option>
+                <option value="Fit question" className="bg-slate-900">Question about fit</option>
+                <option value="Walkthrough" className="bg-slate-900">Walkthrough</option>
+                <option value="Technical Support" className="bg-slate-900">Technical support</option>
+                <option value="Something else" className="bg-slate-900">Something else</option>
               </select>
             </div>
 

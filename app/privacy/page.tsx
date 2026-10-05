@@ -5,15 +5,15 @@ import { generateMetadata as genMeta } from '@/lib/seo';
 
 export const metadata: Metadata = genMeta({
   title: 'Privacy Policy',
-  description: 'Cartaisy Privacy Policy - how we collect, use, and protect your data. Your privacy matters to us.',
-  keywords: ['privacy', 'data protection', 'GDPR'],
+  description: 'What Cartaisy collects on the public site and in an invited account. The product does not collect card numbers.',
+  keywords: ['privacy', 'data protection'],
 });
 
 export default function PrivacyPolicy() {
   return (
     <PageLayout>
       <h1 className="text-4xl font-bold text-white mb-4">Privacy Policy</h1>
-      <p className="text-gray-400 mb-12">Last updated: January 2025</p>
+      <p className="text-gray-400 mb-12">Last updated: October 2026. The billing line was removed because this product does not collect card payments.</p>
 
       <div className="space-y-10 text-gray-300">
         <section>
@@ -21,7 +21,7 @@ export default function PrivacyPolicy() {
           <p className="leading-relaxed">
             Cartaisy (&ldquo;we,&rdquo; &ldquo;our,&rdquo; or &ldquo;us&rdquo;) is committed to protecting your privacy.
             This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use
-            our mobile app builder platform for Shopify stores.
+            the Cartaisy site and the invited merchant dashboard for a Shopify shopping app.
           </p>
         </section>
 
@@ -31,10 +31,10 @@ export default function PrivacyPolicy() {
             <div>
               <h3 className="text-lg font-medium text-purple-300 mb-2">Personal Information</h3>
               <ul className="list-disc list-inside space-y-2 ml-4">
-                <li>Name and email address when you create an account</li>
-                <li>Billing information for subscription payments</li>
-                <li>Shopify store information when you connect your store</li>
-                <li>Communication preferences</li>
+                <li>Name, email, optional store URL, and the answers you send on the fit check, walkthrough request, or contact form</li>
+                <li>Name, email, and store name when you accept an invite and create an account</li>
+                <li>Shopify store information after you connect a store from the dashboard</li>
+                <li>We do not collect card numbers in this product. Commercial payment, if any, happens outside it</li>
               </ul>
             </div>
             <div>
@@ -54,7 +54,7 @@ export default function PrivacyPolicy() {
           <p className="leading-relaxed mb-4">We use the information we collect to:</p>
           <ul className="list-disc list-inside space-y-2 ml-4">
             <li>Provide, maintain, and improve our services</li>
-            <li>Process transactions and send related information</li>
+            <li>Reply to fit checks, walkthrough requests, and contact messages</li>
             <li>Send you technical notices, updates, and support messages</li>
             <li>Respond to your comments, questions, and requests</li>
             <li>Monitor and analyze trends, usage, and activities</li>
