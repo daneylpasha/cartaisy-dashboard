@@ -134,19 +134,19 @@ export const supportEmail = 'support@cartaisy.com';
 export const homeManaged =
   'You keep the Shopify store. You own the Apple Developer account, the Google Play account, and the listings under them.';
 
-/** Homepage cards. Meanings match eligibility; the opening phrase is not repeated. */
+/** Homepage journey cards. Limits stay in offer details and FAQs, not in these three paths. */
 export const homeAudiences = [
   {
-    title: 'You already sell on Shopify',
-    body: 'Shoppers use a branded app that stays on your catalog and Shopify checkout.',
+    title: 'Already selling on Shopify',
+    body: 'Bring your catalog and brand into a mobile shopping experience, with guided setup from Cartaisy.',
   },
   {
-    title: 'You are planning a Shopify store',
-    body: 'You can talk with Cartaisy before the store exists. The store still has to come first. A store URL on the fit check is optional.',
+    title: 'Planning your Shopify store',
+    body: 'You can start the conversation now. Share your plans and explore the steps from store setup to an app.',
   },
   {
-    title: 'Start with the website',
-    body: 'Cartaisy does not acquire customers and does not guarantee sales. If Shopify is not the plan, start with the website.',
+    title: 'Exploring your next step',
+    body: 'Tell us where your business is today. We’ll help you understand whether a Shopify app fits your plans.',
   },
 ] as const;
 

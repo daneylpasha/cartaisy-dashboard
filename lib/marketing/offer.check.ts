@@ -225,6 +225,13 @@ assert.match(home, /offerPaths\.fit/);
 assert.match(home, /offerPaths\.demo/);
 assert.match(home, /offerExcludes/);
 assert.match(home, /homeAudiences/);
+assert.match(home, /Wherever you are in your Shopify journey/);
+assert.equal(/Who it suits/.test(home), false);
+assert.deepEqual(
+  homeAudiences.map((item) => item.title),
+  ['Already selling on Shopify', 'Planning your Shopify store', 'Exploring your next step']
+);
+assert.equal(/guarantee/i.test(homeAudiences.map((item) => `${item.title} ${item.body}`).join('\n')), false);
 assert.match(home, /Offer limits/);
 assert.match(home, /aria-label=\{`\$\{headlineLead\}, \$\{headlineRest\}`\}/);
 assert.match(home, /<span>\{headlineLead\},<\/span>\s*\n\s*<span>\{' '\}<\/span>\s*\n\s*<br className="hidden lg:block" aria-hidden="true" \/>/);
@@ -322,6 +329,11 @@ assert.equal(operating.outcome, 'operating_fit');
 assert.equal(prelaunch.outcome, 'prelaunch_fit');
 assert.equal(other.outcome, 'website_first');
 assert.equal(notShopify.outcome, 'website_first');
+assert.equal(notShopify.title, 'Start with your Shopify store');
+assert.match(notShopify.summary, /establish your Shopify store/);
+assert.equal(/non-Shopify|not the next step|another product/i.test(notShopify.summary), false);
+assert.match(eligibility.websiteFirst, /does not acquire customers/);
+assert.match(eligibility.websiteFirst, /does not guarantee sales/);
 
 const withUrl = parseFitLead({
   name: 'Amina',

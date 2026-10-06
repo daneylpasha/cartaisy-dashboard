@@ -50,13 +50,13 @@ Do not commission, and do not add: a customer logo wall, star ratings, download 
 
 6. **Display type.** Marketing routes now use a self-hosted Manrope variable file (SIL OFL) for headings and body. The signed-in dashboard still uses Plus Jakarta Sans for headings and Geist for body. No further display face is required for this pass.
 
-7. **Lifestyle photography.** Leave this empty. Section that would use it: “Who it suits.” A set of three opaque 4:5 photos would make that band look like the photography strips on other homepages, and it would also read as customer proof Cartaisy does not have. Do not shoot testimonial portraits or borrow brand imagery. Revisit only with a real merchant who has agreed to be shown.
+7. **Lifestyle photography.** Leave this empty. Section that would use it: “Wherever you are in your Shopify journey.” A set of three opaque 4:5 photos would make that band look like the photography strips on other homepages, and it would also read as customer proof Cartaisy does not have. Do not shoot testimonial portraits or borrow brand imagery. Revisit only with a real merchant who has agreed to be shown.
 
 The brand section copy, the rebuild note, and the image-left treatment are live.
 
 ## Typography and lower homepage (2026-10-06)
 
-Public marketing layouts use Manrope. “Who it suits” and “What managed includes” are three cards each. The nine exclusions sit in an Offer limits disclosure, with the pricing link visible while it is closed. The FAQ uses the same card type. Shared Android and iOS sentences no longer describe the August 2026 sample as a public offer. Public marketing call-to-action buttons use a 4px corner. The cookie panel is a near-black lower-left choice with Customize, Reject All, and Accept All. Closing preferences without saving leaves optional cookies off.
+Public marketing layouts use Manrope. “Wherever you are in your Shopify journey” and “What managed includes” are three cards each. The nine exclusions sit in an Offer limits disclosure, with the pricing link visible while it is closed. The FAQ uses the same card type. Shared Android and iOS sentences no longer describe the August 2026 sample as a public offer. Public marketing call-to-action buttons use a 4px corner. The cookie panel is a near-black lower-left choice with Customize, Reject All, and Accept All. Closing preferences without saving leaves optional cookies off.
 
 ## B. Requirement coverage
 

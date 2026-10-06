@@ -110,7 +110,7 @@ export default function HomeProspect() {
       <section aria-labelledby="who-heading">
         <div className={band}>
           <h2 id="who-heading" className={sectionHeading}>
-            Who it suits
+            Wherever you are in your Shopify journey
           </h2>
           <ul className="mt-8 grid items-stretch gap-4 md:grid-cols-3">
             {homeAudiences.map((item) => (

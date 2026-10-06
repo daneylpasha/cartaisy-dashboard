@@ -25,17 +25,17 @@ const results: Record<FitOutcome, Omit<FitResult, 'outcome'>> = {
   operating_fit: {
     title: 'Cartaisy may fit your store',
     summary:
-      'You already run a Shopify store and want a branded shopping app on that catalog. Cartaisy does not guarantee sales. Next, request a walkthrough. If we proceed, we send an invite. This check did not connect Shopify.',
+      'You already sell on Shopify and want a branded shopping app on that catalog. Next, request a walkthrough. If we proceed, we send an invite. This check did not connect Shopify.',
   },
   prelaunch_fit: {
     title: 'Start with the Shopify store',
     summary:
-      'You can talk with Cartaisy before the store is live. A store URL is optional and was not required. Launch the Shopify store before expecting an app to sell. A mobile app does not replace the website and does not guarantee sales. Request a walkthrough if you want to talk. This check did not connect Shopify.',
+      'You can start the conversation before the store is live. A store URL is optional. The Shopify store still comes before an app can sell. Request a walkthrough to walk through the steps. This check did not connect Shopify.',
   },
   website_first: {
-    title: 'A mobile app is not the next step',
+    title: 'Start with your Shopify store',
     summary:
-      'Cartaisy is a managed shopping app for a Shopify store. If you are not planning Shopify, or you want custom software, push or loyalty campaigns, or a sales guarantee, stay with the website or another product. This check did not connect Shopify.',
+      'Your next step is to establish your Shopify store. You’re welcome to discuss your plans with Cartaisy before exploring an app. This check did not connect Shopify.',
   },
 };
 
