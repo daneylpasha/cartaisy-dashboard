@@ -118,8 +118,8 @@ export default function LandingNavbar() {
             {/* Get Started - Primary CTA */}
             <Link href={offerPaths.fit}>
               <motion.button
-                className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold text-white shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300"
-                whileHover={{ scale: 1.05 }}
+                className="inline-flex min-h-10 items-center justify-center rounded-xl bg-white px-5 text-sm font-semibold text-slate-950"
+                whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
                 Check fit
@@ -197,7 +197,7 @@ export default function LandingNavbar() {
                   </Link>
                   <Link
                     href={offerPaths.fit}
-                    className="block text-center px-5 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full font-semibold text-white"
+                    className="block text-center rounded-xl bg-white px-5 py-3 font-semibold text-slate-950"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     Check fit

@@ -26,6 +26,8 @@ The homepage is a shorter merchant view of the same offer. The hero is the appro
 
 Product screenshots: follow-up. No dashboard screenshot was added. The hero illustration is a concept image with a fictional merchant, while authentic product screenshots are still a follow-up.
 
+The homepage now alternates a black ground with a raised `#121212` band. The brand section uses the heading “Your brand, made mobile.” and replaces the repeated “Your brand” bullet. Logo and colors can update without a new build. The home-screen name, app icon, and splash image need a new build. That matches `lib/marketing/offer.ts` and the product tour. The STILL / ARC / MIRA illustration file was not in this workspace, so that section does not show a stand-in image.
+
 ## B. Requirement coverage
 
 | ID | Requirement | Result |
