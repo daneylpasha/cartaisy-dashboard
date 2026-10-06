@@ -175,7 +175,7 @@ assert.match(demo, /ConnectStep/);
 assert.match(demo, /BrandingStep/);
 
 assert.equal(offerPositioning.eyebrow, 'Managed mobile apps for Shopify');
-assert.equal(offerPositioning.headline, 'Give your Shopify customers a branded mobile shopping experience.');
+assert.equal(offerPositioning.headline, 'Your Shopify store, made mobile.');
 assert.equal(offerPositioning.primaryCta, 'Check if Cartaisy fits your store');
 assert.equal(offerPositioning.secondaryCta, 'See Cartaisy in action');
 assert.equal(/free trial|operator|binary|staging store/i.test(offerPositioning.subhead), false);
@@ -202,7 +202,8 @@ const homeCopy = [
 ].join('\n');
 assert.equal(/operator|allowed store|staging store|\bbinary\b/i.test(homeCopy), false);
 assert.match(homePlatform.ios, /not ready/);
-assert.match(homePlatform.android, /August 2026/);
+assert.match(homePlatform.android, /not yet generally available/);
+assert.match(homePlatform.android, /in progress/);
 assert.equal(/download/.test(homePlatform.android), true);
 const costFaq = homeFaqs.find((item) => item.question === 'How much does it cost?');
 assert.match(costFaq?.answer ?? '', /no free trial/);

@@ -26,7 +26,9 @@ The homepage is a shorter merchant view of the same offer. The hero is the appro
 
 Product screenshots: follow-up. No dashboard screenshot was added. The hero illustration is a concept image with a fictional merchant, while authentic product screenshots are still a follow-up.
 
-The homepage now alternates a black ground with a raised `#121212` band. The brand section uses the heading “Your brand, made mobile.” and replaces the repeated “Your brand” bullet. The STILL / ARC / MIRA illustration sits on the left, with the caption “Illustrative merchant identities.” Logo and colors can update without a new build. The native app icon, launcher name, and splash need a new build. That matches `lib/marketing/offer.ts`. The product tour names the launcher icon and native splash in the same way and does not repeat the name rule in that sentence.
+The homepage now alternates a black ground with a raised `#121212` band. The brand section uses the heading “Your brand, made mobile.” and replaces the repeated “Your brand” bullet. The STILL / ARC / MIRA illustration sits on the left, with the caption “Illustrative merchant identities.” Logo and colors can update without a new build. The native icon, launcher name, and splash require a new build. That matches `lib/marketing/offer.ts`. The product tour names the launcher icon and native splash in the same way and does not repeat the name rule in that sentence.
+
+A later refinement pass changes only the navigation, hero, branding section, and cookie banner. The hero headline is “Your Shopify store, made mobile.” Availability no longer treats the 4 August 2026 sample install as merchant readiness. Android is not yet generally available. iOS is not ready for a merchant app. `docs/IOS_READINESS.md` still records the historical sample. This repo’s build screen records a request and does not start EAS, Play Console, or App Store Connect. Unresolved: whether ops can currently hand an invited merchant an Android install outside this product.
 
 ## Gaps vs competitors & assets needed
 

@@ -1,213 +1,110 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-
-const MotionLink = motion.create(Link);
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import { offerPaths } from "@/lib/marketing/offer";
 
+const navLinks = [
+  { href: offerPaths.fit, label: "Fit" },
+  { href: offerPaths.pricing, label: "Pricing" },
+  { href: offerPaths.demo, label: "Product tour" },
+  { href: offerPaths.features, label: "Features" },
+  { href: offerPaths.docs, label: "Docs" },
+];
+
+const linkClass =
+  "rounded-lg px-3 py-2 text-sm text-slate-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300";
+const primaryClass =
+  "inline-flex h-10 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black";
+
 export default function LandingNavbar() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const menuId = useId();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        buttonRef.current?.focus();
+      }
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    window.addEventListener("keydown", onKey);
+    panelRef.current?.querySelector<HTMLElement>("a")?.focus();
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
-  const navLinks = [
-    { href: offerPaths.fit, label: "Fit" },
-    { href: offerPaths.pricing, label: "Pricing" },
-    { href: offerPaths.demo, label: "Product tour" },
-    { href: offerPaths.features, label: "Features" },
-    { href: offerPaths.docs, label: "Docs" },
-  ];
+  const close = () => setOpen(false);
 
   return (
-    <motion.nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isScrolled ? "py-3" : "py-5"
-      }`}
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-    >
-      {/* Backdrop blur and background */}
-      <div
-        className={`absolute inset-0 transition-all duration-500 ${
-          isScrolled
-            ? "bg-slate-950/90 backdrop-blur-xl"
-            : "bg-gradient-to-b from-black/50 to-transparent backdrop-blur-sm"
-        }`}
-      />
-
-      {/* Bottom gradient border - visible on scroll */}
-      <div
-        className={`absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent transition-opacity duration-300 ${
-          isScrolled ? "opacity-100" : "opacity-0"
-        }`}
-      />
-
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-6 relative">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <motion.div
-              className="relative"
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-              {/* Glow effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl blur-lg opacity-40 group-hover:opacity-50 transition-opacity duration-300" />
-              <Image src="/cartaisy-white-logo.png" width={130} height={31} alt="Cartaisy" />
-              {/* Logo icon */}
-              {/* <div className="relative w-11 h-11 bg-gradient-to-br from-purple-600 via-violet-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/25">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div> */}
-            </motion.div>
-
-            {/* Logo text */}
-            {/* <motion.span
-              className="text-2xl font-bold bg-gradient-to-r from-white via-purple-100 to-pink-100 bg-clip-text text-transparent"
-              whileHover={{ scale: 1.02 }}
-            >
-              Cartaisy
-            </motion.span> */}
+    <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-4">
+      <div className="mx-auto w-full max-w-[1280px]">
+        <div className="flex h-14 items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#0b0b0d]/80 px-3 backdrop-blur-md sm:px-4">
+          <Link
+            href="/"
+            className="shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+          >
+            <Image src="/cartaisy-white-logo.png" width={120} height={29} alt="Cartaisy" />
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-1">
-            {navLinks.map((link, index) => (
-              <MotionLink
-                key={link.href}
-                href={link.href}
-                className="relative px-4 py-2 text-sm text-slate-300 hover:text-white transition-colors group"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.08 * index, duration: 0.35 }}
-              >
+          <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Primary">
+            {navLinks.map((link) => (
+              <Link key={link.href} href={link.href} className={linkClass}>
                 {link.label}
-                {/* Animated underline */}
-                <span className="absolute bottom-0 left-2 right-2 h-px bg-gradient-to-r from-purple-500 to-pink-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
-              </MotionLink>
+              </Link>
             ))}
-          </div>
+          </nav>
 
-          {/* CTA Buttons */}
-          <motion.div
-            className="hidden md:flex items-center gap-3"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2, duration: 0.35 }}
-          >
-            {/* Sign In */}
-            <Link
-              href="/login"
-              className="px-5 py-2.5 text-sm text-slate-300 hover:text-white transition-colors"
-            >
+          <div className="hidden items-center gap-1 lg:flex">
+            <Link href="/login" className={linkClass}>
               Sign In
             </Link>
-
-            {/* Get Started - Primary CTA */}
-            <Link href={offerPaths.fit}>
-              <motion.button
-                className="inline-flex min-h-10 items-center justify-center rounded-xl bg-white px-5 text-sm font-semibold text-slate-950"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                Check fit
-              </motion.button>
+            <Link href={offerPaths.fit} className={primaryClass}>
+              Check fit
             </Link>
-          </motion.div>
+          </div>
 
-          {/* Mobile Menu Button */}
-          <motion.button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden relative p-2 text-white"
-            whileTap={{ scale: 0.95 }}
-            aria-expanded={isMobileMenuOpen}
-            aria-controls="mobile-nav"
-            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+          <button
+            ref={buttonRef}
+            type="button"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 lg:hidden"
+            aria-expanded={open}
+            aria-controls={menuId}
+            aria-label={open ? "Close menu" : "Open menu"}
+            onClick={() => setOpen((value) => !value)}
           >
-            <AnimatePresence mode="wait">
-              {isMobileMenuOpen ? (
-                <motion.div
-                  key="close"
-                  initial={{ rotate: -90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 90, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <X size={24} />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="menu"
-                  initial={{ rotate: 90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: -90, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Menu size={24} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.button>
+            {open ? <X size={22} /> : <Menu size={22} />}
+          </button>
         </div>
 
-        {/* Mobile Menu */}
-        <AnimatePresence>
-          {isMobileMenuOpen && (
-            <motion.div
-              className="md:hidden absolute top-full left-0 right-0 bg-slate-950/95 backdrop-blur-xl border-t border-white/10"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-            >
-              <div id="mobile-nav" className="px-6 py-6 space-y-1">
-                {navLinks.map((link, index) => (
-                  <MotionLink
-                    key={link.href}
-                    href={link.href}
-                    className="block px-4 py-3 text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.03 }}
-                  >
-                    {link.label}
-                  </MotionLink>
-                ))}
-
-                <div className="pt-4 mt-4 border-t border-white/10 space-y-3">
-                  <Link
-                    href="/login"
-                    className="block text-center px-5 py-3 text-slate-300 hover:text-white transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    href={offerPaths.fit}
-                    className="block text-center rounded-xl bg-white px-5 py-3 font-semibold text-slate-950"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Check fit
-                  </Link>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {open ? (
+          <div
+            id={menuId}
+            ref={panelRef}
+            className="mt-2 rounded-2xl border border-white/10 bg-[#0b0b0d]/95 p-3 backdrop-blur-md lg:hidden"
+          >
+            <nav aria-label="Mobile" className="flex flex-col">
+              {navLinks.map((link) => (
+                <Link key={link.href} href={link.href} className={linkClass} onClick={close}>
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+            <div className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3">
+              <Link href="/login" className={`${linkClass} text-center`} onClick={close}>
+                Sign In
+              </Link>
+              <Link href={offerPaths.fit} className={primaryClass} onClick={close}>
+                Check fit
+              </Link>
+            </div>
+          </div>
+        ) : null}
       </div>
-    </motion.nav>
+    </header>
   );
 }

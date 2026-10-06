@@ -19,72 +19,85 @@ const audiences = [
 
 const offerPoints = homeIncludes.filter((item) => item.title !== 'Your brand');
 
+const shell = 'mx-auto w-full max-w-[1280px] px-5 sm:px-6 lg:px-12';
+const primaryAction =
+  'inline-flex h-12 items-center justify-center rounded-xl bg-white px-5 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black';
+const secondaryAction =
+  'inline-flex h-12 items-center justify-center rounded-xl border border-white/15 px-5 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black';
 const band = 'mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20';
+
+const brandControls = ['App name', 'Logo', 'Brand colors', 'App icon', 'Splash image'] as const;
+const [headlineLead, headlineRest] = offerPositioning.headline.split(', ');
 
 export default function HomeProspect() {
   return (
     <>
-      <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-8 pt-28 sm:px-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-16 lg:px-8 lg:pb-12 lg:pt-36">
-        <div>
-          <p className="text-sm font-medium uppercase tracking-[0.16em] text-purple-200">{offerPositioning.eyebrow}</p>
-          <h1 className="mt-4 text-4xl font-semibold leading-tight tracking-tight text-white sm:text-5xl">
-            {offerPositioning.headline}
-          </h1>
-          <p className="mt-5 text-lg leading-8 text-slate-200">{offerPositioning.subhead}</p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href={offerPaths.fit}
-              className="inline-flex min-h-12 items-center justify-center rounded-xl bg-white px-5 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
-            >
-              {offerPositioning.primaryCta}
-            </Link>
-            <Link
-              href={offerPaths.demo}
-              className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/20 px-5 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
-            >
-              {offerPositioning.secondaryCta}
-            </Link>
+      <section className="overflow-x-clip pt-24 sm:pt-28">
+        <div className={`${shell} grid items-start gap-8 lg:grid-cols-2 lg:gap-16`}>
+          <div className="lg:pt-4">
+            <p className="text-sm font-medium uppercase tracking-[0.16em] text-purple-200">{offerPositioning.eyebrow}</p>
+            <h1 className="font-heading mt-4 max-w-[10.5em] text-[2rem] font-semibold leading-[1.08] tracking-[-0.03em] text-[#f6f3ee] min-[400px]:text-[2.375rem] sm:max-w-none sm:text-[2.75rem] lg:text-[3.75rem] xl:text-[4.25rem]">
+              {headlineLead}, <span className="lg:block">{headlineRest}</span>
+            </h1>
+            <p className="mt-5 max-w-[52ch] text-base leading-7 text-slate-300 sm:text-lg lg:text-xl lg:leading-8">
+              {offerPositioning.subhead}
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <Link href={offerPaths.fit} className={primaryAction}>
+                {offerPositioning.primaryCta}
+              </Link>
+              <Link href={offerPaths.demo} className={secondaryAction}>
+                {offerPositioning.secondaryCta}
+              </Link>
+            </div>
           </div>
-          <div className="mt-8 rounded-xl border border-white/10 p-4">
-            <h2 className="font-semibold text-white">Where it is available</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-200">{homePlatform.android}</p>
-            <p className="mt-2 text-sm leading-6 text-slate-200">{homePlatform.ios}</p>
+          <figure className="min-w-0 lg:pt-4">
+            <Image
+              src="/marketing/c01-hero-still.webp"
+              alt="A phone showing a branded shopping app for a fictional home-goods store, with floating product cards."
+              width={1536}
+              height={1024}
+              priority
+              quality={90}
+              sizes="(min-width: 1280px) 720px, (min-width: 1024px) 50vw, 100vw"
+              className="h-auto w-full"
+            />
+            <figcaption className="mt-3 text-sm leading-5 text-slate-400">
+              Illustrative shopping experience — fictional merchant.
+            </figcaption>
+          </figure>
+        </div>
+        <div className={`${shell} mt-10 pb-4 lg:mt-14`}>
+          <h2 className="text-sm font-semibold text-white">Availability</h2>
+          <div className="mt-3 grid gap-3 border-t border-white/10 pt-4 sm:grid-cols-2">
+            <p className="text-sm leading-6 text-slate-200">{homePlatform.android}</p>
+            <p className="text-sm leading-6 text-slate-200">{homePlatform.ios}</p>
           </div>
         </div>
-        <figure className="min-w-0">
-          <Image
-            src="/marketing/c01-hero-still.webp"
-            alt="A phone showing a branded shopping app for a fictional home-goods store, with floating product cards."
-            width={1536}
-            height={1024}
-            priority
-            sizes="(min-width: 1024px) 640px, 100vw"
-            className="h-auto w-full [mask-image:radial-gradient(ellipse_at_center,black_92%,transparent_100%)]"
-          />
-          <figcaption className="mt-3 text-sm leading-5 text-slate-400">
-            Illustrative shopping experience — fictional merchant.
-          </figcaption>
-        </figure>
       </section>
 
-      <section className="bg-[#121212]" aria-labelledby="brand-heading">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:gap-16 lg:px-8 lg:py-20">
+      <section
+        className="scroll-mt-28 bg-[linear-gradient(180deg,#100e13_0%,#17141d_48%,#100e13_100%)]"
+        aria-labelledby="brand-heading"
+      >
+        <div className={`${shell} grid items-center gap-8 py-16 lg:grid-cols-2 lg:gap-16 lg:py-28`}>
           <div className="order-1 lg:order-2">
-            <h2 id="brand-heading" className="text-4xl font-semibold leading-tight tracking-tight text-white sm:text-5xl">
+            <h2
+              id="brand-heading"
+              className="font-heading text-[2rem] font-semibold leading-[1.08] tracking-[-0.03em] text-[#f6f3ee] sm:text-[2.5rem] lg:text-[3rem]"
+            >
               Your brand, made mobile.
             </h2>
-            <p className="mt-5 text-lg leading-8 text-slate-200">
+            <p className="mt-4 max-w-[48ch] text-base leading-7 text-slate-300 sm:text-lg">
               Bring your logo, colors, and app assets into a shopping experience that feels like your store.
             </p>
-            <ul className="mt-6 space-y-2 text-sm leading-6 text-slate-300">
-              <li>App name</li>
-              <li>Logo</li>
-              <li>Primary and secondary colors</li>
-              <li>App icon</li>
-              <li>Splash image</li>
+            <ul className="mt-6 grid grid-cols-2 gap-x-6 gap-y-3 text-sm leading-6 text-slate-200">
+              {brandControls.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
             </ul>
-            <p className="mt-6 text-sm leading-6 text-slate-400">
-              Logo and colors can update without a new build. The native app icon, launcher name, and splash need a new build.
+            <p className="mt-6 max-w-[48ch] text-sm leading-6 text-slate-400">
+              Logo and colors can update without a new build. The native icon, launcher name, and splash require a new build.
             </p>
           </div>
           <figure className="order-2 min-w-0 lg:order-1">
@@ -94,12 +107,11 @@ export default function HomeProspect() {
               width={1536}
               height={1024}
               loading="lazy"
-              sizes="(min-width: 1024px) 640px, 100vw"
-              className="h-auto w-full [mask-image:radial-gradient(ellipse_at_center,black_92%,transparent_100%)]"
+              quality={90}
+              sizes="(min-width: 1280px) 640px, (min-width: 1024px) 50vw, 100vw"
+              className="h-auto w-full"
             />
-            <figcaption className="mt-3 text-sm leading-5 text-slate-400">
-              Illustrative merchant identities.
-            </figcaption>
+            <figcaption className="mt-3 text-sm leading-5 text-slate-400">Illustrative merchant identities.</figcaption>
           </figure>
         </div>
       </section>

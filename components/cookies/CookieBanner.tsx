@@ -35,8 +35,8 @@ export default function CookieBanner() {
     'inline-flex min-h-10 items-center justify-center rounded-xl border border-white/20 px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300';
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-3">
-      <div className="max-w-4xl mx-auto bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden">
+    <div className="fixed bottom-3 left-3 right-3 z-50 sm:left-auto sm:right-4 sm:bottom-4 sm:w-[22.5rem]">
+      <div className="max-h-[min(32rem,calc(100vh-1.5rem))] overflow-y-auto rounded-2xl border border-white/10 bg-[#121214] shadow-2xl">
         {/* Main Banner */}
         <div className="px-4 py-3">
           <div className="flex items-start gap-3">
@@ -70,7 +70,7 @@ export default function CookieBanner() {
             {hasChosen && (
               <button
                 onClick={closeBanner}
-                className="text-slate-500 hover:text-white transition-colors"
+                className="rounded-md text-slate-500 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
                 aria-label="Close"
               >
                 <X size={20} />
@@ -101,8 +101,11 @@ export default function CookieBanner() {
                   <p className="text-slate-400 text-xs">Help us understand how visitors interact with our website.</p>
                 </div>
                 <button
+                  type="button"
+                  aria-pressed={localConsent.analytics}
+                  aria-label="Analytics cookies"
                   onClick={() => handleToggle('analytics')}
-                  className={`relative w-12 h-6 rounded-full transition-colors ${
+                  className={`relative h-6 w-12 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 ${
                     localConsent.analytics ? 'bg-purple-600' : 'bg-slate-700'
                   }`}
                 >
@@ -121,8 +124,11 @@ export default function CookieBanner() {
                   <p className="text-slate-400 text-xs">Used to deliver personalized advertisements.</p>
                 </div>
                 <button
+                  type="button"
+                  aria-pressed={localConsent.marketing}
+                  aria-label="Marketing cookies"
                   onClick={() => handleToggle('marketing')}
-                  className={`relative w-12 h-6 rounded-full transition-colors ${
+                  className={`relative h-6 w-12 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 ${
                     localConsent.marketing ? 'bg-purple-600' : 'bg-slate-700'
                   }`}
                 >

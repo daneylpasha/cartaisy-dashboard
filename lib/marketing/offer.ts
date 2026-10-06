@@ -25,9 +25,9 @@ export const offerPaths = {
 
 export const offerPositioning = {
   eyebrow: 'Managed mobile apps for Shopify',
-  headline: 'Give your Shopify customers a branded mobile shopping experience.',
+  headline: 'Your Shopify store, made mobile.',
   subhead:
-    'Cartaisy sets up a branded shopping app for one Shopify store and guides the work with you. Shoppers browse in the app and pay on Shopify hosted checkout.',
+    'A branded shopping app for your Shopify store, with guided setup from Cartaisy. Customers browse in the app and pay through Shopify checkout.',
   primaryCta: 'Check if Cartaisy fits your store',
   secondaryCta: 'See Cartaisy in action',
   walkthroughCta: 'Request a walkthrough',
@@ -153,7 +153,7 @@ export const homeSteps = [
 
 export const homePlatform = {
   android:
-    'Android: a branded sample was installed on a device in August 2026. This website does not offer that file as a download.',
+    'Android: not yet generally available. Merchant builds are in progress, and this site does not offer a download.',
   ios: 'iOS: not ready for a merchant app. Saving an iOS request is not a live iPhone app.',
 } as const;
 
