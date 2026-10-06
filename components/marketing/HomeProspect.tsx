@@ -32,10 +32,14 @@ export default function HomeProspect() {
         >
           <div className="min-w-0">
             <p className="text-sm font-medium uppercase tracking-normal text-purple-200">{offerPositioning.eyebrow}</p>
-            <h1 className="font-heading mt-4 text-[2rem] font-semibold leading-[1.1] tracking-[-0.025em] text-[#f6f3ee] min-[400px]:text-[2.375rem] sm:text-[2.75rem] lg:text-[2.75rem] xl:text-[3.125rem]">
-              {headlineLead},{' '}
-              <br className="hidden lg:block" />
-              {headlineRest}
+            <h1
+              aria-label={`${headlineLead}, ${headlineRest}`}
+              className="font-heading mt-4 text-[2rem] font-semibold leading-[1.1] tracking-[-0.025em] text-[#f6f3ee] min-[400px]:text-[2.375rem] sm:text-[2.75rem] lg:text-[2.75rem] xl:text-[3.125rem]"
+            >
+              <span>{headlineLead},</span>
+              <span>{' '}</span>
+              <br className="hidden lg:block" aria-hidden="true" />
+              <span>{headlineRest}</span>
             </h1>
             <p className="mt-5 max-w-[52ch] text-base font-normal leading-[1.6] text-slate-300 sm:text-lg">
               {offerPositioning.subhead}
