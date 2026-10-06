@@ -512,6 +512,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Auth session and the dashboard shell. Human review is required because this changes membership and can disconnect Shopify. No Shopify token or Expo token is stored or rendered. The last-app block is the merchant-facing choice: the owner always keeps a working app, and Add app still works. The backend route is not deployed yet. `docs/backend-remove-merchant-store.patch` applies on cartaisy-backend `main`.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/backend-remove-merchant-store.patch`.
 
+### The public header is a flat ink bar
+
+- Date: 2026-10-06.
+- Decision: The public marketing header is a full-width sticky bar on solid `#111210`, with one `#2D302B` bottom rule and no outer radius, gradient, or backdrop blur. The inner row uses the existing 1280px grid. The current route gets a sage `#B6C4A1` underline and `aria-current`. The footer uses the same ink and a plain top rule. The signed-in dashboard and auth screens do not use this bar.
+- Reason: The inset rounded floating bar was too close to another product’s navigation. Cartaisy’s public shell should be its own flat bar.
+- Impact: `LandingNavbar` and `LandingFooter` only. Labels, destinations, and page bodies stay. No auth or dashboard change.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
+
 ### The public product tour stays on the page
 
 - Date: 2026-10-06.

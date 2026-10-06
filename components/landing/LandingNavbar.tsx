@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { offerPaths } from "@/lib/marketing/offer";
 
@@ -14,12 +15,16 @@ const navLinks = [
   { href: offerPaths.docs, label: "Docs" },
 ];
 
-const linkClass =
-  "rounded-lg px-3 py-2 text-sm font-medium text-slate-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300";
-const primaryClass =
-  "inline-flex h-10 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black";
+const shell = "mx-auto flex w-full max-w-[1280px] items-center px-5 sm:px-6 lg:px-12";
+const focusRing =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#111210]";
+
+function isCurrent(pathname: string, href: string) {
+  return pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));
+}
 
 export default function LandingNavbar() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -41,70 +46,105 @@ export default function LandingNavbar() {
   const close = () => setOpen(false);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-4">
-      <div className="mx-auto w-full max-w-[1280px]">
-        <div className="flex h-14 items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#0b0b0d]/80 px-3 backdrop-blur-md sm:px-4">
-          <Link
-            href="/"
-            className="shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
-          >
-            <Image src="/cartaisy-white-logo.png" width={120} height={29} alt="Cartaisy" />
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-[#2D302B] bg-[#111210]">
+      <div className={`${shell} h-[68px] justify-between gap-3 lg:h-20`}>
+        <Link href="/" className={`shrink-0 rounded-sm ${focusRing}`}>
+          <Image src="/cartaisy-white-logo.png" width={120} height={29} alt="Cartaisy" />
+        </Link>
+
+        <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
+          {navLinks.map((link) => (
+            <NavLink key={link.href} href={link.href} pathname={pathname}>
+              {link.label}
+            </NavLink>
+          ))}
+        </nav>
+
+        <div className="hidden items-center gap-4 lg:flex">
+          <Link href="/login" className={`text-sm font-medium text-[#a3a69f] hover:text-white ${focusRing} rounded-sm px-1 py-2`}>
+            Sign In
           </Link>
-
-          <nav className="hidden items-center gap-0.5 lg:flex" aria-label="Primary">
-            {navLinks.map((link) => (
-              <Link key={link.href} href={link.href} className={linkClass}>
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="hidden items-center gap-1 lg:flex">
-            <Link href="/login" className={linkClass}>
-              Sign In
-            </Link>
-            <Link href={offerPaths.fit} className={primaryClass}>
-              Check fit
-            </Link>
-          </div>
-
-          <button
-            ref={buttonRef}
-            type="button"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 lg:hidden"
-            aria-expanded={open}
-            aria-controls={menuId}
-            aria-label={open ? "Close menu" : "Open menu"}
-            onClick={() => setOpen((value) => !value)}
+          <Link
+            href={offerPaths.fit}
+            className={`inline-flex h-12 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 ${focusRing}`}
           >
-            {open ? <X size={22} /> : <Menu size={22} />}
-          </button>
+            Check fit
+          </Link>
         </div>
 
-        {open ? (
-          <div
-            id={menuId}
-            ref={panelRef}
-            className="mt-2 rounded-2xl border border-white/10 bg-[#0b0b0d]/95 p-3 backdrop-blur-md lg:hidden"
-          >
+        <button
+          ref={buttonRef}
+          type="button"
+          className={`inline-flex h-11 w-11 items-center justify-center text-white lg:hidden ${focusRing}`}
+          aria-expanded={open}
+          aria-controls={menuId}
+          aria-label={open ? "Close menu" : "Open menu"}
+          onClick={() => setOpen((value) => !value)}
+        >
+          {open ? <X size={22} /> : <Menu size={22} />}
+        </button>
+      </div>
+
+      {open ? (
+        <div id={menuId} ref={panelRef} className="border-t border-[#2D302B] bg-[#111210] lg:hidden">
+          <div className="mx-auto w-full max-w-[1280px] px-5 py-2 sm:px-6">
             <nav aria-label="Mobile" className="flex flex-col">
               {navLinks.map((link) => (
-                <Link key={link.href} href={link.href} className={linkClass} onClick={close}>
+                <NavLink key={link.href} href={link.href} pathname={pathname} onClick={close} mobile>
                   {link.label}
-                </Link>
+                </NavLink>
               ))}
             </nav>
-            <div className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3">
-              <Link href="/login" className={`${linkClass} text-center`} onClick={close}>
+            <div className="mt-2 flex flex-col gap-2 border-t border-[#2D302B] py-3">
+              <Link
+                href="/login"
+                className={`inline-flex min-h-11 items-center px-3 text-sm font-medium text-[#a3a69f] hover:text-white ${focusRing}`}
+                onClick={close}
+              >
                 Sign In
               </Link>
-              <Link href={offerPaths.fit} className={primaryClass} onClick={close}>
+              <Link
+                href={offerPaths.fit}
+                className={`inline-flex h-12 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 ${focusRing}`}
+                onClick={close}
+              >
                 Check fit
               </Link>
             </div>
           </div>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </header>
+  );
+}
+
+function NavLink({
+  href,
+  pathname,
+  onClick,
+  mobile = false,
+  children,
+}: {
+  href: string;
+  pathname: string;
+  onClick?: () => void;
+  mobile?: boolean;
+  children: string;
+}) {
+  const current = isCurrent(pathname, href);
+  return (
+    <Link
+      href={href}
+      aria-current={current ? "page" : undefined}
+      onClick={onClick}
+      className={
+        mobile
+          ? `relative inline-flex min-h-11 items-center px-3 text-sm font-medium ${current ? "text-white" : "text-[#d7d8d3] hover:text-white"} ${focusRing}`
+          : `relative inline-flex h-11 items-center px-3 text-sm font-medium ${current ? "text-white" : "text-[#d7d8d3] hover:text-white"} ${focusRing}`
+      }
+    >
+      {children}
+      {current ? <span className="absolute inset-x-3 bottom-1.5 h-px bg-[#B6C4A1]" aria-hidden /> : null}
+    </Link>
   );
 }
