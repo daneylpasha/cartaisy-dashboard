@@ -5,7 +5,6 @@ import {
   homeIncludes,
   homeManaged,
   homePlatform,
-  homeSteps,
   offerExcludes,
   offerPaths,
   offerPositioning,
@@ -165,20 +164,49 @@ export default function HomeProspect() {
         </div>
       </section>
 
-      <section aria-labelledby="start-heading">
-        <div className={band}>
-          <h2 id="start-heading" className="text-3xl font-semibold tracking-tight text-white">
-            How to get started
-          </h2>
-          <ol className="mt-8 max-w-3xl list-decimal space-y-4 pl-5 text-sm leading-6 text-slate-300">
-            {homeSteps.map((step) => (
-              <li key={step.title}>
-                <span className="font-semibold text-white">{step.title}. </span>
-                {step.body}
-              </li>
-            ))}
-          </ol>
+      <section className="bg-[#f7f4ee]" aria-labelledby="path-heading">
+        <div className="h-14 bg-gradient-to-b from-[#121212] to-[#f7f4ee] sm:h-16" aria-hidden="true" />
+        <div className={`${shell} pb-10 lg:pb-14`}>
+          <div className="flex flex-col lg:grid">
+            <figure className="order-2 overflow-hidden lg:order-none lg:col-start-1 lg:row-start-1">
+              <Image
+                src="/marketing/c01-ridgeline-setup.webp"
+                alt="A fictional outdoor merchant named Ridgeline, shown as catalog, brand, build request, and home preview panels on a mountain landscape."
+                width={1983}
+                height={793}
+                loading="lazy"
+                quality={90}
+                sizes="(min-width: 1024px) 1200px, 140vw"
+                className="-ml-[28%] h-auto w-[128%] max-w-none lg:ml-0 lg:w-full"
+              />
+            </figure>
+            <div className="order-1 py-8 lg:order-none lg:col-start-1 lg:row-start-1 lg:flex lg:w-[26%] lg:items-center lg:py-6 lg:pr-4">
+              <div>
+                <h2
+                  id="path-heading"
+                  className="font-heading text-[1.75rem] font-semibold leading-[1.12] tracking-[-0.03em] text-[#1b3a2f] sm:text-[2rem]"
+                >
+                  A guided path from store to app.
+                </h2>
+                <p className="mt-4 max-w-[36ch] text-base leading-7 text-[#244538]">
+                  Connect your Shopify store, sync your catalog, set your brand, and prepare your app build with guidance from Cartaisy.
+                </p>
+                <Link
+                  href={offerPaths.walkthrough}
+                  className="mt-6 inline-flex h-12 items-center justify-center rounded-xl bg-[#1b3a2f] px-5 text-sm font-semibold text-[#f7f4ec] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1b3a2f] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f7f4ee]"
+                >
+                  {offerPositioning.walkthroughCta}
+                </Link>
+              </div>
+            </div>
+          </div>
+          <p className="mt-3 text-sm leading-5 text-[#3d5348]">Illustrative setup workflow — fictional merchant.</p>
+          <div className="mt-5 grid gap-3 border-t border-[#1b3a2f]/15 pt-4 sm:grid-cols-2">
+            <p className="text-sm leading-6 text-[#1b3a2f]">{homePlatform.android}</p>
+            <p className="text-sm leading-6 text-[#1b3a2f]">{homePlatform.ios}</p>
+          </div>
         </div>
+        <div className="h-14 bg-gradient-to-b from-[#f7f4ee] to-[#121212] sm:h-16" aria-hidden="true" />
       </section>
     </>
   );
