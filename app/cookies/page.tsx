@@ -50,9 +50,8 @@ export default function CookiePolicy() {
             <div className="bg-white/5 rounded-lg p-6 border border-white/10">
               <h3 className="text-lg font-medium text-purple-300 mb-3">Marketing Cookies</h3>
               <p className="leading-relaxed">
-                These cookies are used to track visitors across websites. The intention is to display ads
-                that are relevant and engaging for the individual user. These cookies may be set by third-party
-                advertising networks with our permission.
+                This site does not load advertising-network pixels. The marketing choice is stored with your
+                other choices. Allowing analytics does not turn marketing on.
               </p>
             </div>
           </div>
@@ -78,17 +77,12 @@ export default function CookiePolicy() {
                 <tr className="border-b border-white/10">
                   <td className="py-3 pr-4 text-purple-300">cartaisy_token</td>
                   <td className="py-3 pr-4">Authentication and session management</td>
-                  <td className="py-3">Session</td>
+                  <td className="py-3">7 days</td>
                 </tr>
                 <tr className="border-b border-white/10">
-                  <td className="py-3 pr-4 text-purple-300">_ga</td>
-                  <td className="py-3 pr-4">Google Analytics - distinguishes users</td>
-                  <td className="py-3">2 years</td>
-                </tr>
-                <tr className="border-b border-white/10">
-                  <td className="py-3 pr-4 text-purple-300">_gid</td>
-                  <td className="py-3 pr-4">Google Analytics - distinguishes users</td>
-                  <td className="py-3">24 hours</td>
+                  <td className="py-3 pr-4 text-purple-300">cartaisy_auth_entry</td>
+                  <td className="py-3 pr-4">Short-lived sign-in handoff. Not a credential.</td>
+                  <td className="py-3">30 minutes</td>
                 </tr>
               </tbody>
             </table>
@@ -98,13 +92,12 @@ export default function CookiePolicy() {
         <section>
           <h2 className="text-2xl font-semibold text-white mb-4">4. Third-Party Cookies</h2>
           <p className="leading-relaxed mb-4">
-            In addition to our own cookies, we may also use various third-party cookies to report usage
-            statistics of the Service and deliver advertisements on and through the Service. These may include:
+            Optional analytics load only after you allow analytics. This site does not load those tools as
+            advertising pixels.
           </p>
           <ul className="list-disc list-inside space-y-2 ml-4">
-            <li><strong className="text-white">Google Analytics:</strong> For website analytics and performance monitoring</li>
-            <li><strong className="text-white">Vercel Analytics:</strong> For performance and usage insights</li>
-            <li><strong className="text-white">Shopify:</strong> For integration with your Shopify store</li>
+            <li><strong className="text-white">Google Analytics:</strong> Loaded only when this site is configured with a measurement ID and you allow analytics. Google may then set its own analytics cookie, such as _ga. This site does not set _gid.</li>
+            <li><strong className="text-white">Vercel Analytics and Speed Insights:</strong> Page views and performance. Both load only after you allow analytics.</li>
           </ul>
         </section>
 

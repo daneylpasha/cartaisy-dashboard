@@ -40,10 +40,9 @@ export default function PrivacyPolicy() {
             <div>
               <h3 className="text-lg font-medium text-purple-300 mb-2">Automatically Collected Information</h3>
               <ul className="list-disc list-inside space-y-2 ml-4">
-                <li>Device information and browser type</li>
-                <li>IP address and location data</li>
-                <li>Usage data and analytics</li>
-                <li>Cookies and similar tracking technologies</li>
+                <li>IP address on a fit check, walkthrough request, or contact message</li>
+                <li>Optional analytics after you allow them: Vercel Analytics, Speed Insights, and Google Analytics when it is configured</li>
+                <li>Cookies described in the cookie policy</li>
               </ul>
             </div>
           </div>
@@ -78,9 +77,11 @@ export default function PrivacyPolicy() {
           <h2 className="text-2xl font-semibold text-white mb-4">5. Cookies and Tracking</h2>
           <p className="leading-relaxed">
             We use cookies and similar tracking technologies to track activity on our platform and hold certain
-            information. You can instruct your browser to refuse all cookies or to indicate when a cookie is being
-            sent. However, if you do not accept cookies, you may not be able to use some portions of our service.
-            For more details, please see our <Link href="/cookies" className="text-purple-400 hover:text-purple-300">Cookie Policy</Link>.
+            information. Optional analytics stay off until you allow them. That includes Vercel Analytics, Speed
+            Insights, and Google Analytics when a measurement ID is configured. This site does not load
+            advertising-network pixels. You can instruct your browser to refuse all cookies or to indicate when a
+            cookie is being sent. However, if you do not accept cookies, you may not be able to use some portions
+            of our service. For more details, please see our <Link href="/cookies" className="text-purple-400 hover:text-purple-300">Cookie Policy</Link>.
           </p>
         </section>
 

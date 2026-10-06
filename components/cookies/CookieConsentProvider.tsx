@@ -5,6 +5,7 @@ import {
   CookieConsent,
   defaultConsent,
   getStoredConsent,
+  gtagStorageConsent,
   setConsentCookie,
 } from '@/lib/cookies';
 
@@ -49,10 +50,7 @@ export default function CookieConsentProvider({ children }: { children: ReactNod
   // Update analytics when consent changes
   useEffect(() => {
     if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('consent', 'update', {
-        analytics_storage: consent.analytics ? 'granted' : 'denied',
-        ad_storage: consent.marketing ? 'granted' : 'denied',
-      });
+      window.gtag('consent', 'update', gtagStorageConsent(consent));
     }
   }, [consent]);
 

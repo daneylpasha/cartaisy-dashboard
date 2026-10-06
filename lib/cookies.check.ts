@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { consentAfterPreferencesDismiss, isOnboardingWizardPath } from '@/lib/cookies';
+import { consentAfterPreferencesDismiss, gtagStorageConsent, isOnboardingWizardPath, optionalAnalyticsAllowed } from '@/lib/cookies';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const bannerSource = readFileSync(join(here, '../components/cookies/CookieBanner.tsx'), 'utf8');
@@ -41,5 +41,15 @@ assert.equal(dismissed.marketing, false);
 const storedOn = consentAfterPreferencesDismiss({ necessary: true, analytics: true, marketing: false });
 assert.equal(storedOn.analytics, true);
 assert.equal(storedOn.marketing, false);
+assert.equal(optionalAnalyticsAllowed(null), false);
+assert.equal(optionalAnalyticsAllowed(storedOff), false);
+assert.equal(optionalAnalyticsAllowed({ analytics: false, marketing: true }), false);
+assert.equal(optionalAnalyticsAllowed(storedOn), true);
+assert.deepEqual(gtagStorageConsent(storedOn), { analytics_storage: 'granted', ad_storage: 'denied' });
+assert.deepEqual(gtagStorageConsent({ analytics: false, marketing: true }), {
+  analytics_storage: 'denied',
+  ad_storage: 'granted',
+});
+assert.deepEqual(gtagStorageConsent(null), { analytics_storage: 'denied', ad_storage: 'denied' });
 
 console.log('cookie banner deferral checks passed');

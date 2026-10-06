@@ -28,6 +28,7 @@ import {
   offerPositioning,
   publicFaqs,
 } from '@/lib/marketing/offer';
+import { gtagStorageConsent, optionalAnalyticsAllowed } from '@/lib/cookies';
 import { consumeRateLimit, resetRateLimitForTests } from '@/lib/marketing/rateLimit';
 import { generateMetadata } from '@/lib/seo';
 
@@ -345,8 +346,35 @@ assert.match(readFileSync(join(root, 'app/privacy/page.tsx'), 'utf8'), /We do no
 const cookiesPage = readFileSync(join(root, 'app/cookies/page.tsx'), 'utf8');
 assert.equal(/Stripe/i.test(cookiesPage), false);
 assert.equal(cookiesPage.includes('session_token'), false);
+assert.equal(/<td[^>]*>_ga<\/td>/.test(cookiesPage), false);
+assert.equal(/<td[^>]*>_gid<\/td>/.test(cookiesPage), false);
+assert.equal(/advertising networks|deliver advertisements/i.test(cookiesPage), false);
 assert.match(cookiesPage, /cartaisy_token/);
+assert.match(cookiesPage, /cartaisy_auth_entry/);
+assert.match(cookiesPage, /7 days/);
+assert.match(cookiesPage, /does not set _gid/);
+assert.match(cookiesPage, /Vercel Analytics and Speed Insights/);
+assert.match(cookiesPage, /only after you allow analytics/);
 assert.match(cookiesPage, /Last updated: October 2026/);
+const privacyPage = readFileSync(join(root, 'app/privacy/page.tsx'), 'utf8');
+assert.equal(privacyPage.includes('location data'), false);
+assert.match(privacyPage, /IP address on a fit check/);
+assert.match(privacyPage, /does not load\s+advertising-network pixels/);
+const layoutSource = readFileSync(join(root, 'app/layout.tsx'), 'utf8');
+assert.equal(layoutSource.includes('<VercelAnalytics'), false);
+assert.equal(layoutSource.includes('<VercelSpeedInsights'), false);
+assert.equal(layoutSource.includes('<GoogleAnalytics'), false);
+assert.match(layoutSource, /<ConsentGatedAnalytics/);
+const analyticsGate = readFileSync(join(root, 'components/analytics/ConsentGatedAnalytics.tsx'), 'utf8');
+assert.match(analyticsGate, /optionalAnalyticsAllowed/);
+assert.match(analyticsGate, /removeOptionalAnalyticsScripts/);
+assert.equal(optionalAnalyticsAllowed(null), false);
+assert.equal(optionalAnalyticsAllowed({ analytics: false, marketing: true }), false);
+assert.equal(optionalAnalyticsAllowed({ analytics: true, marketing: false }), true);
+assert.deepEqual(gtagStorageConsent({ analytics: true, marketing: false }), {
+  analytics_storage: 'granted',
+  ad_storage: 'denied',
+});
 assert.equal(offerExcludes.length, 9);
 for (const rel of ['app/about/page.tsx', 'app/features/page.tsx', 'app/docs/quickstart/page.tsx', 'app/fit/page.tsx']) {
   const page = readFileSync(join(root, rel), 'utf8');

@@ -46,6 +46,27 @@ export function hasConsentChoice(): boolean {
   return getStoredConsent() !== null;
 }
 
+/** Optional analytics scripts load only after this stored choice is true. */
+export function optionalAnalyticsAllowed(
+  consent: { analytics?: boolean; marketing?: boolean } | null | undefined
+): boolean {
+  return consent?.analytics === true;
+}
+
+/**
+ * Analytics consent does not grant marketing storage, and marketing consent
+ * does not grant analytics storage.
+ */
+export function gtagStorageConsent(consent: { analytics?: boolean; marketing?: boolean } | null | undefined): {
+  analytics_storage: 'granted' | 'denied';
+  ad_storage: 'granted' | 'denied';
+} {
+  return {
+    analytics_storage: consent?.analytics === true ? 'granted' : 'denied',
+    ad_storage: consent?.marketing === true ? 'granted' : 'denied',
+  };
+}
+
 /**
  * Closing cookie preferences discards draft toggles.
  * Optional cookies stay at the stored choice, which is off until a choice is saved.
