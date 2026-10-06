@@ -26,7 +26,7 @@ The homepage is a shorter merchant view of the same offer. The hero is the appro
 
 Product screenshots: follow-up. No dashboard screenshot was added. The hero illustration is a concept image with a fictional merchant, while authentic product screenshots are still a follow-up.
 
-The homepage now alternates a black ground with a raised `#121212` band. The brand section uses the heading “Your brand, made mobile.” and replaces the repeated “Your brand” bullet. Logo and colors can update without a new build. The home-screen name, app icon, and splash image need a new build. That matches `lib/marketing/offer.ts` and the product tour. The STILL / ARC / MIRA illustration file was not in this workspace, so that section does not show a stand-in image.
+The homepage now alternates a black ground with a raised `#121212` band. The brand section uses the heading “Your brand, made mobile.” and replaces the repeated “Your brand” bullet. The STILL / ARC / MIRA illustration sits on the left, with the caption “Illustrative merchant identities.” Logo and colors can update without a new build. The native app icon, launcher name, and splash need a new build. That matches `lib/marketing/offer.ts`. The product tour names the launcher icon and native splash in the same way and does not repeat the name rule in that sentence.
 
 ## Gaps vs competitors & assets needed
 
@@ -34,7 +34,7 @@ Compared on 6 October 2026 against the live homepages of Tapcart, Shopney, and S
 
 Do not commission, and do not add: a customer logo wall, star ratings, download or brand counts, testimonial portraits, or any phone mock of a product screen that was not captured from the real dashboard or the August 2026 Android sample.
 
-1. **Brand-identity illustration.** Missing. Section: “Your brand, made mobile.” Asset: one PNG source, shipped as WebP, 1536×1024 (3:2), opaque dark studio background (not transparent). It should show the three fictional kits already named for this pass — STILL, ARC, and MIRA — as identity boards, not as customer logos. Count: 1. Why it matters: this is the second band and it is a text column. The file `uploads/c01-brand-identities.png` was not in the workspace. No substitute was drawn. Until it arrives, the image-left / copy-right layout and the caption “Illustrative merchant identities.” are not on the page.
+1. **Brand-identity illustration.** Shipped after the file arrived. Section: “Your brand, made mobile.” One WebP, 1536×1024 (3:2), opaque, showing the fictional kits STILL, ARC, and MIRA. Caption: “Illustrative merchant identities.” They are not customer logos.
 
 2. **Real dashboard stills.** Missing. Section: “What managed includes” (catalog, home, Shopify checkout). Assets: three PNG or WebP captures, about 16:10 or 3:2, opaque, with the real Cartaisy chrome. Suggested frames: the Connect step after a real store address is accepted, the Brand step showing logo, colors, icon, and splash, and the home editor or a Shopify hosted checkout that is actually Shopify’s. Count: 3. No tokens, no invented orders, no pasted-in phone frame. Why it matters: the only picture on the page is a fictional store. The offer section is the place a merchant looks for the product, and it is a list.
 

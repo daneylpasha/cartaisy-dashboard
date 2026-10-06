@@ -68,12 +68,12 @@ export default function HomeProspect() {
       </section>
 
       <section className="bg-[#121212]" aria-labelledby="brand-heading">
-        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-          <div>
-            <h2 id="brand-heading" className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)] lg:gap-16 lg:px-8 lg:py-20">
+          <div className="order-1 lg:order-2">
+            <h2 id="brand-heading" className="text-4xl font-semibold leading-tight tracking-tight text-white sm:text-5xl">
               Your brand, made mobile.
             </h2>
-            <p className="mt-4 text-lg leading-8 text-slate-200">
+            <p className="mt-5 text-lg leading-8 text-slate-200">
               Bring your logo, colors, and app assets into a shopping experience that feels like your store.
             </p>
             <ul className="mt-6 space-y-2 text-sm leading-6 text-slate-300">
@@ -84,9 +84,23 @@ export default function HomeProspect() {
               <li>Splash image</li>
             </ul>
             <p className="mt-6 text-sm leading-6 text-slate-400">
-              Logo and colors can update without a new build. The name on the home screen, the app icon, and the splash image need a new build.
+              Logo and colors can update without a new build. The native app icon, launcher name, and splash need a new build.
             </p>
           </div>
+          <figure className="order-2 min-w-0 lg:order-1">
+            <Image
+              src="/marketing/c01-brand-identities.webp"
+              alt="Three fictional brand kits named STILL, ARC, and MIRA, with color swatches, a vase, a backpack, and a bottle."
+              width={1536}
+              height={1024}
+              loading="lazy"
+              sizes="(min-width: 1024px) 640px, 100vw"
+              className="h-auto w-full [mask-image:radial-gradient(ellipse_at_center,black_92%,transparent_100%)]"
+            />
+            <figcaption className="mt-3 text-sm leading-5 text-slate-400">
+              Illustrative merchant identities.
+            </figcaption>
+          </figure>
         </div>
       </section>
 
