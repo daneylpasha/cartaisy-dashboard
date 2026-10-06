@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Mail, Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { analytics } from '@/lib/analytics';
 
@@ -22,6 +22,11 @@ export default function ContactForm() {
   });
   const [status, setStatus] = useState<FormStatus>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const successRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (status === 'success') successRef.current?.focus();
+  }, [status]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,8 +79,13 @@ export default function ContactForm() {
       {/* Contact Form */}
       <div className="md:col-span-2">
         {status === 'success' ? (
-          <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-8 text-center">
-            <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
+          <div
+            ref={successRef}
+            role="status"
+            tabIndex={-1}
+            className="bg-green-500/10 border border-green-500/20 rounded-xl p-8 text-center"
+          >
+            <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" aria-hidden />
             <h2 className="text-2xl font-semibold text-white mb-2">Message Sent!</h2>
             <p className="text-gray-400 mb-6">
               Thank you for reaching out. We&apos;ll get back to you as soon as possible.
@@ -91,8 +101,8 @@ export default function ContactForm() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Error Message */}
             {status === 'error' && (
-              <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-                <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+              <div role="alert" className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <AlertCircle className="w-5 h-5 text-red-400 shrink-0" aria-hidden />
                 <p className="text-red-300 text-sm">{errorMessage}</p>
               </div>
             )}

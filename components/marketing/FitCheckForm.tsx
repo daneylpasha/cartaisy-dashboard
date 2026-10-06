@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { offerPaths, offerPositioning } from '@/lib/marketing/offer';
 import { type FitGoal, type FitResult, type FitStage } from '@/lib/marketing/fitCheck';
@@ -20,6 +20,11 @@ export default function FitCheckForm() {
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState('');
   const [result, setResult] = useState<FitResult | null>(null);
+  const successRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (status === 'success') successRef.current?.focus();
+  }, [status]);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -54,7 +59,12 @@ export default function FitCheckForm() {
 
   if (status === 'success' && result) {
     return (
-      <div role="status" className="rounded-2xl border border-white/15 bg-white/5 p-6 sm:p-8">
+      <div
+        ref={successRef}
+        role="status"
+        tabIndex={-1}
+        className="rounded-2xl border border-white/15 bg-white/5 p-6 sm:p-8"
+      >
         <p className="text-sm font-medium uppercase tracking-wide text-purple-200">Fit check result</p>
         <h2 className="mt-3 text-2xl font-semibold text-white">{result.title}</h2>
         <p className="mt-4 text-base leading-7 text-slate-200">{result.summary}</p>
