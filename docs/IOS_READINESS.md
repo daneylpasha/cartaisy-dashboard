@@ -15,4 +15,4 @@ Status: TODO. Not a production offer.
 - A successful iOS build for that store.
 - A founder decision that the binary is allowed to be described in public.
 
-Until those exist, copy stays in `lib/marketing/offer.ts` as `iosReadiness`.
+Until those exist, public copy stays in `lib/marketing/offer.ts`. `iosReadiness` says iOS is not ready for a merchant app. `homePlatform.android` says Android is not yet generally available and that this site does not offer a download. The 4 August 2026 install in this file is history, not the public claim.

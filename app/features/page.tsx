@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import PageLayout from '@/components/landing/PageLayout';
-import { checkoutWording, iosReadiness, offerExcludes, offerIncludes, offerPaths, offerPositioning } from '@/lib/marketing/offer';
+import { checkoutWording, homePlatform, offerExcludes, offerIncludes, offerPaths, offerPositioning } from '@/lib/marketing/offer';
 import { generateMetadata as genMeta } from '@/lib/seo';
 
 export const metadata: Metadata = genMeta({
@@ -16,7 +16,8 @@ export default function FeaturesPage() {
       <p className="text-sm font-medium uppercase tracking-wide text-purple-200">{offerPositioning.eyebrow}</p>
       <h1 className="mt-3 text-4xl font-semibold text-white">What the app actually does</h1>
       <p className="mt-4 max-w-2xl text-base leading-7 text-slate-200">{checkoutWording}</p>
-      <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">{iosReadiness}</p>
+      <p className="mt-3 max-w-2xl text-base font-normal leading-[1.6] text-slate-200">{homePlatform.android}</p>
+      <p className="mt-2 max-w-2xl text-base font-normal leading-[1.6] text-slate-200">{homePlatform.ios}</p>
 
       <section id="shopify-integration" className="mt-10 scroll-mt-28">
         <h2 className="text-2xl font-semibold text-white">Supported</h2>
@@ -42,7 +43,7 @@ export default function FeaturesPage() {
       <div className="mt-8">
         <Link
           href={offerPaths.fit}
-          className="inline-flex min-h-11 items-center justify-center rounded-lg bg-white px-4 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+          className="inline-flex min-h-11 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
         >
           {offerPositioning.primaryCta}
         </Link>

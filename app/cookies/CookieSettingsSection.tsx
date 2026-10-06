@@ -9,7 +9,7 @@ export default function CookieSettingsSection() {
       <p className="text-gray-300 leading-relaxed mb-4">
         You can change your cookie preferences at any time by clicking the button below:
       </p>
-      <CookieSettingsButton className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg" />
+      <CookieSettingsButton className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-[4px]" />
     </section>
   );
 }

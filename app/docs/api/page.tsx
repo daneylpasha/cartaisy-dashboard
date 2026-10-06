@@ -23,7 +23,7 @@ export default function ApiReferencePage() {
         </p>
       </div>
       <div className="mt-8">
-        <Link href={offerPaths.contact} className="inline-flex min-h-11 items-center justify-center rounded-lg bg-white px-4 text-sm font-semibold text-slate-950">
+        <Link href={offerPaths.contact} className="inline-flex min-h-11 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950">
           Contact
         </Link>
       </div>

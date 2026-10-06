@@ -61,13 +61,13 @@ export default function FitCheckForm() {
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Link
             href={offerPaths.walkthrough}
-            className="inline-flex min-h-11 items-center justify-center rounded-lg bg-white px-4 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+            className="inline-flex min-h-11 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
           >
             {offerPositioning.walkthroughCta}
           </Link>
           <Link
             href={offerPaths.demo}
-            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/20 px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+            className="inline-flex min-h-11 items-center justify-center rounded-[4px] border border-white/20 px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
           >
             {offerPositioning.secondaryCta}
           </Link>
@@ -152,7 +152,7 @@ export default function FitCheckForm() {
       <button
         type="submit"
         disabled={status === 'submitting'}
-        className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-white px-4 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 disabled:opacity-60 sm:w-auto"
+        className="inline-flex min-h-11 w-full items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 disabled:opacity-60 sm:w-auto"
       >
         {status === 'submitting' ? 'Saving…' : 'See if Cartaisy fits'}
       </button>

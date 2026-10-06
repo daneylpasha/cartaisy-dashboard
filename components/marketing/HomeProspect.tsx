@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import {
-  eligibility,
+  homeAudiences,
   homeIncludes,
   homeManaged,
   offerExcludes,
@@ -9,20 +9,16 @@ import {
   offerPositioning,
 } from '@/lib/marketing/offer';
 
-const audiences = [
-  { title: 'You already sell on Shopify', body: eligibility.operating },
-  { title: 'You are planning a Shopify store', body: eligibility.prelaunch },
-  { title: 'Start with the website', body: eligibility.websiteFirst },
-] as const;
-
 const offerPoints = homeIncludes.filter((item) => item.title !== 'Your brand');
 
 const shell = 'mx-auto w-full max-w-[1280px] px-5 sm:px-6 lg:px-12';
 const primaryAction =
-  'inline-flex h-12 items-center justify-center rounded-xl bg-white px-5 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black';
+  'inline-flex h-12 items-center justify-center rounded-[4px] bg-white px-5 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black';
 const secondaryAction =
-  'inline-flex h-12 items-center justify-center rounded-xl border border-white/15 px-5 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black';
+  'inline-flex h-12 items-center justify-center rounded-[4px] border border-white/15 px-5 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black';
 const band = 'mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20';
+const card = 'flex h-full flex-col rounded-xl border border-white/10 bg-white/5 p-5';
+const sectionHeading = 'text-3xl font-semibold leading-[1.1] tracking-[-0.025em] text-white';
 
 const brandControls = ['App name', 'Logo', 'Brand colors', 'App icon', 'Splash image'] as const;
 const [headlineLead, headlineRest] = offerPositioning.headline.split(', ');
@@ -35,13 +31,13 @@ export default function HomeProspect() {
           className={`${shell} grid items-center gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-10 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] xl:gap-12`}
         >
           <div className="min-w-0">
-            <p className="text-sm font-medium uppercase tracking-[0.16em] text-purple-200">{offerPositioning.eyebrow}</p>
-            <h1 className="font-heading mt-4 text-[2rem] font-semibold leading-[1.08] tracking-[-0.03em] text-[#f6f3ee] min-[400px]:text-[2.375rem] sm:text-[2.75rem] lg:text-[2.75rem] xl:text-[3.125rem]">
+            <p className="text-sm font-medium uppercase tracking-normal text-purple-200">{offerPositioning.eyebrow}</p>
+            <h1 className="font-heading mt-4 text-[2rem] font-semibold leading-[1.1] tracking-[-0.025em] text-[#f6f3ee] min-[400px]:text-[2.375rem] sm:text-[2.75rem] lg:text-[2.75rem] xl:text-[3.125rem]">
               {headlineLead},{' '}
               <br className="hidden lg:block" />
               {headlineRest}
             </h1>
-            <p className="mt-5 max-w-[52ch] text-base leading-7 text-slate-300 sm:text-lg lg:leading-8">
+            <p className="mt-5 max-w-[52ch] text-base font-normal leading-[1.6] text-slate-300 sm:text-lg">
               {offerPositioning.subhead}
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -76,19 +72,19 @@ export default function HomeProspect() {
           <div className="order-1 lg:order-2">
             <h2
               id="brand-heading"
-              className="font-heading text-[2rem] font-semibold leading-[1.08] tracking-[-0.03em] text-[#f6f3ee] sm:text-[2.5rem] lg:text-[3rem]"
+              className="font-heading text-[2rem] font-semibold leading-[1.1] tracking-[-0.025em] text-[#f6f3ee] sm:text-[2.5rem] lg:text-[3rem]"
             >
               Your brand, made mobile.
             </h2>
-            <p className="mt-4 max-w-[48ch] text-base leading-7 text-slate-300 sm:text-lg">
+            <p className="mt-4 max-w-[48ch] text-base font-normal leading-[1.6] text-slate-300 sm:text-lg">
               Bring your logo, colors, and app assets into a shopping experience that feels like your store.
             </p>
-            <ul className="mt-6 grid grid-cols-2 gap-x-6 gap-y-3 text-sm leading-6 text-slate-200">
+            <ul className="mt-6 grid grid-cols-2 gap-x-6 gap-y-3 text-sm font-medium leading-6 text-slate-200">
               {brandControls.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
-            <p className="mt-6 max-w-[48ch] text-sm leading-6 text-slate-400">
+            <p className="mt-6 max-w-[48ch] text-base font-normal leading-[1.6] text-slate-300">
               Logo and colors can update without a new build. The native icon, launcher name, and splash require a new build.
             </p>
           </div>
@@ -109,14 +105,14 @@ export default function HomeProspect() {
 
       <section aria-labelledby="who-heading">
         <div className={band}>
-          <h2 id="who-heading" className="text-3xl font-semibold tracking-tight text-white">
+          <h2 id="who-heading" className={sectionHeading}>
             Who it suits
           </h2>
-          <ul className="mt-8 grid gap-8 md:grid-cols-3">
-            {audiences.map((item) => (
-              <li key={item.title}>
-                <h3 className="font-semibold text-white">{item.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-300">{item.body}</p>
+          <ul className="mt-8 grid items-stretch gap-4 md:grid-cols-3">
+            {homeAudiences.map((item) => (
+              <li key={item.title} className={card}>
+                <h3 className="text-base font-semibold text-white">{item.title}</h3>
+                <p className="mt-2 text-base font-normal leading-[1.6] text-slate-200">{item.body}</p>
               </li>
             ))}
           </ul>
@@ -125,34 +121,34 @@ export default function HomeProspect() {
 
       <section className="bg-[#121212]" aria-labelledby="included-heading">
         <div className={band}>
-          <h2 id="included-heading" className="text-3xl font-semibold tracking-tight text-white">
+          <h2 id="included-heading" className={sectionHeading}>
             What managed includes
           </h2>
-          <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-200">{homeManaged}</p>
-          <div className="mt-10 grid gap-12 lg:grid-cols-2">
-            <ul className="space-y-5">
-              {offerPoints.map((item) => (
-                <li key={item.title}>
-                  <h3 className="font-semibold text-white">{item.title}</h3>
-                  <p className="mt-1 text-sm leading-6 text-slate-300">{item.body}</p>
-                </li>
+          <p className="mt-4 max-w-3xl text-base font-normal leading-[1.6] text-slate-200">{homeManaged}</p>
+          <ul className="mt-8 grid items-stretch gap-4 md:grid-cols-3">
+            {offerPoints.map((item) => (
+              <li key={item.title} className={card}>
+                <h3 className="text-base font-semibold text-white">{item.title}</h3>
+                <p className="mt-2 text-base font-normal leading-[1.6] text-slate-200">{item.body}</p>
+              </li>
+            ))}
+          </ul>
+          <Link
+            href={offerPaths.pricing}
+            className="mt-8 inline-flex min-h-11 items-center text-base font-semibold text-white underline decoration-white/30 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+          >
+            {offerPositioning.pricingCta}
+          </Link>
+          <details className="mt-4 rounded-xl border border-white/10 bg-white/5 p-5">
+            <summary className="cursor-pointer text-base font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 rounded-sm">
+              Offer limits
+            </summary>
+            <ul className="mt-4 list-disc space-y-2 pl-5 text-base font-normal leading-[1.6] text-slate-200">
+              {offerExcludes.map((item) => (
+                <li key={item}>{item}</li>
               ))}
             </ul>
-            <div>
-              <h3 className="font-semibold text-white">Not included</h3>
-              <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-300">
-                {offerExcludes.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-              <Link
-                href={offerPaths.pricing}
-                className="mt-6 inline-flex min-h-11 items-center text-sm font-semibold text-white underline decoration-white/30 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
-              >
-                {offerPositioning.pricingCta}
-              </Link>
-            </div>
-          </div>
+          </details>
         </div>
       </section>
 
@@ -175,16 +171,16 @@ export default function HomeProspect() {
               <div>
                 <h2
                   id="path-heading"
-                  className="font-heading text-[1.75rem] font-semibold leading-[1.12] tracking-[-0.03em] text-[#1b3a2f] sm:text-[2rem]"
+                  className="font-heading text-[1.75rem] font-semibold leading-[1.1] tracking-[-0.025em] text-[#1b3a2f] sm:text-[2rem]"
                 >
                   A guided path from store to app.
                 </h2>
-                <p className="mt-4 max-w-[64ch] text-base leading-7 text-[#244538] lg:max-w-[36ch]">
+                <p className="mt-4 max-w-[64ch] text-base font-normal leading-[1.6] text-[#244538] lg:max-w-[36ch]">
                   Connect your Shopify store, sync your catalog, set your brand, and prepare your app build with guidance from Cartaisy.
                 </p>
                 <Link
                   href={offerPaths.walkthrough}
-                  className="mt-6 inline-flex h-12 items-center justify-center rounded-xl bg-[#1b3a2f] px-5 text-sm font-semibold text-[#f7f4ec] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1b3a2f] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f7f4ee]"
+                  className="mt-6 inline-flex h-12 items-center justify-center rounded-[4px] bg-[#1b3a2f] px-5 text-sm font-semibold text-[#f7f4ec] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1b3a2f] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f7f4ee]"
                 >
                   {offerPositioning.walkthroughCta}
                 </Link>

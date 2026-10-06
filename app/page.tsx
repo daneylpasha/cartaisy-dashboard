@@ -4,6 +4,7 @@ import LandingFooter from '@/components/landing/LandingFooter';
 import FAQSection from '@/components/landing/FAQSection';
 import HomeProspect from '@/components/marketing/HomeProspect';
 import RedirectIfSignedIn from '@/components/marketing/RedirectIfSignedIn';
+import { marketingTypeClass } from '@/lib/fonts/manrope';
 import { offerSeo } from '@/lib/marketing/offer';
 import { generateMetadata as genMeta } from '@/lib/seo';
 
@@ -15,7 +16,7 @@ export const metadata: Metadata = genMeta({
 
 export default function HomePage() {
   return (
-    <main id="main-content" className="min-h-screen bg-black text-white">
+    <main id="main-content" className={`${marketingTypeClass} min-h-screen bg-black text-white`}>
       <RedirectIfSignedIn />
       <LandingNavbar />
       <HomeProspect />

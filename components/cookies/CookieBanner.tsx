@@ -1,154 +1,216 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { X, ChevronDown, ChevronUp } from 'lucide-react';
+import { X } from 'lucide-react';
 import Link from 'next/link';
 import { useCookieConsent } from './CookieConsentProvider';
-import { CookieConsent, isOnboardingWizardPath } from '@/lib/cookies';
+import { CookieConsent, consentAfterPreferencesDismiss, isOnboardingWizardPath } from '@/lib/cookies';
+import { marketingTypeClass } from '@/lib/fonts/manrope';
+
+const actionBase =
+  'inline-flex h-12 items-center justify-center rounded-[4px] px-2 text-center text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121212]';
+const outlinedAction = `${actionBase} border border-white/50 bg-transparent text-white`;
+const filledAction = `${actionBase} bg-white text-slate-950`;
 
 export default function CookieBanner() {
   const pathname = usePathname();
   const { consent, showBanner, acceptAll, rejectAll, acceptSelected, closeBanner, hasChosen } = useCookieConsent();
   const [showDetails, setShowDetails] = useState(false);
   const [localConsent, setLocalConsent] = useState<CookieConsent>(consent);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const wasOpen = useRef(false);
 
-  // Sync local consent with context consent when it changes
   useEffect(() => {
     setLocalConsent(consent);
   }, [consent]);
 
+  useEffect(() => {
+    if (showBanner && !wasOpen.current && hasChosen) {
+      setShowDetails(true);
+      setLocalConsent(consent);
+    }
+    if (!showBanner) setShowDetails(false);
+    wasOpen.current = showBanner;
+  }, [showBanner, hasChosen, consent]);
+
+  const dismissPreferences = () => {
+    setLocalConsent(consentAfterPreferencesDismiss(consent));
+    setShowDetails(false);
+    if (hasChosen) closeBanner();
+  };
+  const dismissRef = useRef(dismissPreferences);
+  dismissRef.current = dismissPreferences;
+
+  useEffect(() => {
+    if (!showDetails) return;
+    const panel = panelRef.current;
+    panel?.querySelector<HTMLElement>('#cookie-heading')?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        dismissRef.current();
+        return;
+      }
+      if (event.key !== 'Tab' || !panel) return;
+      const items = [...panel.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')];
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [showDetails]);
+
   if (!showBanner || isOnboardingWizardPath(pathname)) return null;
 
   const handleToggle = (key: keyof CookieConsent) => {
-    if (key === 'necessary') return; // Can't toggle necessary cookies
-    setLocalConsent(prev => ({ ...prev, [key]: !prev[key] }));
+    if (key === 'necessary') return;
+    setLocalConsent((prev) => ({ ...prev, [key]: !prev[key] }));
   };
-
-  const handleSavePreferences = () => {
-    acceptSelected(localConsent);
-  };
-
-  const primaryAction =
-    'inline-flex min-h-10 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300';
-  const secondaryAction =
-    'inline-flex min-h-10 items-center justify-center rounded-xl border border-white/20 px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300';
 
   return (
-    <div className="fixed bottom-3 left-3 right-3 z-50 sm:left-auto sm:right-4 sm:bottom-4 sm:w-[22.5rem]">
-      <div className="max-h-[min(32rem,calc(100vh-1.5rem))] overflow-y-auto rounded-2xl border border-white/10 bg-[#121214] shadow-2xl">
-        {/* Main Banner */}
-        <div className="px-4 py-3">
-          <div className="flex items-start gap-3">
-            <div className="flex-1">
-              <p className="text-slate-300 text-sm">
-                Cookies run this site. Analytics and marketing cookies stay off unless you allow them.{' '}
-                <Link href="/cookies" className="text-white underline underline-offset-2">
-                  Cookie Policy
-                </Link>
-              </p>
-
-              {/* Action Buttons */}
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button onClick={acceptAll} className={primaryAction}>
-                  Accept All
-                </button>
-                <button onClick={rejectAll} className={secondaryAction}>
-                  Reject All
-                </button>
-                <button
-                  onClick={() => setShowDetails(!showDetails)}
-                  className={`${secondaryAction} gap-1`}
-                >
-                  Customize
-                  {showDetails ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                </button>
-              </div>
-            </div>
-
-            {/* Close button (only if already chosen) */}
-            {hasChosen && (
-              <button
-                onClick={closeBanner}
-                className="rounded-md text-slate-500 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
-                aria-label="Close"
-              >
-                <X size={20} />
-              </button>
-            )}
-          </div>
+    <div className="pointer-events-none fixed inset-0 z-50">
+      {showDetails ? (
+        <button
+          type="button"
+          tabIndex={-1}
+          aria-label="Close preferences"
+          className="pointer-events-auto absolute inset-0 bg-black/50"
+          onClick={dismissPreferences}
+        />
+      ) : null}
+      <div
+        ref={panelRef}
+        role={showDetails ? 'dialog' : 'region'}
+        aria-modal={showDetails ? true : undefined}
+        aria-labelledby="cookie-heading"
+        className={`${marketingTypeClass} pointer-events-auto absolute bottom-4 left-4 right-4 max-h-[min(32rem,calc(100dvh-2rem))] overflow-y-auto rounded-[8px] border border-neutral-700 bg-[#121212] p-6 shadow-lg sm:bottom-6 sm:left-6 sm:right-auto sm:w-full sm:max-w-[420px]`}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <h2 id="cookie-heading" tabIndex={-1} className="text-lg font-semibold text-white">
+            Your privacy choices
+          </h2>
+          {showDetails || hasChosen ? (
+            <button
+              type="button"
+              onClick={showDetails ? dismissPreferences : closeBanner}
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[4px] text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+              aria-label="Close"
+            >
+              <X size={20} />
+            </button>
+          ) : null}
         </div>
+        <p className="mt-3 text-base font-normal leading-[1.6] text-slate-200">
+          Essential cookies keep this site working. Optional analytics and marketing cookies stay off unless you allow them.{' '}
+          <Link href="/cookies" className="font-semibold text-white underline underline-offset-2">
+            Cookie Policy
+          </Link>
+        </p>
 
-        {/* Cookie Details */}
-        {showDetails && (
-          <div className="border-t border-slate-700 px-4 py-3 bg-slate-800/50">
-            <div className="space-y-4">
-              {/* Necessary Cookies */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-white font-medium text-sm">Necessary Cookies</h4>
-                  <p className="text-slate-400 text-xs">Required for the website to function properly.</p>
-                </div>
-                <div className="px-3 py-1 bg-slate-700 text-slate-400 text-xs rounded-full">
-                  Always Active
-                </div>
-              </div>
-
-              {/* Analytics Cookies */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-white font-medium text-sm">Analytics Cookies</h4>
-                  <p className="text-slate-400 text-xs">Help us understand how visitors interact with our website.</p>
-                </div>
-                <button
-                  type="button"
-                  aria-pressed={localConsent.analytics}
-                  aria-label="Analytics cookies"
-                  onClick={() => handleToggle('analytics')}
-                  className={`relative h-6 w-12 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 ${
-                    localConsent.analytics ? 'bg-purple-600' : 'bg-slate-700'
-                  }`}
-                >
-                  <span
-                    className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                      localConsent.analytics ? 'left-7' : 'left-1'
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {/* Marketing Cookies */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="text-white font-medium text-sm">Marketing Cookies</h4>
-                  <p className="text-slate-400 text-xs">Used to deliver personalized advertisements.</p>
-                </div>
-                <button
-                  type="button"
-                  aria-pressed={localConsent.marketing}
-                  aria-label="Marketing cookies"
-                  onClick={() => handleToggle('marketing')}
-                  className={`relative h-6 w-12 rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 ${
-                    localConsent.marketing ? 'bg-purple-600' : 'bg-slate-700'
-                  }`}
-                >
-                  <span
-                    className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                      localConsent.marketing ? 'left-7' : 'left-1'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-end">
-              <button onClick={handleSavePreferences} className={primaryAction}>
-                Save Preferences
+        {showDetails ? (
+          <div className="mt-5 space-y-4">
+            <CookieSwitch
+              id="cookie-necessary"
+              label="Necessary"
+              description="Required for the website to function properly."
+              checked
+              disabled
+            />
+            <CookieSwitch
+              id="cookie-analytics"
+              label="Analytics"
+              description="Help us understand how visitors interact with our website."
+              checked={localConsent.analytics}
+              onToggle={() => handleToggle('analytics')}
+            />
+            <CookieSwitch
+              id="cookie-marketing"
+              label="Marketing"
+              description="Used to deliver personalized advertisements."
+              checked={localConsent.marketing}
+              onToggle={() => handleToggle('marketing')}
+            />
+            <div className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-3">
+              <button type="button" onClick={rejectAll} className={outlinedAction}>
+                Reject All
+              </button>
+              <button type="button" onClick={acceptAll} className={filledAction}>
+                Accept All
+              </button>
+              <button type="button" onClick={() => acceptSelected(localConsent)} className={filledAction}>
+                Save preferences
               </button>
             </div>
+          </div>
+        ) : (
+          <div className="mt-5 grid grid-cols-1 gap-2 min-[480px]:grid-cols-3">
+            <button type="button" onClick={() => setShowDetails(true)} className={outlinedAction}>
+              Customize
+            </button>
+            <button type="button" onClick={rejectAll} className={outlinedAction}>
+              Reject All
+            </button>
+            <button type="button" onClick={acceptAll} className={filledAction}>
+              Accept All
+            </button>
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function CookieSwitch({
+  id,
+  label,
+  description,
+  checked,
+  disabled = false,
+  onToggle,
+}: {
+  id: string;
+  label: string;
+  description: string;
+  checked: boolean;
+  disabled?: boolean;
+  onToggle?: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div>
+        <p id={id} className="text-base font-semibold text-white">
+          {label}
+        </p>
+        <p id={`${id}-desc`} className="mt-1 text-base leading-[1.6] text-slate-200">
+          {description}
+        </p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        id={`${id}-switch`}
+        aria-checked={checked}
+        aria-labelledby={id}
+        aria-describedby={`${id}-desc`}
+        disabled={disabled}
+        onClick={onToggle}
+        className={`relative h-11 w-16 shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 ${
+          checked ? 'bg-white' : 'border border-white/50 bg-transparent'
+        } ${disabled ? 'cursor-not-allowed' : ''}`}
+      >
+        <span
+          className={`absolute top-3 h-5 w-5 rounded-full ${checked ? 'left-8 bg-slate-950' : 'left-1 bg-white'}`}
+        />
+      </button>
     </div>
   );
 }

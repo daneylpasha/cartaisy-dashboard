@@ -112,6 +112,35 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+.marketing-type {
+  font-family: var(--font-manrope), Arial, sans-serif;
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.6;
+  letter-spacing: 0;
+}
+
+.marketing-type :is(h1, h2, h3, .font-heading) {
+  font-family: var(--font-manrope), Arial, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+
+.marketing-type :is(button, a, summary, label) {
+  letter-spacing: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing-type,
+  .marketing-type * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

@@ -32,14 +32,14 @@ export default function NotFound() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-[4px] font-medium transition-colors"
           >
             <Home size={18} />
             Back to Home
           </Link>
           <button
             onClick={() => typeof window !== 'undefined' && window.history.back()}
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-lg font-medium border border-white/10 transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-[4px] font-medium border border-white/10 transition-colors"
           >
             <ArrowLeft size={18} />
             Go Back

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import PageLayout from '@/components/landing/PageLayout';
-import { offerPaths, offerPositioning } from '@/lib/marketing/offer';
+import { homeManaged, homePlatform, offerPaths, offerPositioning } from '@/lib/marketing/offer';
 import { generateMetadata as genMeta } from '@/lib/seo';
 
 export const metadata: Metadata = genMeta({
@@ -23,14 +23,14 @@ export default function AboutPage() {
           Setup is managed and invite-only. Cartaisy is not a self-serve app builder, and it is not a promise that an app will create sales. Merchants who do not yet have customers are often better served by the website first.
         </p>
         <p>
-          Apple and Google developer accounts stay with the merchant. iOS production readiness is still open. Android has a sample build from August 2026, not a public download.
+          {homeManaged} {homePlatform.ios} {homePlatform.android}
         </p>
       </div>
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-        <Link href={offerPaths.fit} className="inline-flex min-h-11 items-center justify-center rounded-lg bg-white px-4 text-sm font-semibold text-slate-950">
+        <Link href={offerPaths.fit} className="inline-flex min-h-11 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950">
           {offerPositioning.primaryCta}
         </Link>
-        <Link href={offerPaths.contact} className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/20 px-4 text-sm font-semibold text-white">
+        <Link href={offerPaths.contact} className="inline-flex min-h-11 items-center justify-center rounded-[4px] border border-white/20 px-4 text-sm font-semibold text-white">
           Contact
         </Link>
       </div>

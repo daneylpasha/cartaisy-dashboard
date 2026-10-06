@@ -8,6 +8,7 @@ import { leadInboxAccess, leadKindLabel, mergeOperatorLeads } from '@/lib/market
 import {
   checkoutWording,
   eligibility,
+  homeAudiences,
   homeFaqs,
   homeIncludes,
   homeManaged,
@@ -185,6 +186,13 @@ assert.match(home, /offerPositioning\.secondaryCta/);
 assert.match(home, /offerPaths\.fit/);
 assert.match(home, /offerPaths\.demo/);
 assert.match(home, /offerExcludes/);
+assert.match(home, /homeAudiences/);
+assert.match(home, /Offer limits/);
+assert.match(home, /,\{' '\}/);
+assert.match(home, /h-12 items-center justify-center rounded-\[4px\]/);
+assert.equal(/h-12[^"\n]*rounded-xl/.test(home), false);
+assert.match(readFileSync(join(root, 'components/landing/LandingNavbar.tsx'), 'utf8'), /rounded-\[4px\]/);
+assert.ok(home.indexOf('offerPaths.pricing') < home.indexOf('<details'));
 assert.equal(/homePlatform|Availability|Illustrative/.test(home), false);
 const fitPage = readFileSync(join(root, 'app/fit/page.tsx'), 'utf8');
 assert.match(fitPage, /homePlatform\.android/);
@@ -197,6 +205,7 @@ const homeCopy = [
   homeManaged,
   homePlatform.android,
   homePlatform.ios,
+  ...homeAudiences.flatMap((item) => [item.title, item.body]),
   ...homeIncludes.flatMap((item) => [item.title, item.body]),
   ...homeSteps.flatMap((item) => [item.title, item.body]),
   ...homeFaqs.flatMap((item) => [item.question, item.answer]),
@@ -220,7 +229,23 @@ assert.match(footer, /offerPaths\.fit/);
 assert.match(footer, /offerPaths\.walkthrough/);
 assert.match(checkoutWording, /Shopify hosted checkout/);
 assert.match(checkoutWording, /not Cartaisy features/);
-assert.match(iosReadiness, /not a production offer/);
+assert.match(iosReadiness, /not ready for a merchant app/);
+assert.equal(/August 2026|sample branded build|sample build|not a production offer/i.test(iosReadiness), false);
+const offerSource = readFileSync(join(root, 'lib/marketing/offer.ts'), 'utf8');
+assert.equal(/August 2026|sample branded build|sample build|not a production offer/i.test(offerSource), false);
+assert.equal(offerExcludes.length, 9);
+for (const rel of ['app/about/page.tsx', 'app/features/page.tsx', 'app/docs/quickstart/page.tsx', 'app/fit/page.tsx']) {
+  const page = readFileSync(join(root, rel), 'utf8');
+  assert.equal(/August 2026|sample branded build|sample build/i.test(page), false, rel);
+  assert.match(page, /homePlatform/, rel);
+}
+assert.match(readFileSync(join(root, 'lib/fonts/manrope.ts'), 'utf8'), /next\/font\/local/);
+assert.match(readFileSync(join(root, 'lib/fonts/manrope.ts'), 'utf8'), /Manrope-Variable\.woff2/);
+assert.equal(readFileSync(join(root, 'app/layout.tsx'), 'utf8').includes('manrope'), false);
+assert.equal(readFileSync(join(root, 'app/dashboard/layout.tsx'), 'utf8').includes('marketingTypeClass'), false);
+assert.match(readFileSync(join(root, 'app/page.tsx'), 'utf8'), /marketingTypeClass/);
+assert.match(readFileSync(join(root, 'components/landing/PageLayout.tsx'), 'utf8'), /marketingTypeClass/);
+assert.match(readFileSync(join(root, 'app/(auth)/layout.tsx'), 'utf8'), /marketingTypeClass/);
 assert.ok(publicFaqs.length >= 12);
 
 const operating = resolveFitOutcome({ stage: 'operating', goal: 'branded_app' });

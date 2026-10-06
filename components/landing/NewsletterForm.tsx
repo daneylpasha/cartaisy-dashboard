@@ -84,7 +84,7 @@ export default function NewsletterForm({
           <button
             type="submit"
             disabled={status === 'submitting'}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-600/50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors whitespace-nowrap"
+            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-600/50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-[4px] transition-colors whitespace-nowrap"
           >
             {status === 'submitting' ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -122,7 +122,7 @@ export default function NewsletterForm({
         <button
           type="submit"
           disabled={status === 'submitting'}
-          className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-600/50 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-600/50 disabled:cursor-not-allowed text-white font-medium rounded-[4px] transition-colors"
         >
           {status === 'submitting' ? (
             <>

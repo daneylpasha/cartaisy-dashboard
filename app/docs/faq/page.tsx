@@ -26,10 +26,10 @@ export default function FAQPage() {
         ))}
       </div>
       <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-        <Link href={offerPaths.fit} className="inline-flex min-h-11 items-center justify-center rounded-lg bg-white px-4 text-sm font-semibold text-slate-950">
+        <Link href={offerPaths.fit} className="inline-flex min-h-11 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950">
           Check fit
         </Link>
-        <Link href={offerPaths.walkthrough} className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/20 px-4 text-sm font-semibold text-white">
+        <Link href={offerPaths.walkthrough} className="inline-flex min-h-11 items-center justify-center rounded-[4px] border border-white/20 px-4 text-sm font-semibold text-white">
           Request a walkthrough
         </Link>
       </div>

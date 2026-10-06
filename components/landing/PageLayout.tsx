@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { marketingTypeClass } from '@/lib/fonts/manrope';
 import LandingNavbar from './LandingNavbar';
 import LandingFooter from './LandingFooter';
 
@@ -32,7 +33,7 @@ export default function PageLayout({
   maxWidth = '4xl',
 }: PageLayoutProps) {
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative">
+    <div className={`${marketingTypeClass} min-h-screen flex flex-col bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative`}>
       <div className="relative z-10 min-h-screen flex flex-col">
         <LandingNavbar />
         <main className="flex-1 pt-24 pb-16">

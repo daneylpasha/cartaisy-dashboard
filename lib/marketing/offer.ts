@@ -82,7 +82,7 @@ export const offerIncludes = [
   },
   {
     title: 'A tracked build request',
-    body: 'Build my app records Android and iOS status. A sample Android build was installed on a device in August 2026. An iOS production binary is not ready.',
+    body: 'Build my app records Android and iOS status. Android is not yet generally available. iOS is not ready for a merchant app.',
   },
 ] as const;
 
@@ -120,7 +120,7 @@ export const checkoutWording =
   'Shoppers pay on Shopify hosted checkout. Cartaisy does not collect card numbers. Apple Pay and Google Pay are not Cartaisy features. If a wallet appears, it is Shopify’s checkout for that store.';
 
 export const iosReadiness =
-  'iOS is not a production offer. No merchant iOS binary is ready. Android has a sample branded build from August 2026, which is not a public install link.';
+  'iOS is not ready for a merchant app. Saving an iOS request is not a live iPhone app.';
 
 export const shopifyScopesDisclosure =
   'Shopify scopes are whatever the Partner app requests at install, from the SHOPIFY_SCOPES setting on the Cartaisy backend. This site does not publish that list. Confirm the live value in the Railway project before treating any scope list as current. Older docs that named five scopes were incomplete.';
@@ -132,7 +132,23 @@ export const supportEmail = 'support@cartaisy.com';
 
 /** Short homepage copy. Facts stay aligned with the constants above. */
 export const homeManaged =
-  'Managed means Cartaisy guides the work for one store: connect Shopify, sync the catalog, set the brand, preview the home, and request the app build. You keep the Shopify store. You own the Apple Developer account, the Google Play account, and the listings under them.';
+  'You keep the Shopify store. You own the Apple Developer account, the Google Play account, and the listings under them.';
+
+/** Homepage cards. Meanings match eligibility; the opening phrase is not repeated. */
+export const homeAudiences = [
+  {
+    title: 'You already sell on Shopify',
+    body: 'Shoppers use a branded app that stays on your catalog and Shopify checkout.',
+  },
+  {
+    title: 'You are planning a Shopify store',
+    body: 'You can talk with Cartaisy before the store exists. The store still has to come first. A store URL on the fit check is optional.',
+  },
+  {
+    title: 'Start with the website',
+    body: 'Cartaisy does not acquire customers and does not guarantee sales. If Shopify is not the plan, start with the website.',
+  },
+] as const;
 
 export const homeIncludes = [
   { title: 'Your catalog', body: 'Products sync, including variants and inventory, before a build can start.' },
@@ -189,6 +205,10 @@ export const homeFaqs: { question: string; answer: string }[] = [
     answer:
       'No. Installing from the Shopify App Store does not create a Cartaisy account. Signup stays invite-only.',
   },
+  {
+    question: 'Is the iOS app ready?',
+    answer: `${iosReadiness} ${homePlatform.android}`,
+  },
 ];
 
 export const publicFaqs: { question: string; answer: string }[] = [
@@ -232,7 +252,7 @@ export const publicFaqs: { question: string; answer: string }[] = [
   },
   {
     question: 'Is the iOS app ready?',
-    answer: iosReadiness,
+    answer: `${iosReadiness} ${homePlatform.android}`,
   },
   {
     question: 'Can I install Cartaisy from the Shopify App Store?',

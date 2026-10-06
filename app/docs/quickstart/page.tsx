@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import PageLayout from '@/components/landing/PageLayout';
-import { iosReadiness, offerPaths, ownership } from '@/lib/marketing/offer';
+import { homePlatform, offerPaths, ownership } from '@/lib/marketing/offer';
 import { generateMetadata as genMeta } from '@/lib/seo';
 
 export const metadata: Metadata = genMeta({
@@ -29,7 +29,7 @@ const steps = [
   },
   {
     title: 'Request a build',
-    body: iosReadiness,
+    body: `${homePlatform.android} ${homePlatform.ios}`,
   },
 ];
 
@@ -58,7 +58,7 @@ export default function QuickStartPage() {
         </ul>
       </section>
       <div className="mt-8">
-        <Link href={offerPaths.fit} className="inline-flex min-h-11 items-center justify-center rounded-lg bg-white px-4 text-sm font-semibold text-slate-950">
+        <Link href={offerPaths.fit} className="inline-flex min-h-11 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950">
           Check if Cartaisy fits your store
         </Link>
       </div>

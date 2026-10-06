@@ -61,13 +61,13 @@ export default function PricingPage() {
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
         <Link
           href={offerPaths.fit}
-          className="inline-flex min-h-11 items-center justify-center rounded-lg bg-white px-4 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+          className="inline-flex min-h-11 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
         >
           {offerPositioning.primaryCta}
         </Link>
         <Link
           href={offerPaths.walkthrough}
-          className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/20 px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+          className="inline-flex min-h-11 items-center justify-center rounded-[4px] border border-white/20 px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
         >
           {offerPositioning.walkthroughCta}
         </Link>

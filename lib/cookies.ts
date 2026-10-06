@@ -47,6 +47,18 @@ export function hasConsentChoice(): boolean {
 }
 
 /**
+ * Closing cookie preferences discards draft toggles.
+ * Optional cookies stay at the stored choice, which is off until a choice is saved.
+ */
+export function consentAfterPreferencesDismiss(saved: CookieConsent): CookieConsent {
+  return {
+    necessary: true,
+    analytics: saved.analytics === true,
+    marketing: saved.marketing === true,
+  };
+}
+
+/**
  * The setup wizard's phone and brand card sit in the same viewport as the
  * sticky consent banner. Defer the banner on these paths only. This does not
  * record a choice; other routes still show the banner until the merchant chooses.

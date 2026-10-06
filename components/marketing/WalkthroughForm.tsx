@@ -50,7 +50,7 @@ export default function WalkthroughForm() {
         </p>
         <Link
           href={offerPaths.fit}
-          className="mt-6 inline-flex min-h-11 items-center justify-center rounded-lg border border-white/20 px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+          className="mt-6 inline-flex min-h-11 items-center justify-center rounded-[4px] border border-white/20 px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
         >
           Check fit
         </Link>
@@ -116,7 +116,7 @@ export default function WalkthroughForm() {
       <button
         type="submit"
         disabled={status === 'submitting'}
-        className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-white px-4 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 disabled:opacity-60 sm:w-auto"
+        className="inline-flex min-h-11 w-full items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 disabled:opacity-60 sm:w-auto"
       >
         {status === 'submitting' ? 'Saving…' : 'Request a walkthrough'}
       </button>

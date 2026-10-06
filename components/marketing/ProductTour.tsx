@@ -6,7 +6,7 @@ import { ConnectStep } from '@/components/onboarding/steps/ConnectStep';
 import { BrandingStep } from '@/components/onboarding/steps/BrandingStep';
 import { DEFAULT_PRIMARY_COLOR } from '@/lib/onboarding/branding';
 import type { BrandingDraft, LockedCatalog, ShopifyConnectionSnapshot, SyncGate } from '@/lib/onboarding/types';
-import { checkoutWording, homePlatform, iosReadiness, offerExcludes, offerPaths, offerPositioning } from '@/lib/marketing/offer';
+import { checkoutWording, homePlatform, offerExcludes, offerPaths, offerPositioning } from '@/lib/marketing/offer';
 
 const connection: ShopifyConnectionSnapshot = {
   statusKnown: true,
@@ -144,9 +144,8 @@ export default function ProductTour() {
         <h2 id="tour-build" className="text-lg font-semibold text-white">
           Build my app
         </h2>
-        <p className="mt-3 text-base leading-7 text-slate-200">{iosReadiness}</p>
-        <p className="mt-3 text-sm leading-6 text-slate-200">{homePlatform.android}</p>
-        <p className="mt-2 text-sm leading-6 text-slate-200">{homePlatform.ios}</p>
+        <p className="mt-3 text-base font-normal leading-[1.6] text-slate-200">{homePlatform.android}</p>
+        <p className="mt-2 text-base font-normal leading-[1.6] text-slate-200">{homePlatform.ios}</p>
         <p className="mt-3 text-sm leading-6 text-slate-300">
           The first-build note inside the brand screen is the real empty state. It does not include a public install link.
         </p>
@@ -160,13 +159,13 @@ export default function ProductTour() {
       <div className="flex flex-col gap-3 sm:flex-row">
         <Link
           href={offerPaths.walkthrough}
-          className="inline-flex min-h-11 items-center justify-center rounded-lg bg-white px-4 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+          className="inline-flex min-h-11 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
         >
           {offerPositioning.walkthroughCta}
         </Link>
         <Link
           href={offerPaths.fit}
-          className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/20 px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+          className="inline-flex min-h-11 items-center justify-center rounded-[4px] border border-white/20 px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
         >
           {offerPositioning.primaryCta}
         </Link>
