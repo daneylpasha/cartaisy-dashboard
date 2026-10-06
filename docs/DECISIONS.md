@@ -528,6 +528,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Public `/demo` and `/product-tour` only. No Shopify OAuth, upload, or build call is added. Human review is required because the same Connect and Brand components render in the merchant wizard.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`.
 
+### A failed public lead save returns 503
+
+- Date: 2026-10-06.
+- Decision: Fit, walkthrough, and contact return 503 when the repository save throws. The body is an error string. It does not include `success` or a fit outcome. Contact email still runs only after `ContactSubmission` is created. An email failure after that save stays on the existing 500 path.
+- Reason: C01 acceptance. The contact catch returned 500 for a failed save, while fit and walkthrough already returned 503. The isolated fixture reproduced the 500.
+- Impact: `POST /api/contact` save failures only. Success copy, validation, and the rate limit are unchanged. Human review is required because the route sits next to prospect data.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

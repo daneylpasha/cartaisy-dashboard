@@ -1,7 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
-import { connectToDatabase } from "@/lib/db";
-import { ContactSubmission } from "@/models/ContactSubmission";
+
+type ContactCreateInput = {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  ipAddress: string;
+};
+
+type ContactCreate = (input: ContactCreateInput) => Promise<void>;
+
+let createForTests: ContactCreate | null = null;
+
+/** Fixture seam for `npm run test:c01`. Production POST leaves this unset. */
+export function setContactCreateForTests(create: ContactCreate | null) {
+  createForTests = create;
+}
+
+async function saveContactSubmission(input: ContactCreateInput) {
+  if (createForTests) return createForTests(input);
+  const { connectToDatabase } = await import("@/lib/db");
+  const { ContactSubmission } = await import("@/models/ContactSubmission");
+  await connectToDatabase();
+  await ContactSubmission.create(input);
+}
 
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
@@ -67,12 +90,19 @@ export async function POST(request: NextRequest) {
       message: message.trim().slice(0, 5000),
     };
 
-    // Save to database
-    await connectToDatabase();
-    await ContactSubmission.create({
-      ...sanitizedData,
-      ipAddress: ip,
-    });
+    // Save to database. A failed save is the same unavailable response as fit and walkthrough.
+    try {
+      await saveContactSubmission({
+        ...sanitizedData,
+        ipAddress: ip,
+      });
+    } catch (error) {
+      console.error("Contact form error:", error instanceof Error ? error.name : "error");
+      return NextResponse.json(
+        { error: "Failed to send message. Please try again." },
+        { status: 503 },
+      );
+    }
 
     // Send emails via Resend
     if (resend) {

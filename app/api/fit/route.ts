@@ -1,10 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { resolveFitOutcome } from '@/lib/marketing/fitCheck';
-import { clientIp, parseFitLead } from '@/lib/marketing/leadPayload';
+import { resolveFitOutcome, type FitAnswers } from '@/lib/marketing/fitCheck';
+import { clientIp, parseFitLead, type LeadInput } from '@/lib/marketing/leadPayload';
 import { consumeRateLimit } from '@/lib/marketing/rateLimit';
-import { saveProspectLead } from '@/lib/marketing/saveLead';
 
 export const dynamic = 'force-dynamic';
+
+type SaveProspect = (lead: LeadInput, ipAddress: string) => Promise<void>;
+
+type FitRouteAdapters = {
+  saveProspectLead: SaveProspect;
+  resolveOutcome: (answers: FitAnswers) => ReturnType<typeof resolveFitOutcome>;
+};
+
+let adaptersForTests: FitRouteAdapters | null = null;
+
+/** Fixture seam for `npm run test:c01`. Production POST leaves this unset. */
+export function setFitRouteAdaptersForTests(adapters: FitRouteAdapters | null) {
+  adaptersForTests = adapters;
+}
+
+async function saveFitLead(lead: LeadInput, ipAddress: string) {
+  if (adaptersForTests) return adaptersForTests.saveProspectLead(lead, ipAddress);
+  const { saveProspectLead } = await import('@/lib/marketing/saveLead');
+  await saveProspectLead(lead, ipAddress);
+}
 
 export async function POST(request: NextRequest) {
   const ip = clientIp(request.headers);
@@ -25,7 +44,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await saveProspectLead(parsed.value, ip);
+    await saveFitLead(parsed.value, ip);
   } catch (error) {
     console.error('Fit check save failed', error instanceof Error ? error.name : 'error');
     return NextResponse.json(
@@ -34,6 +53,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const result = resolveFitOutcome({ stage: parsed.value.stage, goal: parsed.value.goal });
+  const result = (adaptersForTests?.resolveOutcome ?? resolveFitOutcome)({
+    stage: parsed.value.stage,
+    goal: parsed.value.goal,
+  });
   return NextResponse.json({ success: true, ...result });
 }

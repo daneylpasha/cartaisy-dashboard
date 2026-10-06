@@ -4,7 +4,13 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { NextRequest } from 'next/server';
+import { SignupAccessHandoff, signupAccessCopy, signupTokenFailure } from '@/components/auth/SignupAccessHandoff';
 import ProductTour from '@/components/marketing/ProductTour';
+import { GET as getLeadInbox, setLeadInboxAdaptersForTests } from '@/app/api/admin/leads/route';
+import { POST as postContact, setContactCreateForTests } from '@/app/api/contact/route';
+import { POST as postFit, setFitRouteAdaptersForTests } from '@/app/api/fit/route';
+import { POST as postWalkthrough, setWalkthroughSaveForTests } from '@/app/api/walkthrough/route';
 import { resolveFitOutcome } from '@/lib/marketing/fitCheck';
 import { parseFitLead, parseWalkthroughLead } from '@/lib/marketing/leadPayload';
 import { leadInboxAccess, leadKindLabel, mergeOperatorLeads } from '@/lib/marketing/leadInbox';
@@ -60,6 +66,7 @@ const scanned = [
   'app/(auth)/signup/page.tsx',
   'components/landing',
   'components/marketing',
+  'components/auth/SignupAccessHandoff.tsx',
   'components/ContactForm.tsx',
   'lib/seo.ts',
   'lib/marketing/offer.ts',
@@ -182,8 +189,14 @@ assert.deepEqual(pricingTitle.title, { absolute: 'Pricing | Cartaisy' });
 assert.deepEqual(homeTitle.title, { absolute: 'Cartaisy — Managed mobile apps for Shopify' });
 assert.equal(JSON.stringify(pricingTitle.title).includes('Cartaisy | Cartaisy'), false);
 const signup = readFileSync(join(root, 'app/(auth)/signup/page.tsx'), 'utf8');
-assert.match(signup, /href="\/fit"/);
-assert.match(signup, /invite-only/);
+const signupHandoff = readFileSync(join(root, 'components/auth/SignupAccessHandoff.tsx'), 'utf8');
+assert.match(signup, /SignupAccessHandoff/);
+assert.match(signup, /signupTokenFailure/);
+assert.match(signup, /href="\/login"/);
+assert.match(signupHandoff, /href="\/fit"/);
+assert.match(signupHandoff, /href="\/schedule-demo"/);
+assert.match(signupHandoff, /href="\/login"/);
+assert.match(signupHandoff, /invite-only/);
 const demo = readFileSync(join(root, 'components/marketing/ProductTour.tsx'), 'utf8');
 assert.equal(/youtube|testflight|play\.google/i.test(demo), false);
 assert.match(demo, /ConnectStep/);
@@ -385,4 +398,390 @@ assert.equal(consumeRateLimit('fit:test', 2, 60_000, 1_100), true);
 assert.equal(consumeRateLimit('fit:test', 2, 60_000, 1_200), false);
 assert.equal(consumeRateLimit('fit:test', 2, 60_000, 70_000), true);
 
-console.log('c01 commercial checks passed');
+const inviteSecret = 'qa-invite-token-do-not-render';
+
+function handoffMarkup(tokenError: string) {
+  const copy = signupAccessCopy(tokenError);
+  assert.equal(copy.showsSignupForm, false);
+  const markup = renderToStaticMarkup(createElement(SignupAccessHandoff, { tokenError }));
+  assert.equal(markup.includes(inviteSecret), false);
+  assert.equal(markup.includes(tokenError), false);
+  assert.match(markup, /href="\/fit"/);
+  assert.match(markup, /href="\/schedule-demo"/);
+  assert.match(markup, /href="\/login"/);
+  assert.match(markup, /Check if Cartaisy fits your store/);
+  assert.match(markup, /Request a walkthrough/);
+  assert.match(markup, /Go to login/);
+  assert.equal(/<form[\s>]/.test(markup), false);
+  assert.equal(markup.includes('Create account'), false);
+  assert.equal(markup.includes('Valid onboarding link'), false);
+  assert.equal(markup.includes('/api/auth/signup'), false);
+  return markup;
+}
+
+const missingInvite = signupTokenFailure({ token: null, validation: null });
+assert.equal(missingInvite.ok, false);
+if (!missingInvite.ok) {
+  assert.equal(missingInvite.tokenError, 'no_token');
+  assert.match(handoffMarkup(missingInvite.tokenError), /Access required/);
+  assert.match(handoffMarkup(missingInvite.tokenError), /invite-only/);
+}
+
+const invalidInvite = signupTokenFailure({
+  token: inviteSecret,
+  validation: { valid: false, error: `Invalid token ${inviteSecret}` },
+});
+assert.equal(invalidInvite.ok, false);
+if (!invalidInvite.ok) {
+  assert.match(handoffMarkup(invalidInvite.tokenError), /Invalid link/);
+  assert.match(handoffMarkup(invalidInvite.tokenError), /invalid or has been revoked/);
+}
+
+const expiredInvite = signupTokenFailure({
+  token: inviteSecret,
+  validation: { valid: false, error: `Token has expired ${inviteSecret}` },
+});
+assert.equal(expiredInvite.ok, false);
+if (!expiredInvite.ok) {
+  assert.match(handoffMarkup(expiredInvite.tokenError), /Link expired/);
+  assert.match(handoffMarkup(expiredInvite.tokenError), /signup link has expired/);
+}
+
+const usedInvite = signupTokenFailure({
+  token: inviteSecret,
+  validation: { valid: false, error: 'Token has already been used' },
+});
+assert.equal(usedInvite.ok, false);
+if (!usedInvite.ok) {
+  assert.match(handoffMarkup(usedInvite.tokenError), /already been used/);
+  assert.match(handoffMarkup(usedInvite.tokenError), /Sign in if this is your account/);
+}
+
+const validInvite = signupTokenFailure({
+  token: inviteSecret,
+  validation: { valid: true },
+});
+assert.equal(validInvite.ok, true);
+assert.match(signup, /Already have an account/);
+
+function jsonPost(path: string, body: unknown, ip: string) {
+  return new NextRequest(`http://localhost${path}`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-forwarded-for': ip,
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+function assertNoSuccessOutcome(body: Record<string, unknown>) {
+  assert.equal(Object.hasOwn(body, 'success'), false);
+  assert.equal(Object.hasOwn(body, 'outcome'), false);
+  assert.equal(Object.hasOwn(body, 'title'), false);
+  assert.equal(Object.hasOwn(body, 'summary'), false);
+  const encoded = JSON.stringify(body);
+  assert.equal(encoded.includes('operating_fit'), false);
+  assert.equal(encoded.includes('prelaunch_fit'), false);
+  assert.equal(encoded.includes('website_first'), false);
+  assert.equal(encoded.includes('Message sent successfully'), false);
+  assert.equal(encoded.includes('Request received'), false);
+  assert.equal(encoded.includes('Cartaisy may fit your store'), false);
+}
+
+const qaProspects = [
+  {
+    _id: 'fit-operating',
+    kind: 'fit' as const,
+    name: 'Amina Operating',
+    email: 'operating@example.com',
+    storeUrl: 'https://operating.example',
+    stage: 'operating',
+    goal: 'branded_app',
+    outcome: 'operating_fit',
+    outcomeTitle: 'Cartaisy may fit your store',
+    note: 'Selling now',
+    createdAt: new Date('2026-10-05T00:00:00.000Z'),
+  },
+  {
+    _id: 'fit-prelaunch',
+    kind: 'fit' as const,
+    name: 'Noor Prelaunch',
+    email: 'prelaunch@example.com',
+    stage: 'prelaunch',
+    goal: 'branded_app',
+    outcome: 'prelaunch_fit',
+    outcomeTitle: 'Start with the Shopify store',
+    createdAt: new Date('2026-10-05T01:00:00.000Z'),
+  },
+  {
+    _id: 'fit-website',
+    kind: 'fit' as const,
+    name: 'Sam Website',
+    email: 'website@example.com',
+    stage: 'not_shopify',
+    goal: 'other',
+    outcome: 'website_first',
+    outcomeTitle: 'Start with your Shopify store',
+    createdAt: new Date('2026-10-05T02:00:00.000Z'),
+  },
+  {
+    _id: 'walk-qa',
+    kind: 'walkthrough' as const,
+    name: 'Walk Person',
+    email: 'walk@example.com',
+    preferredWindow: 'Tuesday morning',
+    note: 'Please walk through Connect.',
+    createdAt: new Date('2026-10-05T03:00:00.000Z'),
+  },
+];
+
+const qaContacts = [
+  {
+    _id: 'contact-qa',
+    name: 'Contact Person',
+    email: 'contact@example.com',
+    subject: 'Sales',
+    message: 'Can you tell me about setup?',
+    createdAt: new Date('2026-10-05T04:00:00.000Z'),
+  },
+];
+
+async function leadInboxCase(input: {
+  session: unknown;
+  token: string | null;
+  operator: boolean;
+}) {
+  let operatorCalls = 0;
+  let prospectCalls = 0;
+  let contactCalls = 0;
+  setLeadInboxAdaptersForTests({
+    getSession: async () => input.session,
+    getToken: async () => input.token,
+    isPlatformOperator: async () => {
+      operatorCalls += 1;
+      return input.operator;
+    },
+    findProspects: async () => {
+      prospectCalls += 1;
+      return qaProspects;
+    },
+    findContacts: async () => {
+      contactCalls += 1;
+      return qaContacts;
+    },
+  });
+  const response = await getLeadInbox(new NextRequest('http://localhost/api/admin/leads'));
+  const body = (await response.json()) as { error?: string; leads?: Array<Record<string, unknown>> };
+  return { response, body, operatorCalls, prospectCalls, contactCalls };
+}
+
+async function runRouteFixtures() {
+const unsignedInbox = await leadInboxCase({ session: null, token: null, operator: false });
+assert.equal(unsignedInbox.response.status, 401);
+assert.equal(unsignedInbox.body.error, 'Sign in required.');
+assert.equal(unsignedInbox.operatorCalls, 0);
+assert.equal(unsignedInbox.prospectCalls, 0);
+assert.equal(unsignedInbox.contactCalls, 0);
+assert.equal(Object.hasOwn(unsignedInbox.body, 'leads'), false);
+
+const tokenOnlyInbox = await leadInboxCase({
+  session: null,
+  token: 'fixture-token-without-session',
+  operator: true,
+});
+assert.equal(tokenOnlyInbox.response.status, 401);
+assert.equal(tokenOnlyInbox.body.error, 'Sign in required.');
+assert.equal(tokenOnlyInbox.operatorCalls, 0);
+assert.equal(tokenOnlyInbox.prospectCalls, 0);
+assert.equal(tokenOnlyInbox.contactCalls, 0);
+
+const merchantInbox = await leadInboxCase({
+  session: { user: { id: 'merchant-1', email: 'merchant@example.com' } },
+  token: 'fixture-merchant-token',
+  operator: false,
+});
+assert.equal(merchantInbox.response.status, 403);
+assert.equal(merchantInbox.body.error, 'Operators only.');
+assert.equal(merchantInbox.operatorCalls, 1);
+assert.equal(merchantInbox.prospectCalls, 0);
+assert.equal(merchantInbox.contactCalls, 0);
+assert.equal(Object.hasOwn(merchantInbox.body, 'leads'), false);
+
+const operatorInbox = await leadInboxCase({
+  session: { user: { id: 'operator-1', email: 'operator@example.com' } },
+  token: 'fixture-operator-token',
+  operator: true,
+});
+assert.equal(operatorInbox.response.status, 200);
+assert.equal(operatorInbox.operatorCalls, 1);
+assert.equal(operatorInbox.prospectCalls, 1);
+assert.equal(operatorInbox.contactCalls, 1);
+const operatorLeads = operatorInbox.body.leads;
+assert.ok(operatorLeads);
+assert.equal(operatorLeads.length, 5);
+assert.deepEqual(
+  operatorLeads.map((lead) => lead.kind),
+  ['contact', 'walkthrough', 'fit', 'fit', 'fit']
+);
+assert.deepEqual(
+  operatorLeads.map((lead) => lead.outcome ?? null),
+  [null, null, 'website_first', 'prelaunch_fit', 'operating_fit']
+);
+assert.deepEqual(
+  operatorLeads.map((lead) => lead.createdAt),
+  [
+    '2026-10-05T04:00:00.000Z',
+    '2026-10-05T03:00:00.000Z',
+    '2026-10-05T02:00:00.000Z',
+    '2026-10-05T01:00:00.000Z',
+    '2026-10-05T00:00:00.000Z',
+  ]
+);
+for (const lead of operatorLeads) {
+  assert.equal(typeof lead.id, 'string');
+  assert.ok(lead.id);
+  assert.equal(typeof lead.email, 'string');
+  assert.match(String(lead.email), /@example\.com$/);
+  assert.equal(typeof lead.createdAt, 'string');
+  assert.equal(typeof lead.name, 'string');
+  const kind = lead.kind;
+  assert.ok(kind === 'fit' || kind === 'walkthrough' || kind === 'contact');
+  assert.equal(typeof leadKindLabel[kind], 'string');
+  if (kind === 'fit') {
+    assert.ok(lead.outcome === 'operating_fit' || lead.outcome === 'prelaunch_fit' || lead.outcome === 'website_first');
+    assert.equal(typeof lead.outcomeTitle, 'string');
+  }
+}
+assert.equal(operatorLeads[0]?.subject, 'Sales');
+assert.equal(operatorLeads[0]?.message, 'Can you tell me about setup?');
+assert.equal(leadKindLabel.contact, 'Contact');
+assert.equal(operatorLeads[1]?.preferredWindow, 'Tuesday morning');
+assert.equal(leadKindLabel.walkthrough, 'Walkthrough');
+assert.equal(JSON.stringify(operatorLeads).includes('ipAddress'), false);
+setLeadInboxAdaptersForTests(null);
+
+resetRateLimitForTests();
+const fitOrder: string[] = [];
+try {
+  setFitRouteAdaptersForTests({
+    saveProspectLead: async (lead) => {
+      fitOrder.push('save');
+      assert.equal(lead.kind, 'fit');
+      assert.equal(lead.outcome, 'operating_fit');
+    },
+    resolveOutcome: (answers) => {
+      fitOrder.push('outcome');
+      return resolveFitOutcome(answers);
+    },
+  });
+  const saved = await postFit(
+    jsonPost(
+      '/api/fit',
+      {
+        name: 'Amina',
+        email: 'amina@example.com',
+        stage: 'operating',
+        goal: 'branded_app',
+        storeUrl: 'https://example.com',
+      },
+      '203.0.113.21'
+    )
+  );
+  assert.equal(saved.status, 200);
+  const savedBody = (await saved.json()) as { success?: boolean; outcome?: string };
+  assert.equal(savedBody.success, true);
+  assert.equal(savedBody.outcome, 'operating_fit');
+  assert.deepEqual(fitOrder, ['save', 'outcome']);
+
+  fitOrder.length = 0;
+  setFitRouteAdaptersForTests({
+    saveProspectLead: async () => {
+      fitOrder.push('save');
+      throw new Error('fixture-save-failed');
+    },
+    resolveOutcome: (answers) => {
+      fitOrder.push('outcome');
+      return resolveFitOutcome(answers);
+    },
+  });
+  const failedFit = await postFit(
+    jsonPost(
+      '/api/fit',
+      {
+        name: 'Amina',
+        email: 'amina@example.com',
+        stage: 'operating',
+        goal: 'branded_app',
+        storeUrl: 'https://example.com',
+      },
+      '203.0.113.22'
+    )
+  );
+  assert.equal(failedFit.status, 503);
+  const failedFitBody = (await failedFit.json()) as Record<string, unknown>;
+  assertNoSuccessOutcome(failedFitBody);
+  assert.equal(typeof failedFitBody.error, 'string');
+  assert.deepEqual(fitOrder, ['save']);
+} finally {
+  setFitRouteAdaptersForTests(null);
+}
+
+try {
+  setWalkthroughSaveForTests(async () => {
+    throw new Error('fixture-save-failed');
+  });
+  const failedWalk = await postWalkthrough(
+    jsonPost(
+      '/api/walkthrough',
+      {
+        name: 'Noor',
+        email: 'noor@example.com',
+        storeUrl: '',
+        preferredWindow: 'Tuesday morning',
+      },
+      '203.0.113.23'
+    )
+  );
+  assert.equal(failedWalk.status, 503);
+  const failedWalkBody = (await failedWalk.json()) as Record<string, unknown>;
+  assertNoSuccessOutcome(failedWalkBody);
+  assert.equal(typeof failedWalkBody.error, 'string');
+} finally {
+  setWalkthroughSaveForTests(null);
+}
+
+try {
+  setContactCreateForTests(async () => {
+    throw new Error('fixture-save-failed');
+  });
+  const failedContact = await postContact(
+    jsonPost(
+      '/api/contact',
+      {
+        name: 'Sam',
+        email: 'sam@example.com',
+        subject: 'Sales',
+        message: 'Can you tell me about setup?',
+      },
+      '203.0.113.24'
+    )
+  );
+  assert.equal(failedContact.status, 503);
+  const failedContactBody = (await failedContact.json()) as Record<string, unknown>;
+  assertNoSuccessOutcome(failedContactBody);
+  assert.equal(typeof failedContactBody.error, 'string');
+  assert.equal(failedContactBody.error, 'Failed to send message. Please try again.');
+} finally {
+  setContactCreateForTests(null);
+}
+}
+
+runRouteFixtures()
+  .then(() => {
+    console.log('c01 commercial checks passed');
+  })
+  .catch((error: unknown) => {
+    console.error(error);
+    process.exit(1);
+  });

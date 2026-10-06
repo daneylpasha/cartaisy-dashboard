@@ -1,9 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { clientIp, parseWalkthroughLead } from '@/lib/marketing/leadPayload';
+import { clientIp, parseWalkthroughLead, type LeadInput } from '@/lib/marketing/leadPayload';
 import { consumeRateLimit } from '@/lib/marketing/rateLimit';
-import { saveProspectLead } from '@/lib/marketing/saveLead';
 
 export const dynamic = 'force-dynamic';
+
+type SaveProspect = (lead: LeadInput, ipAddress: string) => Promise<void>;
+
+let saveForTests: SaveProspect | null = null;
+
+/** Fixture seam for `npm run test:c01`. Production POST leaves this unset. */
+export function setWalkthroughSaveForTests(save: SaveProspect | null) {
+  saveForTests = save;
+}
+
+async function saveWalkthroughLead(lead: LeadInput, ipAddress: string) {
+  if (saveForTests) return saveForTests(lead, ipAddress);
+  const { saveProspectLead } = await import('@/lib/marketing/saveLead');
+  await saveProspectLead(lead, ipAddress);
+}
 
 export async function POST(request: NextRequest) {
   const ip = clientIp(request.headers);
@@ -24,7 +38,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await saveProspectLead(parsed.value, ip);
+    await saveWalkthroughLead(parsed.value, ip);
   } catch (error) {
     console.error('Walkthrough save failed', error instanceof Error ? error.name : 'error');
     return NextResponse.json(
