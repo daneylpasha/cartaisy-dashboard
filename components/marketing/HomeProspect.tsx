@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import {
   eligibility,
@@ -19,26 +20,47 @@ const audiences = [
 export default function HomeProspect() {
   return (
     <>
-      <section className="mx-auto max-w-3xl px-4 pb-12 pt-28 sm:px-6 lg:px-8 lg:pt-36">
-        <p className="text-sm font-medium uppercase tracking-[0.16em] text-purple-200">{offerPositioning.eyebrow}</p>
-        <h1 className="mt-4 text-4xl font-semibold leading-tight tracking-tight text-white sm:text-5xl">
-          {offerPositioning.headline}
-        </h1>
-        <p className="mt-5 text-lg leading-8 text-slate-200">{offerPositioning.subhead}</p>
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <Link
-            href={offerPaths.fit}
-            className="inline-flex min-h-12 items-center justify-center rounded-xl bg-white px-5 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
-          >
-            {offerPositioning.primaryCta}
-          </Link>
-          <Link
-            href={offerPaths.demo}
-            className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/20 px-5 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
-          >
-            {offerPositioning.secondaryCta}
-          </Link>
+      <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 pb-8 pt-28 sm:px-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-16 lg:px-8 lg:pb-12 lg:pt-36">
+        <div>
+          <p className="text-sm font-medium uppercase tracking-[0.16em] text-purple-200">{offerPositioning.eyebrow}</p>
+          <h1 className="mt-4 text-4xl font-semibold leading-tight tracking-tight text-white sm:text-5xl">
+            {offerPositioning.headline}
+          </h1>
+          <p className="mt-5 text-lg leading-8 text-slate-200">{offerPositioning.subhead}</p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <Link
+              href={offerPaths.fit}
+              className="inline-flex min-h-12 items-center justify-center rounded-xl bg-white px-5 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+            >
+              {offerPositioning.primaryCta}
+            </Link>
+            <Link
+              href={offerPaths.demo}
+              className="inline-flex min-h-12 items-center justify-center rounded-xl border border-white/20 px-5 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+            >
+              {offerPositioning.secondaryCta}
+            </Link>
+          </div>
+          <div className="mt-8 rounded-xl border border-white/10 p-4">
+            <h2 className="font-semibold text-white">Where it is available</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-200">{homePlatform.android}</p>
+            <p className="mt-2 text-sm leading-6 text-slate-200">{homePlatform.ios}</p>
+          </div>
         </div>
+        <figure className="min-w-0">
+          <Image
+            src="/marketing/c01-hero-still.webp"
+            alt="A phone showing a branded shopping app for a fictional home-goods store, with floating product cards."
+            width={1536}
+            height={1024}
+            priority
+            sizes="(min-width: 1024px) 640px, 100vw"
+            className="h-auto w-full [mask-image:radial-gradient(ellipse_at_center,black_92%,transparent_100%)]"
+          />
+          <figcaption className="mt-3 text-sm leading-5 text-slate-400">
+            Illustrative shopping experience — fictional merchant.
+          </figcaption>
+        </figure>
       </section>
 
       <section className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8" aria-labelledby="who-heading">
@@ -68,11 +90,6 @@ export default function HomeProspect() {
             </li>
           ))}
         </ul>
-        <div className="mt-6 rounded-xl border border-white/10 p-4">
-          <h3 className="font-semibold text-white">Where it is available</h3>
-          <p className="mt-2 text-sm leading-6 text-slate-200">{homePlatform.android}</p>
-          <p className="mt-2 text-sm leading-6 text-slate-200">{homePlatform.ios}</p>
-        </div>
         <h3 className="mt-8 font-semibold text-white">Not included</h3>
         <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-300">
           {offerExcludes.map((item) => (
