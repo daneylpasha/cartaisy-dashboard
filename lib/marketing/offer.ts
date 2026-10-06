@@ -58,19 +58,19 @@ export const managedOffer = {
 export const offerIncludes = [
   {
     title: 'Invite-only dashboard',
-    body: 'After a fit check and a walkthrough, an operator can send a signup link. Open signup is not available.',
+    body: 'After a fit check and a walkthrough, Cartaisy can send a signup link. Open signup is not available.',
   },
   {
-    title: 'Shopify connection for an allowed store',
-    body: 'The invited merchant connects a Shopify store from the dashboard. Today that connection is reliable for stores the Shopify app is allowed to install on. A public App Store install is not a way for a new merchant to create an account.',
+    title: 'Shopify connection from your dashboard',
+    body: 'You connect your Shopify store from the dashboard after you have an account. The connection works when the Cartaisy Shopify app can be installed on that store. Installing from the Shopify App Store does not create an account.',
   },
   {
     title: 'Catalog sync',
-    body: 'Product sync, including variant and inventory fields, is implemented. It was proven on Cartaisy’s own staging store. A new shop still needs its own sync to succeed before a build.',
+    body: 'Products can sync, including variants and inventory. Your store still needs its own successful sync before a build.',
   },
   {
     title: 'Brand you can set',
-    body: 'Name, logo, primary and secondary colors, app icon, and splash image. Colors and logo can update in the shopper app without a new binary. The launcher name, native icon, and native splash need a new build.',
+    body: 'Name, logo, primary and secondary colors, app icon, and splash image. Colors and the logo can update in the shopper app without a new build. The home-screen name, icon, and splash need a new build.',
   },
   {
     title: 'Home layout',
@@ -123,10 +123,10 @@ export const iosReadiness =
   'iOS is not ready for a merchant app. Saving an iOS request is not a live iPhone app.';
 
 export const shopifyScopesDisclosure =
-  'Shopify scopes are whatever the Partner app requests at install, from the SHOPIFY_SCOPES setting on the Cartaisy backend. This site does not publish that list. Confirm the live value in the Railway project before treating any scope list as current. Older docs that named five scopes were incomplete.';
+  'The exact Shopify access permissions are not confirmed on this site. Cartaisy requests them when your store connects. An older list of permissions is not the current set.';
 
 export const appStoreAcquisitionTodo =
-  'Public Shopify App Store install, then claim, then invite, is not a working path for a new merchant. Signup stays invite-only, and claim requires a signed-in store admin. Do not link an App Store listing as the way to buy Cartaisy.';
+  'A Shopify App Store install does not create a Cartaisy account. Signup stays invite-only. Claiming a store requires a signed-in store admin. This site does not offer an App Store listing as the way to start.';
 
 export const supportEmail = 'support@cartaisy.com';
 
@@ -162,7 +162,7 @@ export const homeSteps = [
   { title: 'Request a walkthrough', body: 'See the real Connect and Brand screens. We reply by email. The form does not book a calendar.' },
   { title: 'Receive a signup link', body: 'If Cartaisy proceeds, we send a signup link. Open signup is not available.' },
   { title: 'Connect Shopify', body: 'Connect the store from your dashboard. This works for a store where the Cartaisy Shopify app can be installed. An install from the Shopify App Store does not create an account.' },
-  { title: 'Sync the catalog', body: 'A build waits until product sync succeeds. That sync has been completed on a Cartaisy test store. Your store still needs its own.' },
+  { title: 'Sync the catalog', body: 'A build waits until product sync succeeds for your store. A sync on another store does not count.' },
   { title: 'Set the brand and preview', body: 'Set the name, logo, colors, icon, and splash, then preview or publish the home.' },
   { title: 'Request the build', body: 'The dashboard tracks Android and iOS. Publishing uses your Apple Developer and Google Play accounts. Store review stays with Apple and Google.' },
 ] as const;
@@ -240,7 +240,7 @@ export const publicFaqs: { question: string; answer: string }[] = [
   {
     question: 'How do I get an account?',
     answer:
-      'Accounts are invite-only. Check fit or request a walkthrough. If Cartaisy proceeds, an operator sends a signup link. The login page is for people who already have an account.',
+      'Accounts are invite-only. Check fit or request a walkthrough. If Cartaisy proceeds, we send a signup link. The login page is for people who already have an account.',
   },
   {
     question: 'Where do shoppers pay?',

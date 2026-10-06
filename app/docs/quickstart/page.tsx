@@ -17,11 +17,11 @@ const steps = [
   },
   {
     title: 'Request a walkthrough',
-    body: 'An operator follows up. The form does not book a calendar by itself.',
+    body: 'We follow up by email. The form does not book a calendar by itself.',
   },
   {
     title: 'Accept an invite',
-    body: 'Signup stays closed until an operator sends a link. Login is for people who already have an account.',
+    body: 'Signup stays closed until Cartaisy sends a link. Login is for people who already have an account.',
   },
   {
     title: 'Connect Shopify, then brand',

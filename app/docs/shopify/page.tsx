@@ -18,11 +18,11 @@ export default function ShopifyIntegrationPage() {
 
       <section className="mt-8 space-y-4 text-base leading-7 text-slate-200">
         <p>
-          An invited merchant enters the Shopify admin address ending in .myshopify.com. Cartaisy starts the connection through its backend. The dashboard does not store the Shopify Admin token.
+          After you have an account, you enter the Shopify admin address ending in .myshopify.com. Cartaisy starts the connection through its backend. The dashboard does not store the Shopify Admin token.
         </p>
         <p>{checkoutWording}</p>
         <p>
-          Product sync, including variant and inventory fields, is implemented and was proven on Cartaisy staging. Customers, orders, and webhooks exist in the product with limits. Do not treat every Shopify app, market, or frozen store as supported. A store with a Shopify billing problem can fail closed.
+          Product sync includes variants and inventory. Your store still needs its own successful sync before a build. Customers, orders, and webhooks exist in the product, with limits. Not every Shopify app, market, or paused store is supported. A Shopify billing problem on the store can block the connection.
         </p>
       </section>
 

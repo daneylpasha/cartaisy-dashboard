@@ -57,7 +57,7 @@ export async function generateMetadata({
 
   if (!response) {
     return {
-      title: 'Blog Post Not Found | Cartaisy',
+      title: { absolute: 'Blog Post Not Found | Cartaisy' },
     };
   }
 
@@ -68,7 +68,7 @@ export async function generateMetadata({
   const image = post.featuredImage || siteConfig.ogImage;
 
   return {
-    title: `${title} | ${siteConfig.name}`,
+    title: { absolute: `${title} | ${siteConfig.name}` },
     description,
     keywords: post.tags,
     authors: [{ name: post.author }],

@@ -23,7 +23,8 @@ export function generateMetadata(page: PageSEO): Metadata {
     : `${page.title} | ${siteConfig.name}`;
 
   return {
-    title,
+    // The root layout template is `%s | Cartaisy`. A string title would be wrapped again.
+    title: { absolute: title },
     description: page.description,
     keywords: [...siteConfig.keywords, ...(page.keywords || [])],
     authors: [{ name: siteConfig.name }],

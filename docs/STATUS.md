@@ -4,7 +4,7 @@ Last updated: 2026-10-05.
 
 ## C01 evaluation and purchase (2026-10-05)
 
-- Public commercial facts live in `lib/marketing/offer.ts`. The homepage, pricing, features, FAQ, docs, and SEO read that module.
+- Public commercial facts live in `lib/marketing/offer.ts`. The homepage, pricing, features, FAQ, docs, and SEO read that module. Public route titles from `generateMetadata` are absolute, so the root `%s | Cartaisy` template does not append a second suffix. `/docs/shopify` says the exact Shopify permissions are not confirmed on the site. The Railway `SHOPIFY_SCOPES` check and the App Store do-not-link note live in `docs/SHOPIFY_ACCESS.md`.
 - The public offer is one managed engagement: setup, then a recurring fee, with no dollar amount on the site. Unsupported counts, ratings, trials, card and PayPal claims, and the old JSON-LD price and rating are removed.
 - `/fit` saves a no-login fit check. `/schedule-demo` saves a walkthrough request. Neither starts Shopify OAuth. `/demo` shows the real Connect and Brand dashboard steps in tour mode. Every embedded action stays on the page, including Continue without connecting, Back, Continue, Publish home, Go live, and Build my app. The page has one heading, and Android, iOS, and excluded features sit in Offer limits. It does not offer an install link.
 - Operators with a successful `GET /api/v1/admin/build-requests` can open `/dashboard/admin/leads`. That inbox lists fit checks, walkthrough requests, and contact-form submissions, newest first. Contact rows stay in `ContactSubmission`; the contact form still saves and still emails when Resend is configured. Store owners see a forbidden state and no lead fields.

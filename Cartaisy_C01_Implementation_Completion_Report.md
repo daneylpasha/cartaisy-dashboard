@@ -78,7 +78,7 @@ Public marketing layouts use Manrope. “Who it suits” and “What managed inc
 | C01-R14 | No unqualified iOS claim | Done. `docs/IOS_READINESS.md` records the TODO. |
 | C01-R15 | Dead trust elements | Done. Placeholder social links, the unreachable demo modal, and the invalid Calendly embed are removed. |
 | C01-R16 | Terms and privacy | Done. Commercial sentences match the offer and do not invent a refund, cancellation, or offboarding policy. |
-| C01-R17 | Shopify scopes | Done. Docs say the live list is the Partner app `SHOPIFY_SCOPES` value and do not publish the old five-scope checklist. |
+| C01-R17 | Shopify scopes | Done. The public Shopify page says the exact permissions are not confirmed on the site. Railway `SHOPIFY_SCOPES` confirmation and the App Store do-not-link note are in `docs/SHOPIFY_ACCESS.md`, not on the public page. |
 | C01-R18 | Responsive prospect journey | Checked at about 1280px and 390px. Homepage, fit, and the mobile nav were usable. Full keyboard and screen-reader QA is still for the founder. |
 
 ## C. What changed

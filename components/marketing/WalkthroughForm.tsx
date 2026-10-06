@@ -104,7 +104,7 @@ export default function WalkthroughForm() {
           className={fieldClass}
         />
         <p id="walk-window-help" className="mt-2 text-sm leading-6 text-slate-300">
-          This is a note for the operator. It does not confirm a meeting.
+          This is a note for our team. It does not confirm a meeting.
         </p>
       </div>
       <div>

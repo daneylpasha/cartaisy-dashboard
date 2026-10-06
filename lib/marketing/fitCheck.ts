@@ -25,7 +25,7 @@ const results: Record<FitOutcome, Omit<FitResult, 'outcome'>> = {
   operating_fit: {
     title: 'Cartaisy may fit your store',
     summary:
-      'You already run a Shopify store and want a branded shopping app on that catalog. Cartaisy does not guarantee sales. Next, request a walkthrough. If we proceed, an operator sends an invite. This check did not connect Shopify.',
+      'You already run a Shopify store and want a branded shopping app on that catalog. Cartaisy does not guarantee sales. Next, request a walkthrough. If we proceed, we send an invite. This check did not connect Shopify.',
   },
   prelaunch_fit: {
     title: 'Start with the Shopify store',

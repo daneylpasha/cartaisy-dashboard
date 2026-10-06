@@ -13,7 +13,7 @@ export default function PrivacyPolicy() {
   return (
     <PageLayout>
       <h1 className="text-4xl font-bold text-white mb-4">Privacy Policy</h1>
-      <p className="text-gray-400 mb-12">Last updated: October 2026. The billing line was removed because this product does not collect card payments.</p>
+      <p className="text-gray-400 mb-12">Last updated: October 2026.</p>
 
       <div className="space-y-10 text-gray-300">
         <section>

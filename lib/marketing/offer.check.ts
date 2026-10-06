@@ -23,6 +23,7 @@ import {
   publicFaqs,
 } from '@/lib/marketing/offer';
 import { consumeRateLimit, resetRateLimitForTests } from '@/lib/marketing/rateLimit';
+import { generateMetadata } from '@/lib/seo';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -169,7 +170,17 @@ assert.equal(JSON.stringify(merged).includes('ipAddress'), false);
 const shopifyDocs = readFileSync(join(root, 'app/docs/shopify/page.tsx'), 'utf8');
 assert.equal(shopifyDocs.includes('read_products'), false);
 assert.match(shopifyDocs, /shopifyScopesDisclosure/);
-assert.match(readFileSync(join(root, 'lib/marketing/offer.ts'), 'utf8'), /does not publish that list/);
+assert.equal(/Railway|SHOPIFY_SCOPES|do not link/i.test(shopifyDocs), false);
+const scopesNote = readFileSync(join(root, 'docs/SHOPIFY_ACCESS.md'), 'utf8');
+assert.match(scopesNote, /SHOPIFY_SCOPES/);
+assert.match(scopesNote, /Railway/);
+assert.match(scopesNote, /Do not link a Shopify App Store listing/);
+assert.match(readFileSync(join(root, 'lib/marketing/offer.ts'), 'utf8'), /not confirmed on this site/);
+const pricingTitle = generateMetadata({ title: 'Pricing', description: 'One managed offer.' });
+const homeTitle = generateMetadata({ title: 'Home', description: 'Home.' });
+assert.deepEqual(pricingTitle.title, { absolute: 'Pricing | Cartaisy' });
+assert.deepEqual(homeTitle.title, { absolute: 'Cartaisy — Managed mobile apps for Shopify' });
+assert.equal(JSON.stringify(pricingTitle.title).includes('Cartaisy | Cartaisy'), false);
 const signup = readFileSync(join(root, 'app/(auth)/signup/page.tsx'), 'utf8');
 assert.match(signup, /href="\/fit"/);
 assert.match(signup, /invite-only/);
@@ -261,6 +272,23 @@ assert.match(iosReadiness, /not ready for a merchant app/);
 assert.equal(/August 2026|sample branded build|sample build|not a production offer/i.test(iosReadiness), false);
 const offerSource = readFileSync(join(root, 'lib/marketing/offer.ts'), 'utf8');
 assert.equal(/August 2026|sample branded build|sample build|not a production offer/i.test(offerSource), false);
+const prospectFiles = [
+  'lib/marketing/offer.ts',
+  'lib/marketing/fitCheck.ts',
+  'app/docs/shopify/page.tsx',
+  'app/docs/quickstart/page.tsx',
+  'app/docs/faq/page.tsx',
+  'app/schedule-demo/page.tsx',
+  'app/(auth)/signup/page.tsx',
+  'app/terms/page.tsx',
+  'app/privacy/page.tsx',
+  'app/contact/page.tsx',
+  'components/ContactForm.tsx',
+  'components/marketing/WalkthroughForm.tsx',
+].map((rel) => readFileSync(join(root, rel), 'utf8')).join('\n');
+assert.equal(/\boperator\b|allowed store|\bstaging\b|\bbinary\b|August test|billing line was removed|Schedule a personalized demo|within 24 hours/i.test(prospectFiles), false);
+assert.match(readFileSync(join(root, 'components/ContactForm.tsx'), 'utf8'), /Request a walkthrough/);
+assert.match(readFileSync(join(root, 'app/privacy/page.tsx'), 'utf8'), /We do not collect card numbers/);
 assert.equal(offerExcludes.length, 9);
 for (const rel of ['app/about/page.tsx', 'app/features/page.tsx', 'app/docs/quickstart/page.tsx', 'app/fit/page.tsx']) {
   const page = readFileSync(join(root, rel), 'utf8');

@@ -32,7 +32,7 @@ export default function TermsOfService() {
           <ul className="list-disc list-inside space-y-2 ml-4">
             <li>Connect an invited store to Shopify through the Cartaisy backend</li>
             <li>Set the supported brand fields and a home layout</li>
-            <li>Request a tracked build. An iOS production binary is not a current promise</li>
+            <li>Request a tracked build. A production iOS app is not a current promise</li>
           </ul>
         </section>
 

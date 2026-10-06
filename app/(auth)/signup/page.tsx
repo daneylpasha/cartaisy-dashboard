@@ -282,9 +282,9 @@ function SignupForm() {
             </h1>
             <p className="text-sm leading-6 text-slate-600">
               {missing
-                ? 'Cartaisy accounts are invite-only. Check whether the offer fits your store, or request a walkthrough. An operator sends a signup link if we proceed.'
+                ? 'Cartaisy accounts are invite-only. Check whether the offer fits your store, or request a walkthrough. We send a signup link if we proceed.'
                 : expired
-                  ? 'This signup link has expired. Request a walkthrough and an operator can send a new link.'
+                  ? 'This signup link has expired. Request a walkthrough and we can send a new link.'
                   : tokenError === 'Token has already been used'
                     ? 'This signup link has already been used. Sign in if this is your account.'
                     : 'This signup link is invalid or has been revoked. Request a walkthrough if you still want to talk.'}
