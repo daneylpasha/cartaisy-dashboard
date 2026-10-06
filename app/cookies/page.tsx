@@ -47,13 +47,6 @@ export default function CookiePolicy() {
               </p>
             </div>
 
-            <div className="bg-white/5 rounded-lg p-6 border border-white/10">
-              <h3 className="text-lg font-medium text-purple-300 mb-3">Marketing Cookies</h3>
-              <p className="leading-relaxed">
-                This site does not load advertising-network pixels. The marketing choice is stored with your
-                other choices. Allowing analytics does not turn marketing on.
-              </p>
-            </div>
           </div>
         </section>
 

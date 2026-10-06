@@ -3,9 +3,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import {
   CookieConsent,
+  acceptAllConsent,
   defaultConsent,
   getStoredConsent,
   gtagStorageConsent,
+  normalizeConsent,
+  rejectAllConsent,
   setConsentCookie,
 } from '@/lib/cookies';
 
@@ -55,11 +58,7 @@ export default function CookieConsentProvider({ children }: { children: ReactNod
   }, [consent]);
 
   const acceptAll = () => {
-    const fullConsent: CookieConsent = {
-      necessary: true,
-      analytics: true,
-      marketing: true,
-    };
+    const fullConsent = acceptAllConsent();
     setConsent(fullConsent);
     setConsentCookie(fullConsent);
     setHasChosen(true);
@@ -67,11 +66,7 @@ export default function CookieConsentProvider({ children }: { children: ReactNod
   };
 
   const rejectAll = () => {
-    const minimalConsent: CookieConsent = {
-      necessary: true,
-      analytics: false,
-      marketing: false,
-    };
+    const minimalConsent = rejectAllConsent();
     setConsent(minimalConsent);
     setConsentCookie(minimalConsent);
     setHasChosen(true);
@@ -79,7 +74,7 @@ export default function CookieConsentProvider({ children }: { children: ReactNod
   };
 
   const acceptSelected = (selectedConsent: CookieConsent) => {
-    const newConsent = { ...selectedConsent, necessary: true };
+    const newConsent = normalizeConsent(selectedConsent);
     setConsent(newConsent);
     setConsentCookie(newConsent);
     setHasChosen(true);

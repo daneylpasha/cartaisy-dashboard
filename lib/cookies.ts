@@ -14,6 +14,40 @@ export const defaultConsent: CookieConsent = {
   marketing: false,
 };
 
+/**
+ * Keep the stored shape, but never treat marketing as on.
+ * Older cookies may still say marketing true; the next save writes false.
+ */
+export function normalizeConsent(input: unknown): CookieConsent {
+  const record = input && typeof input === 'object' ? (input as { analytics?: unknown }) : {};
+  return {
+    necessary: true,
+    analytics: record.analytics === true,
+    marketing: false,
+  };
+}
+
+export function parseConsentCookie(raw: string | null | undefined): CookieConsent | null {
+  if (!raw) return null;
+  try {
+    return normalizeConsent(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
+
+export function consentCookieValue(consent: CookieConsent): string {
+  return JSON.stringify(normalizeConsent(consent));
+}
+
+export function acceptAllConsent(): CookieConsent {
+  return normalizeConsent({ necessary: true, analytics: true, marketing: true });
+}
+
+export function rejectAllConsent(): CookieConsent {
+  return normalizeConsent({ necessary: true, analytics: false, marketing: true });
+}
+
 // Get consent from cookie
 export function getStoredConsent(): CookieConsent | null {
   if (typeof window === 'undefined') return null;
@@ -24,8 +58,9 @@ export function getStoredConsent(): CookieConsent | null {
 
   if (!cookie) return null;
 
+  const raw = cookie.slice(CONSENT_COOKIE_NAME.length + 1);
   try {
-    return JSON.parse(decodeURIComponent(cookie.split('=')[1]));
+    return parseConsentCookie(decodeURIComponent(raw));
   } catch {
     return null;
   }
@@ -37,7 +72,7 @@ export function setConsentCookie(consent: CookieConsent) {
   expires.setDate(expires.getDate() + CONSENT_COOKIE_EXPIRY);
 
   document.cookie = `${CONSENT_COOKIE_NAME}=${encodeURIComponent(
-    JSON.stringify(consent)
+    consentCookieValue(consent)
   )}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
 }
 
@@ -53,17 +88,14 @@ export function optionalAnalyticsAllowed(
   return consent?.analytics === true;
 }
 
-/**
- * Analytics consent does not grant marketing storage, and marketing consent
- * does not grant analytics storage.
- */
+/** Analytics consent never grants ad storage. A legacy marketing flag stays denied. */
 export function gtagStorageConsent(consent: { analytics?: boolean; marketing?: boolean } | null | undefined): {
   analytics_storage: 'granted' | 'denied';
-  ad_storage: 'granted' | 'denied';
+  ad_storage: 'denied';
 } {
   return {
     analytics_storage: consent?.analytics === true ? 'granted' : 'denied',
-    ad_storage: consent?.marketing === true ? 'granted' : 'denied',
+    ad_storage: 'denied',
   };
 }
 
@@ -72,11 +104,7 @@ export function gtagStorageConsent(consent: { analytics?: boolean; marketing?: b
  * Optional cookies stay at the stored choice, which is off until a choice is saved.
  */
 export function consentAfterPreferencesDismiss(saved: CookieConsent): CookieConsent {
-  return {
-    necessary: true,
-    analytics: saved.analytics === true,
-    marketing: saved.marketing === true,
-  };
+  return normalizeConsent(saved);
 }
 
 /**

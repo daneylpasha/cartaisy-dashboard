@@ -72,8 +72,8 @@ export default function CookieBanner() {
   if (!showBanner || isOnboardingWizardPath(pathname)) return null;
 
   const handleToggle = (key: keyof CookieConsent) => {
-    if (key === 'necessary') return;
-    setLocalConsent((prev) => ({ ...prev, [key]: !prev[key] }));
+    if (key !== 'analytics') return;
+    setLocalConsent((prev) => ({ ...prev, analytics: !prev.analytics, marketing: false }));
   };
 
   return (
@@ -110,7 +110,7 @@ export default function CookieBanner() {
           ) : null}
         </div>
         <p className="mt-3 text-base font-normal leading-[1.6] text-slate-200">
-          Essential cookies keep this site working. Optional analytics and marketing cookies stay off unless you allow them.{' '}
+          Essential cookies keep this site working. Optional analytics stay off unless you allow them.{' '}
           <Link href="/cookies" className="font-semibold text-white underline underline-offset-2">
             Cookie Policy
           </Link>
@@ -131,13 +131,6 @@ export default function CookieBanner() {
               description="Help us understand how visitors interact with our website."
               checked={localConsent.analytics}
               onToggle={() => handleToggle('analytics')}
-            />
-            <CookieSwitch
-              id="cookie-marketing"
-              label="Marketing"
-              description="Used to deliver personalized advertisements."
-              checked={localConsent.marketing}
-              onToggle={() => handleToggle('marketing')}
             />
             <div className="grid grid-cols-1 gap-2 min-[480px]:grid-cols-3">
               <button type="button" onClick={rejectAll} className={outlinedAction}>

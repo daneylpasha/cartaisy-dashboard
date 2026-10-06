@@ -28,7 +28,14 @@ import {
   offerPositioning,
   publicFaqs,
 } from '@/lib/marketing/offer';
-import { gtagStorageConsent, optionalAnalyticsAllowed } from '@/lib/cookies';
+import {
+  acceptAllConsent,
+  consentCookieValue,
+  gtagStorageConsent,
+  optionalAnalyticsAllowed,
+  parseConsentCookie,
+  rejectAllConsent,
+} from '@/lib/cookies';
 import { consumeRateLimit, resetRateLimitForTests } from '@/lib/marketing/rateLimit';
 import { generateMetadata } from '@/lib/seo';
 
@@ -349,6 +356,8 @@ assert.equal(cookiesPage.includes('session_token'), false);
 assert.equal(/<td[^>]*>_ga<\/td>/.test(cookiesPage), false);
 assert.equal(/<td[^>]*>_gid<\/td>/.test(cookiesPage), false);
 assert.equal(/advertising networks|deliver advertisements/i.test(cookiesPage), false);
+assert.equal(cookiesPage.includes('Marketing Cookies'), false);
+assert.equal(cookiesPage.includes('marketing choice'), false);
 assert.match(cookiesPage, /cartaisy_token/);
 assert.match(cookiesPage, /cartaisy_auth_entry/);
 assert.match(cookiesPage, /7 days/);
@@ -371,10 +380,23 @@ assert.match(analyticsGate, /removeOptionalAnalyticsScripts/);
 assert.equal(optionalAnalyticsAllowed(null), false);
 assert.equal(optionalAnalyticsAllowed({ analytics: false, marketing: true }), false);
 assert.equal(optionalAnalyticsAllowed({ analytics: true, marketing: false }), true);
-assert.deepEqual(gtagStorageConsent({ analytics: true, marketing: false }), {
+assert.deepEqual(gtagStorageConsent({ analytics: true, marketing: true }), {
   analytics_storage: 'granted',
   ad_storage: 'denied',
 });
+assert.deepEqual(acceptAllConsent(), { necessary: true, analytics: true, marketing: false });
+assert.deepEqual(rejectAllConsent(), { necessary: true, analytics: false, marketing: false });
+const legacyMarketing = parseConsentCookie('{"necessary":true,"analytics":false,"marketing":true}');
+assert.equal(legacyMarketing?.marketing, false);
+assert.equal(optionalAnalyticsAllowed(legacyMarketing), false);
+assert.equal(JSON.parse(consentCookieValue({ necessary: true, analytics: true, marketing: true })).marketing, false);
+const bannerSource = readFileSync(join(root, 'components/cookies/CookieBanner.tsx'), 'utf8');
+assert.equal(bannerSource.includes('cookie-marketing'), false);
+assert.equal(bannerSource.includes('label="Marketing"'), false);
+assert.match(bannerSource, /Customize[\s\S]*Reject All[\s\S]*Accept All/);
+assert.match(bannerSource, /Save preferences/);
+assert.match(bannerSource, /id="cookie-analytics"/);
+assert.match(bannerSource, /id="cookie-necessary"/);
 assert.equal(offerExcludes.length, 9);
 for (const rel of ['app/about/page.tsx', 'app/features/page.tsx', 'app/docs/quickstart/page.tsx', 'app/fit/page.tsx']) {
   const page = readFileSync(join(root, rel), 'utf8');

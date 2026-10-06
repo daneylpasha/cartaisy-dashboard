@@ -2,12 +2,10 @@ import Script from 'next/script';
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
-export default function GoogleAnalytics({ marketing }: { marketing: boolean }) {
+export default function GoogleAnalytics() {
   if (!GA_MEASUREMENT_ID) {
     return null;
   }
-
-  const adStorage = marketing ? 'granted' : 'denied';
 
   return (
     <>
@@ -18,7 +16,7 @@ export default function GoogleAnalytics({ marketing }: { marketing: boolean }) {
           window['ga-disable-${GA_MEASUREMENT_ID}'] = false;
           gtag('consent', 'default', {
             'analytics_storage': 'granted',
-            'ad_storage': '${adStorage}',
+            'ad_storage': 'denied',
           });
         `}
       </Script>

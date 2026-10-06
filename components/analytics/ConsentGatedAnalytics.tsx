@@ -33,7 +33,7 @@ export default function ConsentGatedAnalytics() {
 
   return (
     <>
-      <GoogleAnalytics marketing={consent.marketing === true} />
+      <GoogleAnalytics />
       <VercelAnalytics />
       <VercelSpeedInsights />
     </>
