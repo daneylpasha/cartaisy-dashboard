@@ -28,6 +28,28 @@ Product screenshots: follow-up. No dashboard screenshot was added. The hero illu
 
 The homepage now alternates a black ground with a raised `#121212` band. The brand section uses the heading “Your brand, made mobile.” and replaces the repeated “Your brand” bullet. Logo and colors can update without a new build. The home-screen name, app icon, and splash image need a new build. That matches `lib/marketing/offer.ts` and the product tour. The STILL / ARC / MIRA illustration file was not in this workspace, so that section does not show a stand-in image.
 
+## Gaps vs competitors & assets needed
+
+Compared on 6 October 2026 against the live homepages of Tapcart, Shopney, and Superfans (formerly Vajro). Reference frames are internal only and are not in the repo. Cartaisy’s finished homepage has one visual: the fictional STILL concept in the hero. Every section after that is type. Those sites put a large product visual in the hero and again in the feature bands. Cartaisy does not have those assets, and this pass did not invent them.
+
+Do not commission, and do not add: a customer logo wall, star ratings, download or brand counts, testimonial portraits, or any phone mock of a product screen that was not captured from the real dashboard or the August 2026 Android sample.
+
+1. **Brand-identity illustration.** Missing. Section: “Your brand, made mobile.” Asset: one PNG source, shipped as WebP, 1536×1024 (3:2), opaque dark studio background (not transparent). It should show the three fictional kits already named for this pass — STILL, ARC, and MIRA — as identity boards, not as customer logos. Count: 1. Why it matters: this is the second band and it is a text column. The file `uploads/c01-brand-identities.png` was not in the workspace. No substitute was drawn. Until it arrives, the image-left / copy-right layout and the caption “Illustrative merchant identities.” are not on the page.
+
+2. **Real dashboard stills.** Missing. Section: “What managed includes” (catalog, home, Shopify checkout). Assets: three PNG or WebP captures, about 16:10 or 3:2, opaque, with the real Cartaisy chrome. Suggested frames: the Connect step after a real store address is accepted, the Brand step showing logo, colors, icon, and splash, and the home editor or a Shopify hosted checkout that is actually Shopify’s. Count: 3. No tokens, no invented orders, no pasted-in phone frame. Why it matters: the only picture on the page is a fictional store. The offer section is the place a merchant looks for the product, and it is a list.
+
+3. **Real Android sample capture.** Missing. Section: hero, beside or under the concept illustration. The concept stays until this exists; it is not proof. Asset: one PNG or WebP, either a 9:19.5 screen capture of the August 2026 sample or a 3:2 photograph of that build on a device. Opaque. Count: 1. Caption it as the Cartaisy sample, not as a customer. Why it matters: the hero currently has to say the merchant is fictional. A sample capture is the honest product picture. Do not stage a new mock.
+
+4. **Step and brand icons.** Missing. Sections: “How to get started” and the brand control list. Assets: about twelve SVG icons, 24×24 viewBox, single color (`currentColor`), transparent background, simple strokes. Seven for the real steps (fit, walkthrough, signup link, connect, sync, brand, build) and five for the real brand fields (name, logo, colors, icon, splash). Why it matters: the steps and the brand list are hard to scan as plain lines. Do not draw icons for push, loyalty, wallets, reviews, or anything else Cartaisy does not offer.
+
+5. **Short product recording.** Missing, and optional. Section: a still poster on the homepage is enough to point at “See Cartaisy in action”; the motion itself can live on `/demo`. Asset: one silent H.264 MP4, about 8–12 seconds, 1280×720 or 1440×810 (16:9), under about 2MB, plus a 16:9 PNG poster of the first frame. Record the real dashboard only: store-address check, then brand fields. No music, no on-screen claims. Why it matters: the hero does not move, and a generated clip would be a fake product.
+
+6. **Display type.** Not blocking. Headings are Plus Jakarta Sans and body text is Geist. Both are already licensed through the app. The headline is smaller and less distinct than a dedicated display face would be. If a change is wanted: one licensed WOFF2, latin subset, one or two weights, used only for headings. Do not add an unlicensed face. Why it matters: type is doing all the work below the hero, and the current heading face does not separate those bands on its own.
+
+7. **Lifestyle photography.** Leave this empty. Section that would use it: “Who it suits.” A set of three opaque 4:5 photos would make that band look like the photography strips on other homepages, and it would also read as customer proof Cartaisy does not have. Do not shoot testimonial portraits or borrow brand imagery. Revisit only with a real merchant who has agreed to be shown.
+
+The brand section copy and the rebuild note are live. The queued image-left treatment is not done until item 1 is in the repo.
+
 ## B. Requirement coverage
 
 | ID | Requirement | Result |
