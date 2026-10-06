@@ -5,7 +5,19 @@ import { fileURLToPath } from 'node:url';
 import { resolveFitOutcome } from '@/lib/marketing/fitCheck';
 import { parseFitLead, parseWalkthroughLead } from '@/lib/marketing/leadPayload';
 import { leadInboxAccess, leadKindLabel, mergeOperatorLeads } from '@/lib/marketing/leadInbox';
-import { checkoutWording, iosReadiness, offerPositioning, publicFaqs } from '@/lib/marketing/offer';
+import {
+  checkoutWording,
+  eligibility,
+  homeFaqs,
+  homeIncludes,
+  homeManaged,
+  homePlatform,
+  homeSteps,
+  iosReadiness,
+  offerExcludes,
+  offerPositioning,
+  publicFaqs,
+} from '@/lib/marketing/offer';
 import { consumeRateLimit, resetRateLimitForTests } from '@/lib/marketing/rateLimit';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -166,6 +178,40 @@ assert.equal(offerPositioning.eyebrow, 'Managed mobile apps for Shopify');
 assert.equal(offerPositioning.headline, 'Give your Shopify customers a branded mobile shopping experience.');
 assert.equal(offerPositioning.primaryCta, 'Check if Cartaisy fits your store');
 assert.equal(offerPositioning.secondaryCta, 'See Cartaisy in action');
+assert.equal(/free trial|operator|binary|staging store/i.test(offerPositioning.subhead), false);
+const home = readFileSync(join(root, 'components/marketing/HomeProspect.tsx'), 'utf8');
+assert.match(home, /offerPositioning\.primaryCta/);
+assert.match(home, /offerPositioning\.secondaryCta/);
+assert.match(home, /offerPaths\.fit/);
+assert.match(home, /offerPaths\.demo/);
+assert.match(home, /offerExcludes/);
+assert.match(home, /homePlatform/);
+assert.equal(/operator|allowed store|staging store|\bbinary\b/i.test(home), false);
+const homeCopy = [
+  offerPositioning.subhead,
+  homeManaged,
+  homePlatform.android,
+  homePlatform.ios,
+  ...homeIncludes.flatMap((item) => [item.title, item.body]),
+  ...homeSteps.flatMap((item) => [item.title, item.body]),
+  ...homeFaqs.flatMap((item) => [item.question, item.answer]),
+  ...offerExcludes,
+  eligibility.operating,
+  eligibility.prelaunch,
+  eligibility.websiteFirst,
+].join('\n');
+assert.equal(/operator|allowed store|staging store|\bbinary\b/i.test(homeCopy), false);
+assert.match(homePlatform.ios, /not ready/);
+assert.match(homePlatform.android, /August 2026/);
+assert.equal(/download/.test(homePlatform.android), true);
+const costFaq = homeFaqs.find((item) => item.question === 'How much does it cost?');
+assert.match(costFaq?.answer ?? '', /no free trial/);
+assert.ok(homeFaqs.length >= 6);
+const footer = readFileSync(join(root, 'components/landing/LandingFooter.tsx'), 'utf8');
+assert.equal(footer.includes('No public price'), false);
+assert.equal(/href=["']#["']/.test(footer), false);
+assert.match(footer, /offerPaths\.fit/);
+assert.match(footer, /offerPaths\.walkthrough/);
 assert.match(checkoutWording, /Shopify hosted checkout/);
 assert.match(checkoutWording, /not Cartaisy features/);
 assert.match(iosReadiness, /not a production offer/);

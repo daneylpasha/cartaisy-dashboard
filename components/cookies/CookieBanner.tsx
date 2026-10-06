@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { X, Cookie, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import { useCookieConsent } from './CookieConsentProvider';
 import { CookieConsent, isOnboardingWizardPath } from '@/lib/cookies';
@@ -29,44 +29,36 @@ export default function CookieBanner() {
     acceptSelected(localConsent);
   };
 
+  const primaryAction =
+    'inline-flex min-h-10 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300';
+  const secondaryAction =
+    'inline-flex min-h-10 items-center justify-center rounded-xl border border-white/20 px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300';
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-4">
+    <div className="fixed bottom-0 left-0 right-0 z-50 p-3">
       <div className="max-w-4xl mx-auto bg-slate-900 border border-slate-700 rounded-xl shadow-2xl overflow-hidden">
         {/* Main Banner */}
-        <div className="p-6">
-          <div className="flex items-start gap-4">
-            <div className="p-2 bg-purple-500/20 rounded-lg flex-shrink-0">
-              <Cookie className="w-6 h-6 text-purple-400" />
-            </div>
-
+        <div className="px-4 py-3">
+          <div className="flex items-start gap-3">
             <div className="flex-1">
-              <h3 className="text-white font-semibold mb-2">We value your privacy</h3>
-              <p className="text-slate-400 text-sm mb-4">
-                We use cookies to enhance your browsing experience, analyze site traffic, and personalize content.
-                Read our{' '}
-                <Link href="/cookies" className="text-purple-400 hover:text-purple-300 underline">
+              <p className="text-slate-300 text-sm">
+                Cookies run this site. Analytics and marketing cookies stay off unless you allow them.{' '}
+                <Link href="/cookies" className="text-white underline underline-offset-2">
                   Cookie Policy
-                </Link>{' '}
-                for more information.
+                </Link>
               </p>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3">
-                <button
-                  onClick={acceptAll}
-                  className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors"
-                >
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button onClick={acceptAll} className={primaryAction}>
                   Accept All
                 </button>
-                <button
-                  onClick={rejectAll}
-                  className="px-5 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg transition-colors"
-                >
+                <button onClick={rejectAll} className={secondaryAction}>
                   Reject All
                 </button>
                 <button
                   onClick={() => setShowDetails(!showDetails)}
-                  className="px-5 py-2 text-slate-300 hover:text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-1"
+                  className={`${secondaryAction} gap-1`}
                 >
                   Customize
                   {showDetails ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -89,7 +81,7 @@ export default function CookieBanner() {
 
         {/* Cookie Details */}
         {showDetails && (
-          <div className="border-t border-slate-700 p-6 bg-slate-800/50">
+          <div className="border-t border-slate-700 px-4 py-3 bg-slate-800/50">
             <div className="space-y-4">
               {/* Necessary Cookies */}
               <div className="flex items-center justify-between">
@@ -144,10 +136,7 @@ export default function CookieBanner() {
             </div>
 
             <div className="mt-6 flex justify-end">
-              <button
-                onClick={handleSavePreferences}
-                className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium rounded-lg transition-colors"
-              >
+              <button onClick={handleSavePreferences} className={primaryAction}>
                 Save Preferences
               </button>
             </div>

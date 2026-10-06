@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { Mail } from "lucide-react";
 import { offerPaths, offerPositioning, supportEmail } from "@/lib/marketing/offer";
-import NewsletterForm from "./NewsletterForm";
 import { CookieSettingsButton } from "@/components/cookies";
 
 export default function LandingFooter() {
@@ -15,25 +14,22 @@ export default function LandingFooter() {
       { label: "Pricing", href: offerPaths.pricing },
       { label: "Product tour", href: offerPaths.demo },
       { label: "Features", href: offerPaths.features },
+      { label: "Walkthrough", href: offerPaths.walkthrough },
     ],
     company: [
-      { label: "About Us", href: "/about" },
-      { label: "Blog", href: "/blog" },
-      { label: "Careers", href: "/careers" },
-      { label: "Contact", href: "/contact" },
+      { label: "About", href: "/about" },
+      { label: "Contact", href: offerPaths.contact },
+      { label: "Sign in", href: offerPaths.login },
     ],
     resources: [
-      { label: "Documentation", href: "/docs" },
-      { label: "API Reference", href: "/docs/api" },
-      { label: "FAQ", href: "/docs/faq" },
-      { label: "Walkthrough", href: offerPaths.walkthrough },
-      { label: "Newsletter", href: "/newsletter" },
-      { label: "Support", href: "/contact" },
+      { label: "Docs", href: offerPaths.docs },
+      { label: "FAQ", href: offerPaths.docsFaq },
+      { label: "Shopify", href: offerPaths.docsShopify },
     ],
     legal: [
-      { label: "Privacy Policy", href: "/privacy" },
-      { label: "Terms of Service", href: "/terms" },
-      { label: "Cookie Policy", href: "/cookies" },
+      { label: "Privacy", href: offerPaths.privacy },
+      { label: "Terms", href: offerPaths.terms },
+      { label: "Cookies", href: "/cookies" },
     ],
   };
 
@@ -51,18 +47,7 @@ export default function LandingFooter() {
       {/* Top gradient border */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
 
-      <div className="max-w-7xl mx-auto px-6 py-16">
-        {/* Newsletter Section */}
-        <div className="mb-12 pb-12 border-b border-white/10">
-          <div className="max-w-md">
-            <h3 className="text-white font-semibold mb-2">Stay Updated</h3>
-            <p className="text-gray-400 text-sm mb-4">
-              Get the latest updates on mobile commerce and Cartaisy features.
-            </p>
-            <NewsletterForm variant="inline" />
-          </div>
-        </div>
-
+      <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12 mb-12">
           {/* Brand Column - Takes 2 columns on large screens */}
@@ -200,9 +185,9 @@ export default function LandingFooter() {
             <p className="text-gray-400 text-sm">
               © {new Date().getFullYear()} Cartaisy. All rights reserved.
             </p>
-
-            {/* Status indicator */}
-            <p className="text-sm text-gray-400">Invite-only. No public price.</p>
+            <a href={`mailto:${supportEmail}`} className="text-sm text-gray-400 hover:text-white">
+              {supportEmail}
+            </a>
           </div>
         </div>
       </div>

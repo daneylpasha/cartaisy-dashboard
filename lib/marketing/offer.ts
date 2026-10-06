@@ -27,7 +27,7 @@ export const offerPositioning = {
   eyebrow: 'Managed mobile apps for Shopify',
   headline: 'Give your Shopify customers a branded mobile shopping experience.',
   subhead:
-    'Cartaisy is a managed shopping app for one Shopify store. Shoppers browse and use a cart in the app, then pay on Shopify hosted checkout. An operator invites you in. There is no self-serve signup, no free trial, and no promise of more sales.',
+    'Cartaisy sets up a branded shopping app for one Shopify store and guides the work with you. Shoppers browse in the app and pay on Shopify hosted checkout.',
   primaryCta: 'Check if Cartaisy fits your store',
   secondaryCta: 'See Cartaisy in action',
   walkthroughCta: 'Request a walkthrough',
@@ -129,6 +129,67 @@ export const appStoreAcquisitionTodo =
   'Public Shopify App Store install, then claim, then invite, is not a working path for a new merchant. Signup stays invite-only, and claim requires a signed-in store admin. Do not link an App Store listing as the way to buy Cartaisy.';
 
 export const supportEmail = 'support@cartaisy.com';
+
+/** Short homepage copy. Facts stay aligned with the constants above. */
+export const homeManaged =
+  'Managed means Cartaisy guides the work for one store: connect Shopify, sync the catalog, set the brand, preview the home, and request the app build. You keep the Shopify store. You own the Apple Developer account, the Google Play account, and the listings under them.';
+
+export const homeIncludes = [
+  { title: 'Your catalog', body: 'Products sync, including variants and inventory, before a build can start.' },
+  { title: 'Your brand', body: 'Name, logo, colors, icon, and splash image. Colors and the logo can update without a new build. The home-screen name, icon, and splash need one.' },
+  { title: 'Your home', body: 'Publish a home from the supported modules, or leave the app’s default home.' },
+  { title: 'Shopify checkout', body: 'Shoppers pay on Shopify hosted checkout. Cartaisy does not collect card numbers.' },
+] as const;
+
+export const homeSteps = [
+  { title: 'Check fit', body: 'Tell us about your store. You do not need an account, and this does not connect Shopify.' },
+  { title: 'Request a walkthrough', body: 'See the real Connect and Brand screens. We reply by email. The form does not book a calendar.' },
+  { title: 'Receive a signup link', body: 'If Cartaisy proceeds, we send a signup link. Open signup is not available.' },
+  { title: 'Connect Shopify', body: 'Connect the store from your dashboard. This works for a store where the Cartaisy Shopify app can be installed. An install from the Shopify App Store does not create an account.' },
+  { title: 'Sync the catalog', body: 'A build waits until product sync succeeds. That sync has been completed on a Cartaisy test store. Your store still needs its own.' },
+  { title: 'Set the brand and preview', body: 'Set the name, logo, colors, icon, and splash, then preview or publish the home.' },
+  { title: 'Request the build', body: 'The dashboard tracks Android and iOS. Publishing uses your Apple Developer and Google Play accounts. Store review stays with Apple and Google.' },
+] as const;
+
+export const homePlatform = {
+  android:
+    'Android: a branded sample was installed on a device in August 2026. This website does not offer that file as a download.',
+  ios: 'iOS: not ready for a merchant app. Saving an iOS request is not a live iPhone app.',
+} as const;
+
+export const homeFaqs: { question: string; answer: string }[] = [
+  {
+    question: 'How much does it cost?',
+    answer: `${managedOffer.structure} ${managedOffer.notIncludedInTheProduct}`,
+  },
+  {
+    question: 'How do I get an account?',
+    answer:
+      'Accounts are invite-only. Check fit or request a walkthrough. If Cartaisy proceeds, we send a signup link. The login page is for people who already have an account.',
+  },
+  {
+    question: 'Where do shoppers pay?',
+    answer: checkoutWording,
+  },
+  {
+    question: 'Who owns the Apple and Google accounts?',
+    answer: `${ownership.accounts} ${ownership.expo}`,
+  },
+  {
+    question: 'What happens if I stop?',
+    answer: ownership.exit,
+  },
+  {
+    question: 'Does Cartaisy guarantee sales?',
+    answer:
+      'No. The app can make repeat shopping more convenient for people who already buy from your Shopify store. It does not create an audience and it does not promise revenue, ratings, or downloads.',
+  },
+  {
+    question: 'Can I install Cartaisy from the Shopify App Store?',
+    answer:
+      'No. Installing from the Shopify App Store does not create a Cartaisy account. Signup stays invite-only.',
+  },
+];
 
 export const publicFaqs: { question: string; answer: string }[] = [
   {

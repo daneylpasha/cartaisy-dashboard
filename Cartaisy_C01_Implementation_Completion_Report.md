@@ -20,6 +20,12 @@ The operator lead inbox lists fit checks, walkthrough requests, and contact-form
 
 Founder manual QA is still required before merge or any production deploy.
 
+## Homepage revision (2026-10-06)
+
+The homepage is a shorter merchant view of the same offer. The hero is the approved headline plus one description of the branded Shopify app and the managed setup. Trial, signup, and sales-guarantee limits stay in the cost question and the “Not included” list. Both CTAs keep their exact text and destinations. “Managed” is the real sequence: fit check, walkthrough, signup link, connect, sync, brand and preview, then a tracked build. The merchant owns the Apple and Google accounts. Android is the August 2026 sample, not a public download. iOS is not ready for a merchant app. Internal words (operator, allowed store, staging store, binary) are off this page. The footer lists live C01 destinations and no longer says “No public price.” The cookie banner is shorter, and Accept and Save use the same white button as the homepage primary action.
+
+Product screenshots: follow-up. `public/` has logos only. No dashboard screenshot was added, and no phone or simulator mock was drawn.
+
 ## B. Requirement coverage
 
 | ID | Requirement | Result |
