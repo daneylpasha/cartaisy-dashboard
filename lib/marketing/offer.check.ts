@@ -342,6 +342,11 @@ const prospectFiles = [
 assert.equal(/\boperator\b|allowed store|\bstaging\b|\bbinary\b|August test|billing line was removed|Schedule a personalized demo|within 24 hours/i.test(prospectFiles), false);
 assert.match(readFileSync(join(root, 'components/ContactForm.tsx'), 'utf8'), /Request a walkthrough/);
 assert.match(readFileSync(join(root, 'app/privacy/page.tsx'), 'utf8'), /We do not collect card numbers/);
+const cookiesPage = readFileSync(join(root, 'app/cookies/page.tsx'), 'utf8');
+assert.equal(/Stripe/i.test(cookiesPage), false);
+assert.equal(cookiesPage.includes('session_token'), false);
+assert.match(cookiesPage, /cartaisy_token/);
+assert.match(cookiesPage, /Last updated: October 2026/);
 assert.equal(offerExcludes.length, 9);
 for (const rel of ['app/about/page.tsx', 'app/features/page.tsx', 'app/docs/quickstart/page.tsx', 'app/fit/page.tsx']) {
   const page = readFileSync(join(root, rel), 'utf8');

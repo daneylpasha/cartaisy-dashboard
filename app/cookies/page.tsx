@@ -13,7 +13,7 @@ export default function CookiePolicy() {
   return (
     <PageLayout>
       <h1 className="text-4xl font-bold text-white mb-4">Cookie Policy</h1>
-      <p className="text-gray-400 mb-12">Last updated: January 2025</p>
+      <p className="text-gray-400 mb-12">Last updated: October 2026</p>
 
       <div className="space-y-10 text-gray-300">
         <section>
@@ -76,7 +76,7 @@ export default function CookiePolicy() {
                   <td className="py-3">1 year</td>
                 </tr>
                 <tr className="border-b border-white/10">
-                  <td className="py-3 pr-4 text-purple-300">session_token</td>
+                  <td className="py-3 pr-4 text-purple-300">cartaisy_token</td>
                   <td className="py-3 pr-4">Authentication and session management</td>
                   <td className="py-3">Session</td>
                 </tr>
@@ -105,7 +105,6 @@ export default function CookiePolicy() {
             <li><strong className="text-white">Google Analytics:</strong> For website analytics and performance monitoring</li>
             <li><strong className="text-white">Vercel Analytics:</strong> For performance and usage insights</li>
             <li><strong className="text-white">Shopify:</strong> For integration with your Shopify store</li>
-            <li><strong className="text-white">Stripe:</strong> For secure payment processing</li>
           </ul>
         </section>
 
