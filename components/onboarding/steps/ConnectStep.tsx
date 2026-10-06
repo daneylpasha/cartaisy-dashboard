@@ -28,6 +28,8 @@ interface ConnectStepProps {
   onContinue: () => void;
   onRefresh: () => void;
   onSyncAgain: () => void;
+  /** Public /demo only. The signed-in wizard keeps this title as the page heading. */
+  tourMode?: boolean;
 }
 
 export function ConnectStep({
@@ -45,6 +47,7 @@ export function ConnectStep({
   onContinue,
   onRefresh,
   onSyncAgain,
+  tourMode = false,
 }: ConnectStepProps) {
   const [shop, setShop] = useState(suggestedShop ?? '');
   const [fieldError, setFieldError] = useState<string | null>(null);
@@ -83,6 +86,7 @@ export function ConnectStep({
   };
 
   const title = justConnected ? returnNotice.title : 'Connect Shopify';
+  const TitleTag = tourMode ? 'h3' : 'h1';
   const lede = justConnected
     ? returnNotice.body
     : confirmed
@@ -92,9 +96,9 @@ export function ConnectStep({
   return (
     <section className="rounded-2xl border border-slate-200/80 bg-white px-6 py-8 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-10 sm:py-10">
       <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Step 1</p>
-      <h1 className="font-heading mt-3 text-[1.75rem] font-semibold tracking-tight text-slate-950">
+      <TitleTag className="font-heading mt-3 text-[1.75rem] font-semibold tracking-tight text-slate-950">
         {title}
-      </h1>
+      </TitleTag>
       <p className="mt-3 max-w-lg text-[15px] leading-7 text-slate-600">{lede}</p>
 
       {returnError && (

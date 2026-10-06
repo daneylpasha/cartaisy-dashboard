@@ -512,6 +512,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Auth session and the dashboard shell. Human review is required because this changes membership and can disconnect Shopify. No Shopify token or Expo token is stored or rendered. The last-app block is the merchant-facing choice: the owner always keeps a working app, and Add app still works. The backend route is not deployed yet. `docs/backend-remove-merchant-store.patch` applies on cartaisy-backend `main`.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/backend-remove-merchant-store.patch`.
 
+### The public product tour stays on the page
+
+- Date: 2026-10-06.
+- Decision: `/demo` reuses the Connect and Brand steps with `tourMode`. Continue without connecting, Back, Continue, Publish home, Go live, and Build my app announce a local status and do not navigate. File picks stay in the browser. The signed-in wizard does not pass `tourMode`, so its dashboard links and page headings stay.
+- Reason: C01 R06/R18. The embedded first-build links were sending prospects to `/dashboard` paths, and the page had three top-level headings.
+- Impact: Public `/demo` and `/product-tour` only. No Shopify OAuth, upload, or build call is added. Human review is required because the same Connect and Brand components render in the merchant wizard.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.

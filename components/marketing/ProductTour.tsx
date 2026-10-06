@@ -44,37 +44,59 @@ const emptyDraft: BrandingDraft = {
   iconPersisted: true,
 };
 
+const sectionTitle =
+  'font-heading text-[1.75rem] font-semibold leading-[1.1] tracking-[-0.025em] text-white sm:text-[2rem]';
+const body = 'max-w-[62ch] text-base font-normal leading-[1.6] text-slate-300';
+
 export default function ProductTour() {
   const [draft, setDraft] = useState<BrandingDraft>(emptyDraft);
   const [primaryValid, setPrimaryValid] = useState(true);
   const [secondaryValid, setSecondaryValid] = useState(true);
   const [notice, setNotice] = useState('');
 
+  const keepLocalFile = (kind: 'logoUrl' | 'iconUrl' | 'splashUrl', file: File) => {
+    const url = URL.createObjectURL(file);
+    setDraft((current) => {
+      const previous = current[kind];
+      if (previous?.startsWith('blob:')) URL.revokeObjectURL(previous);
+      return { ...current, [kind]: url };
+    });
+    setNotice('That file stays in this browser. This tour does not upload it.');
+  };
+
   return (
-    <div className="space-y-10">
+    <div className="space-y-14" data-product-tour="">
       <header>
-        <p className="text-sm font-medium uppercase tracking-wide text-purple-200">{offerPositioning.eyebrow}</p>
-        <h1 className="mt-3 text-4xl font-semibold tracking-tight text-white">See Cartaisy in action</h1>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-slate-200">
-          These are the real merchant dashboard steps, shown here without a store connection. Nothing on this page installs an app, opens Shopify, or plays a video.
-        </p>
+        <p className="text-sm font-medium uppercase tracking-normal text-purple-200">{offerPositioning.eyebrow}</p>
+        <h1 className="font-heading mt-4 text-[2rem] font-semibold leading-[1.1] tracking-[-0.025em] text-[#f6f3ee] sm:text-[2.75rem]">
+          Explore your store-to-app setup.
+        </h1>
+        <p className={`mt-5 ${body} sm:text-lg`}>Try the setup steps with sample data. Changes stay in this tour.</p>
       </header>
 
-      {notice && (
-        <p role="status" className="rounded-lg border border-white/15 bg-white/5 px-4 py-3 text-sm leading-6 text-slate-100">
-          {notice}
-        </p>
-      )}
+      <p
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        className={
+          notice
+            ? 'rounded-[4px] border border-white/15 bg-white/5 px-4 py-3 text-sm leading-6 text-slate-100'
+            : 'sr-only'
+        }
+      >
+        {notice}
+      </p>
 
-      <section aria-labelledby="tour-connect" className="space-y-3">
-        <h2 id="tour-connect" className="text-lg font-semibold text-white">
-          Connect Shopify
-        </h2>
-        <p className="max-w-2xl text-sm leading-6 text-slate-300">
-          An invited merchant sees this step after signup. The button on this tour does not start Shopify OAuth.
-        </p>
-        <div className="overflow-x-auto rounded-2xl bg-[#f6f6f7] p-3 sm:p-6">
+      <section aria-labelledby="tour-connect" className="space-y-4">
+        <div>
+          <h2 id="tour-connect" className={sectionTitle}>
+            Connect
+          </h2>
+          <p className={`mt-3 ${body}`}>Enter a store address to see the step. This tour does not open Shopify.</p>
+        </div>
+        <div className="min-w-0 rounded-[4px] bg-[#f6f6f7] p-3 sm:p-6">
           <ConnectStep
+            tourMode
             connection={connection}
             sync={sync}
             catalog={catalog}
@@ -85,23 +107,26 @@ export default function ProductTour() {
             returnNotice={null}
             suggestedShop={null}
             syncing={false}
-            onStart={() => setNotice('This tour does not connect Shopify. Request a walkthrough if you want to see a live store.')}
-            onContinue={() => setNotice('Continue without connecting is a dashboard step. It does not create an account from this page.')}
+            onStart={() => setNotice('This tour does not open Shopify. The store stays disconnected.')}
+            onContinue={() =>
+              setNotice('Continue without connecting stays in this tour. It does not open the dashboard.')
+            }
             onRefresh={() => setNotice('This tour does not check a live Shopify connection.')}
             onSyncAgain={() => setNotice('This tour does not sync a catalog.')}
           />
         </div>
       </section>
 
-      <section aria-labelledby="tour-brand" className="space-y-3">
-        <h2 id="tour-brand" className="text-lg font-semibold text-white">
-          Brand
-        </h2>
-        <p className="max-w-2xl text-sm leading-6 text-slate-300">
-          Name, logo, colors, icon, and splash are the supported brand fields. Files you pick here stay in the browser. Launcher icon and native splash still need a new build.
-        </p>
-        <div className="overflow-x-auto rounded-2xl bg-[#f6f6f7] p-3 sm:p-6">
+      <section aria-labelledby="tour-brand" className="space-y-4">
+        <div>
+          <h2 id="tour-brand" className={sectionTitle}>
+            Brand
+          </h2>
+          <p className={`mt-3 ${body}`}>Set the name, colors, and images. Files you pick stay in this browser.</p>
+        </div>
+        <div className="min-w-0 rounded-[4px] bg-[#f6f6f7] p-3 sm:p-6">
           <BrandingStep
+            tourMode
             draft={draft}
             connection={connection}
             catalog={catalog}
@@ -118,58 +143,58 @@ export default function ProductTour() {
             onDraftChange={setDraft}
             onPrimaryValidity={setPrimaryValid}
             onSecondaryValidity={setSecondaryValid}
-            onLogoFile={() => setNotice('This tour does not upload a logo.')}
-            onIconFile={() => setNotice('This tour does not upload an icon.')}
-            onSplashFile={() => setNotice('This tour does not upload a splash image.')}
+            onLogoFile={(file) => keepLocalFile('logoUrl', file)}
+            onIconFile={(file) => keepLocalFile('iconUrl', file)}
+            onSplashFile={(file) => keepLocalFile('splashUrl', file)}
             onImageError={(message) => setNotice(message || 'That image was not accepted.')}
-            onBack={() => setNotice('Back returns to Connect Shopify in the invited dashboard.')}
-            onContinue={() => setNotice('Brand is saved only after an invite, inside the dashboard.')}
-            onRetry={() => undefined}
+            onBack={() => setNotice('Back stays on this tour. It does not open the dashboard.')}
+            onContinue={() => setNotice('Continue stays on this tour. Nothing is saved.')}
+            onRetry={() => setNotice('This tour does not reload a store.')}
+            onPublishHome={() => setNotice('Publish home stays in this tour. It does not open the dashboard.')}
+            onGoLive={() => setNotice('Go live stays in this tour. It does not open the dashboard.')}
+            onBuildMyApp={() => setNotice('Build my app stays in this tour. It does not start a build.')}
             installPreview={{ phase: 'unavailable', installs: [] }}
           />
         </div>
       </section>
 
-      <section aria-labelledby="tour-checkout" className="rounded-2xl border border-white/10 bg-white/5 p-6">
-        <h2 id="tour-checkout" className="text-lg font-semibold text-white">
-          Shopper checkout
+      <section aria-labelledby="tour-checkout" className="space-y-3">
+        <h2 id="tour-checkout" className={sectionTitle}>
+          Checkout and build
         </h2>
-        <p className="mt-3 text-base leading-7 text-slate-200">{checkoutWording}</p>
-        <p className="mt-3 text-sm leading-6 text-slate-300">
-          There is no public shopper install on this page. The shopper path was proven on Cartaisy staging, not as a download you can open from the marketing site.
-        </p>
-      </section>
-
-      <section aria-labelledby="tour-build" className="rounded-2xl border border-white/10 bg-white/5 p-6">
-        <h2 id="tour-build" className="text-lg font-semibold text-white">
-          Build my app
-        </h2>
-        <p className="mt-3 text-base font-normal leading-[1.6] text-slate-200">{homePlatform.android}</p>
-        <p className="mt-2 text-base font-normal leading-[1.6] text-slate-200">{homePlatform.ios}</p>
-        <p className="mt-3 text-sm leading-6 text-slate-300">
-          The first-build note inside the brand screen is the real empty state. It does not include a public install link.
-        </p>
-        <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-200">
-          {offerExcludes.slice(0, 4).map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
+        <p className={body}>{checkoutWording}</p>
+        <p className={body}>Build my app records a request. This page does not start a build or offer a download.</p>
       </section>
 
       <div className="flex flex-col gap-3 sm:flex-row">
         <Link
           href={offerPaths.walkthrough}
-          className="inline-flex min-h-11 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+          className="inline-flex h-12 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
         >
           {offerPositioning.walkthroughCta}
         </Link>
         <Link
           href={offerPaths.fit}
-          className="inline-flex min-h-11 items-center justify-center rounded-[4px] border border-white/20 px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+          className="inline-flex h-12 items-center justify-center rounded-[4px] border border-white/20 px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
         >
           {offerPositioning.primaryCta}
         </Link>
       </div>
+
+      <details className="rounded-[4px] border border-white/10 bg-white/5 px-5 py-4">
+        <summary className="cursor-pointer text-base font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300">
+          Offer limits
+        </summary>
+        <div className="mt-4 space-y-3 text-base font-normal leading-[1.6] text-slate-200">
+          <p>{homePlatform.android}</p>
+          <p>{homePlatform.ios}</p>
+          <ul className="list-disc space-y-2 pl-5">
+            {offerExcludes.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      </details>
     </div>
   );
 }
