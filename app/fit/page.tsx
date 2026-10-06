@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import PageLayout from '@/components/landing/PageLayout';
 import FitCheckForm from '@/components/marketing/FitCheckForm';
-import { eligibility, offerPositioning } from '@/lib/marketing/offer';
+import { eligibility, homePlatform, offerPositioning } from '@/lib/marketing/offer';
 import { generateMetadata as genMeta } from '@/lib/seo';
 
 export const metadata: Metadata = genMeta({
@@ -18,6 +18,11 @@ export default function FitPage() {
       <p className="mt-4 text-base leading-7 text-slate-200">
         No account is required. {eligibility.operating} {eligibility.prelaunch} {eligibility.websiteFirst}
       </p>
+      <div className="mt-6 space-y-2 border-t border-white/10 pt-4">
+        <h2 className="text-sm font-semibold text-white">Platform limits</h2>
+        <p className="text-sm leading-6 text-slate-300">{homePlatform.android}</p>
+        <p className="text-sm leading-6 text-slate-300">{homePlatform.ios}</p>
+      </div>
       <div className="mt-8">
         <FitCheckForm />
       </div>

@@ -185,7 +185,12 @@ assert.match(home, /offerPositioning\.secondaryCta/);
 assert.match(home, /offerPaths\.fit/);
 assert.match(home, /offerPaths\.demo/);
 assert.match(home, /offerExcludes/);
-assert.match(home, /homePlatform/);
+assert.equal(/homePlatform|Availability|Illustrative/.test(home), false);
+const fitPage = readFileSync(join(root, 'app/fit/page.tsx'), 'utf8');
+assert.match(fitPage, /homePlatform\.android/);
+assert.match(fitPage, /homePlatform\.ios/);
+assert.match(demo, /homePlatform\.android/);
+assert.match(demo, /homePlatform\.ios/);
 assert.equal(/operator|allowed store|staging store|\bbinary\b/i.test(home), false);
 const homeCopy = [
   offerPositioning.subhead,
@@ -203,7 +208,7 @@ const homeCopy = [
 assert.equal(/operator|allowed store|staging store|\bbinary\b/i.test(homeCopy), false);
 assert.match(homePlatform.ios, /not ready/);
 assert.match(homePlatform.android, /not yet generally available/);
-assert.match(homePlatform.android, /in progress/);
+assert.equal(/in progress|merchant builds/i.test(homePlatform.android), false);
 assert.equal(/download/.test(homePlatform.android), true);
 const costFaq = homeFaqs.find((item) => item.question === 'How much does it cost?');
 assert.match(costFaq?.answer ?? '', /no free trial/);

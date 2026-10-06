@@ -4,7 +4,6 @@ import {
   eligibility,
   homeIncludes,
   homeManaged,
-  homePlatform,
   offerExcludes,
   offerPaths,
   offerPositioning,
@@ -31,14 +30,18 @@ const [headlineLead, headlineRest] = offerPositioning.headline.split(', ');
 export default function HomeProspect() {
   return (
     <>
-      <section className="overflow-x-clip pt-24 sm:pt-28">
-        <div className={`${shell} grid items-start gap-8 lg:grid-cols-2 lg:gap-16`}>
-          <div className="lg:pt-4">
+      <section className="overflow-x-clip pb-4 pt-24 sm:pt-28">
+        <div
+          className={`${shell} grid items-center gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-10 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] xl:gap-12`}
+        >
+          <div className="min-w-0">
             <p className="text-sm font-medium uppercase tracking-[0.16em] text-purple-200">{offerPositioning.eyebrow}</p>
-            <h1 className="font-heading mt-4 max-w-[10.5em] text-[2rem] font-semibold leading-[1.08] tracking-[-0.03em] text-[#f6f3ee] min-[400px]:text-[2.375rem] sm:max-w-none sm:text-[2.75rem] lg:text-[3.75rem] xl:text-[4.25rem]">
-              {headlineLead}, <span className="lg:block">{headlineRest}</span>
+            <h1 className="font-heading mt-4 text-[2rem] font-semibold leading-[1.08] tracking-[-0.03em] text-[#f6f3ee] min-[400px]:text-[2.375rem] sm:text-[2.75rem] lg:text-[2.75rem] xl:text-[3.125rem]">
+              {headlineLead},{' '}
+              <br className="hidden lg:block" />
+              {headlineRest}
             </h1>
-            <p className="mt-5 max-w-[52ch] text-base leading-7 text-slate-300 sm:text-lg lg:text-xl lg:leading-8">
+            <p className="mt-5 max-w-[52ch] text-base leading-7 text-slate-300 sm:text-lg lg:leading-8">
               {offerPositioning.subhead}
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -50,28 +53,18 @@ export default function HomeProspect() {
               </Link>
             </div>
           </div>
-          <figure className="min-w-0 lg:pt-4">
+          <figure className="min-w-0">
             <Image
               src="/marketing/c01-hero-still.webp"
-              alt="A phone showing a branded shopping app for a fictional home-goods store, with floating product cards."
+              alt="Illustration of a branded mobile shopping app for a fictional home-goods store, with floating product cards."
               width={1536}
               height={1024}
               priority
               quality={90}
-              sizes="(min-width: 1280px) 720px, (min-width: 1024px) 50vw, 100vw"
+              sizes="(min-width: 1280px) 700px, (min-width: 1024px) 55vw, 100vw"
               className="h-auto w-full"
             />
-            <figcaption className="mt-3 text-sm leading-5 text-slate-400">
-              Illustrative shopping experience — fictional merchant.
-            </figcaption>
           </figure>
-        </div>
-        <div className={`${shell} mt-10 pb-4 lg:mt-14`}>
-          <h2 className="text-sm font-semibold text-white">Availability</h2>
-          <div className="mt-3 grid gap-3 border-t border-white/10 pt-4 sm:grid-cols-2">
-            <p className="text-sm leading-6 text-slate-200">{homePlatform.android}</p>
-            <p className="text-sm leading-6 text-slate-200">{homePlatform.ios}</p>
-          </div>
         </div>
       </section>
 
@@ -102,7 +95,7 @@ export default function HomeProspect() {
           <figure className="order-2 min-w-0 lg:order-1">
             <Image
               src="/marketing/c01-brand-identities.webp"
-              alt="Three fictional brand kits named STILL, ARC, and MIRA, with color swatches, a vase, a backpack, and a bottle."
+              alt="Illustration of three fictional brand kits named STILL, ARC, and MIRA, with color swatches, a vase, a backpack, and a bottle."
               width={1536}
               height={1024}
               loading="lazy"
@@ -110,7 +103,6 @@ export default function HomeProspect() {
               sizes="(min-width: 1280px) 640px, (min-width: 1024px) 50vw, 100vw"
               className="h-auto w-full"
             />
-            <figcaption className="mt-3 text-sm leading-5 text-slate-400">Illustrative merchant identities.</figcaption>
           </figure>
         </div>
       </section>
@@ -165,13 +157,12 @@ export default function HomeProspect() {
       </section>
 
       <section className="bg-[#f7f4ee]" aria-labelledby="path-heading">
-        <div className="h-14 bg-gradient-to-b from-[#121212] to-[#f7f4ee] sm:h-16" aria-hidden="true" />
-        <div className={`${shell} pb-10 lg:pb-14`}>
+        <div className={`${shell} py-10 lg:py-14`}>
           <div className="flex flex-col lg:grid">
             <figure className="order-2 overflow-hidden lg:order-none lg:col-start-1 lg:row-start-1">
               <Image
                 src="/marketing/c01-ridgeline-setup.webp"
-                alt="A fictional outdoor merchant named Ridgeline, shown as catalog, brand, build request, and home preview panels on a mountain landscape."
+                alt="Illustration of a setup workflow for a fictional outdoor store named Ridgeline, shown as catalog, brand, build request, and home preview panels on a mountain landscape."
                 width={1983}
                 height={793}
                 loading="lazy"
@@ -188,7 +179,7 @@ export default function HomeProspect() {
                 >
                   A guided path from store to app.
                 </h2>
-                <p className="mt-4 max-w-[36ch] text-base leading-7 text-[#244538]">
+                <p className="mt-4 max-w-[64ch] text-base leading-7 text-[#244538] lg:max-w-[36ch]">
                   Connect your Shopify store, sync your catalog, set your brand, and prepare your app build with guidance from Cartaisy.
                 </p>
                 <Link
@@ -200,13 +191,7 @@ export default function HomeProspect() {
               </div>
             </div>
           </div>
-          <p className="mt-3 text-sm leading-5 text-[#3d5348]">Illustrative setup workflow — fictional merchant.</p>
-          <div className="mt-5 grid gap-3 border-t border-[#1b3a2f]/15 pt-4 sm:grid-cols-2">
-            <p className="text-sm leading-6 text-[#1b3a2f]">{homePlatform.android}</p>
-            <p className="text-sm leading-6 text-[#1b3a2f]">{homePlatform.ios}</p>
-          </div>
         </div>
-        <div className="h-14 bg-gradient-to-b from-[#f7f4ee] to-[#121212] sm:h-16" aria-hidden="true" />
       </section>
     </>
   );

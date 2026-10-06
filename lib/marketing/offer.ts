@@ -153,7 +153,7 @@ export const homeSteps = [
 
 export const homePlatform = {
   android:
-    'Android: not yet generally available. Merchant builds are in progress, and this site does not offer a download.',
+    'Android: not yet generally available. This site does not offer a download.',
   ios: 'iOS: not ready for a merchant app. Saving an iOS request is not a live iPhone app.',
 } as const;
 
