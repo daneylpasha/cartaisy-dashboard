@@ -118,7 +118,7 @@ export default function FitCheckForm() {
           value="other"
           current={goal}
           onChange={setGoal}
-          label="Something else, such as custom software, push or loyalty campaigns, or a sales guarantee"
+          label="Another goal"
         />
       </fieldset>
 
@@ -138,7 +138,7 @@ export default function FitCheckForm() {
           className={fieldClass}
         />
         <p id="fit-store-help" className="mt-2 text-sm leading-6 text-slate-300">
-          Pre-launch stores can skip this. Submitting does not connect Shopify and does not start OAuth.
+          You can leave this blank if your store is still in planning.
         </p>
       </div>
 

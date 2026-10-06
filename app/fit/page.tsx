@@ -16,16 +16,20 @@ export default function FitPage() {
       <p className="text-sm font-medium uppercase tracking-wide text-purple-200">{offerPositioning.eyebrow}</p>
       <h1 className="mt-3 text-4xl font-semibold text-white">Check if Cartaisy fits your store</h1>
       <p className="mt-4 text-base leading-7 text-slate-200">
-        No account is required. Tell us where you are with Shopify. If the store is not live yet, the store URL is optional. This check does not connect Shopify.
+        You do not need an account to check fit. Tell us about your business and your Shopify plans. You can explore fit before your store is live.
       </p>
-      <div className="mt-6 space-y-2 border-t border-white/10 pt-4">
-        <h2 className="text-sm font-semibold text-white">Platform limits</h2>
-        <p className="text-sm leading-6 text-slate-300">{homePlatform.android}</p>
-        <p className="text-sm leading-6 text-slate-300">{homePlatform.ios}</p>
-      </div>
       <div className="mt-8">
         <FitCheckForm />
       </div>
+      <details className="mt-8 rounded-xl border border-white/10 bg-white/5 p-5">
+        <summary className="cursor-pointer rounded-sm text-base font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300">
+          Offer details
+        </summary>
+        <div className="mt-4 space-y-2 text-sm leading-6 text-slate-300">
+          <p>{homePlatform.android}</p>
+          <p>{homePlatform.ios}</p>
+        </div>
+      </details>
     </PageLayout>
   );
 }
