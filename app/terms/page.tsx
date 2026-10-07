@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import PageLayout from '@/components/landing/PageLayout';
 import { generateMetadata as genMeta } from '@/lib/seo';
 
@@ -127,8 +128,16 @@ export default function TermsOfService() {
             <li>Unexpected technical or security issues</li>
           </ul>
           <p className="leading-relaxed mt-4">
-            Upon termination, your right to use the Service will immediately cease. You may export your data
-            before termination where possible.
+            Upon termination, your right to use the Service will immediately cease. To request a copy of data
+            Cartaisy holds, use the{' '}
+            <Link href="/contact" className="text-purple-400 hover:text-purple-300">
+              contact form
+            </Link>{' '}
+            or email{' '}
+            <a href="mailto:support@cartaisy.com" className="text-purple-400 hover:text-purple-300">
+              support@cartaisy.com
+            </a>{' '}
+            before access ends. This product does not provide a self-serve export download.
           </p>
         </section>
 

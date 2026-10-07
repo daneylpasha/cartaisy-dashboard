@@ -552,6 +552,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Marketing pages, SEO, terms and privacy wording, signup and login handoff copy, and `/dashboard/admin/leads`. No merchant billing code. No change to the signup token check or the Shopify connect call. Human review is required because the handoff copy sits next to invite signup, and the lead inbox reuses the platform-operator gate.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/IOS_READINESS.md`, `Cartaisy_C01_Implementation_Completion_Report.md`.
 
+### A data copy is requested through support
+
+- Date: 2026-10-07.
+- Decision: A merchant or user asks Cartaisy for a copy of data Cartaisy holds through the contact form or `support@cartaisy.com`. This product does not provide a self-serve export download. Public copy does not promise a file format, a turnaround, or which records are included. Public copy does not say the support mailbox is monitored. Retention periods, refunds, cancellation, auto-renew, and termination notice are not decided by this entry.
+- Reason: Founder confirmation for C01. The terms page said a person may export data before termination where possible, and the privacy page listed portability, without a self-serve export in the public product.
+- Impact: `app/terms/page.tsx` termination paragraph and `app/privacy/page.tsx` rights list. FAQ and offer strings did not claim a self-serve export, so they stay. Existing dashboard download controls are unchanged. Mailbox forwarding and regular monitoring stay open. Human review is required because this is public policy wording.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`, `Cartaisy_C01_Implementation_Completion_Report.md`.
+
 ## Related docs/issues:
 
 - Shared context: backend repo `docs/cartaisy/README.md`.

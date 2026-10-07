@@ -102,7 +102,17 @@ export default function PrivacyPolicy() {
             <li>Request correction of inaccurate data</li>
             <li>Request deletion of your personal information</li>
             <li>Object to or restrict processing of your data</li>
-            <li>Request portability of your data</li>
+            <li>
+              Ask Cartaisy for a copy of the personal information we hold by using the{' '}
+              <Link href="/contact" className="text-purple-400 hover:text-purple-300">
+                contact form
+              </Link>{' '}
+              or emailing{' '}
+              <a href="mailto:support@cartaisy.com" className="text-purple-400 hover:text-purple-300">
+                support@cartaisy.com
+              </a>
+              . This product does not provide a self-serve export download.
+            </li>
             <li>Withdraw consent at any time</li>
           </ul>
         </section>
