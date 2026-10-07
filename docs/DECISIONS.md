@@ -632,6 +632,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Public permissions copy only. No Shopify OAuth, scope, or environment change.
 - Related docs: `docs/SHOPIFY_ACCESS.md`, `docs/SHOPIFY_SCOPES_USAGE.md`, `docs/STATUS.md`, `docs/TESTING.md`.
 
+### Features cards drop the duplicated sentences
+
+- Date: 2026-10-07.
+- Decision: On `/features` only, the Shopify hosted checkout card and the tracked build request card each use one approved three-sentence body. Shared checkout and platform sentences on the homepage, pricing, fit, and docs stay as they are.
+- Reason: Those two cards were showing the shorter include line and the longer limit line together.
+- Impact: Those two card bodies. No layout, style, or other-page copy change.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
+
 ## Related docs/issues:
 
 - Shared context: backend repo `docs/cartaisy/README.md`.

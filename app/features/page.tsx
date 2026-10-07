@@ -1,9 +1,16 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import PageLayout from '@/components/landing/PageLayout';
-import { checkoutWording, homePlatform, offerExcludes, offerIncludes, offerPaths, offerPositioning } from '@/lib/marketing/offer';
+import { offerExcludes, offerIncludes, offerPaths, offerPositioning } from '@/lib/marketing/offer';
 import { inkPanelClass, inkPrimaryClass } from '@/lib/marketing/publicInk';
 import { generateMetadata as genMeta } from '@/lib/seo';
+
+const featureCardCopy: Record<string, string> = {
+  'Shopify hosted checkout':
+    'Shoppers browse, use a cart, and pay through Shopify’s hosted checkout. Cartaisy does not collect card numbers or process payments. Any Apple Pay or Google Pay option is provided by Shopify for that store.',
+  'A tracked build request':
+    'Build my app records Android and iOS request status. Android merchant builds are still in progress, and this site does not offer an app download. iOS requests can be saved, but a merchant iPhone app is not yet available.',
+};
 
 export const metadata: Metadata = genMeta({
   title: 'Features',
@@ -26,16 +33,7 @@ export default function FeaturesPage() {
           {offerIncludes.map((item) => (
             <li key={item.title} className={`${inkPanelClass} p-4`}>
               <h3 className="font-semibold text-[#f6f3ee]">{item.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-[#c5c7c1]">{item.body}</p>
-              {item.title === 'Shopify hosted checkout' ? (
-                <p className="mt-2 text-sm leading-6 text-[#c5c7c1]">{checkoutWording}</p>
-              ) : null}
-              {item.title === 'A tracked build request' ? (
-                <>
-                  <p className="mt-2 text-sm leading-6 text-[#c5c7c1]">{homePlatform.android}</p>
-                  <p className="mt-2 text-sm leading-6 text-[#c5c7c1]">{homePlatform.ios}</p>
-                </>
-              ) : null}
+              <p className="mt-2 text-sm leading-6 text-[#c5c7c1]">{featureCardCopy[item.title] ?? item.body}</p>
             </li>
           ))}
         </ul>

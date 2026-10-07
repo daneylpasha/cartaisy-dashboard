@@ -533,18 +533,31 @@ assert.ok(pricingPage.indexOf('Billing details') < pricingPage.indexOf('id="pric
 const featuresPage = readFileSync(join(root, 'app/features/page.tsx'), 'utf8');
 assert.match(featuresPage, /Bring your Shopify store into a branded app\./);
 assert.match(featuresPage, /Connect your catalog, shape your brand, and manage your app setup with Cartaisy\./);
-assert.match(featuresPage, /checkoutWording/);
-assert.match(featuresPage, /homePlatform\.android/);
-assert.match(featuresPage, /homePlatform\.ios/);
+assert.match(
+  featuresPage,
+  /Shoppers browse, use a cart, and pay through Shopify’s hosted checkout\. Cartaisy does not collect card numbers or process payments\. Any Apple Pay or Google Pay option is provided by Shopify for that store\./,
+);
+assert.match(
+  featuresPage,
+  /Build my app records Android and iOS request status\. Android merchant builds are still in progress, and this site does not offer an app download\. iOS requests can be saved, but a merchant iPhone app is not yet available\./,
+);
+assert.equal(featuresPage.includes('checkoutWording'), false);
+assert.equal(featuresPage.includes('homePlatform'), false);
+assert.equal(featuresPage.includes('does not take the payment'), false);
+assert.equal(featuresPage.includes('not yet generally available'), false);
+assert.equal(featuresPage.includes('not ready for a merchant app'), false);
 assert.match(featuresPage, /Not offered/);
 assert.match(featuresPage, /offerPaths\.fit/);
-assert.ok(featuresPage.indexOf('Connect your catalog, shape your brand, and manage your app setup with Cartaisy.') < featuresPage.indexOf('{checkoutWording}'));
-assert.ok(featuresPage.indexOf('{checkoutWording}') < featuresPage.indexOf('homePlatform.android'));
+assert.ok(featuresPage.indexOf("'Shopify hosted checkout'") < featuresPage.indexOf("'A tracked build request'"));
+assert.match(featuresPage, /\{featureCardCopy\[item\.title\] \?\? item\.body\}/);
+assert.equal((featuresPage.match(/<p className="mt-2 text-sm leading-6 text-\[#c5c7c1\]">/g) ?? []).length, 1);
 assert.equal(/live merchant app|now available|download today/i.test(featuresPage), false);
 for (const rel of ['app/about/page.tsx', 'app/features/page.tsx', 'app/docs/quickstart/page.tsx', 'app/fit/page.tsx']) {
   const page = readFileSync(join(root, rel), 'utf8');
   assert.equal(/August 2026|sample branded build|sample build/i.test(page), false, rel);
-  assert.match(page, /homePlatform/, rel);
+}
+for (const rel of ['app/about/page.tsx', 'app/docs/quickstart/page.tsx', 'app/fit/page.tsx']) {
+  assert.match(readFileSync(join(root, rel), 'utf8'), /homePlatform/, rel);
 }
 assert.match(readFileSync(join(root, 'lib/fonts/manrope.ts'), 'utf8'), /next\/font\/local/);
 assert.match(readFileSync(join(root, 'lib/fonts/manrope.ts'), 'utf8'), /Manrope-Variable\.woff2/);
