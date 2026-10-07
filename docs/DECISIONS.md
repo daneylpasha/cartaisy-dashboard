@@ -600,6 +600,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: `inkPrimaryMotionClass` in `lib/marketing/publicInk.ts`. No copy, layout, or route change.
 - Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
 
+### Docs index Coming soon cards, and ink on quick start and API
+
+- Date: 2026-10-07.
+- Decision: `/docs` subtitle is “Guides for connecting your Shopify store, preparing your brand, and working with Cartaisy.” Dashboard Overview, Webhook Configuration, and Authentication render as non-interactive cards with a “Coming soon” badge, full contrast, and no link. `/docs/quickstart` and `/docs/api` use the ink shell and a 68ch measure. Available guide URLs stay. Blog, careers, newsletter, not-found, auth, and the dashboard stay off that shell.
+- Reason: Owner review of the docs index. Faint Soon links still looked clickable, and the subtitle implied a self-serve builder.
+- Impact: Docs index cards and the two guide pages. No cookie, pricing, or feature-copy change.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
+
 ## Related docs/issues:
 
 - Shared context: backend repo `docs/cartaisy/README.md`.

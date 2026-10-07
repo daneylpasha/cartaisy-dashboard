@@ -11,9 +11,18 @@ import {
   Settings,
   Shield,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import PageLayout from '@/components/landing/PageLayout';
 import { inkPanelClass, inkPrimaryClass } from '@/lib/marketing/publicInk';
 import { generateMetadata as genMeta } from '@/lib/seo';
+
+type DocLink = {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  href?: string;
+  comingSoon?: boolean;
+};
 
 export const metadata: Metadata = genMeta({
   title: 'Documentation',
@@ -36,7 +45,6 @@ const docSections = [
         icon: Settings,
         title: 'Dashboard Overview',
         description: 'Navigate the Cartaisy dashboard',
-        href: '/docs/quickstart#dashboard',
         comingSoon: true,
       },
     ],
@@ -55,7 +63,6 @@ const docSections = [
         icon: Zap,
         title: 'Webhook Configuration',
         description: 'Set up real-time data sync',
-        href: '/docs/shopify#webhooks',
         comingSoon: true,
       },
     ],
@@ -74,7 +81,6 @@ const docSections = [
         icon: Shield,
         title: 'Authentication',
         description: 'JWT tokens and security',
-        href: '/docs/api#authentication',
         comingSoon: true,
       },
     ],
@@ -99,6 +105,42 @@ const docSections = [
   },
 ];
 
+function DocCard({ link }: { link: DocLink }) {
+  const content = (
+    <div className="flex items-start gap-4">
+      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[4px] border border-[#666962] text-[#B6C4A1]">
+        <link.icon className="w-6 h-6" />
+      </div>
+      <div className="flex-1">
+        <div className="flex items-center gap-2">
+          <h3 className={`text-lg font-medium text-[#f6f3ee] ${link.comingSoon ? '' : 'transition-colors group-hover:text-[#B6C4A1]'}`}>
+            {link.title}
+          </h3>
+          {link.comingSoon ? (
+            <span className="rounded-[4px] border border-[#666962] px-2 py-0.5 text-xs text-[#c5c7c1]">
+              Coming soon
+            </span>
+          ) : null}
+        </div>
+        <p className="text-[#a3a69f] text-sm mt-1">{link.description}</p>
+      </div>
+    </div>
+  );
+
+  if (link.comingSoon || !link.href) {
+    return <div className={`p-6 ${inkPanelClass}`}>{content}</div>;
+  }
+
+  return (
+    <Link
+      href={link.href}
+      className={`group p-6 transition-colors hover:border-[#B6C4A1] ${inkPanelClass}`}
+    >
+      {content}
+    </Link>
+  );
+}
+
 export default function DocsPage() {
   return (
     <PageLayout surface="ink" maxWidth="5xl">
@@ -109,7 +151,7 @@ export default function DocsPage() {
         </div>
         <h1 className="text-4xl font-bold text-[#f6f3ee] mb-4">Documentation</h1>
         <p className="text-[#c5c7c1] text-lg max-w-lg mx-auto">
-          Everything you need to build, customize, and manage your Shopify mobile app with Cartaisy.
+          Guides for connecting your Shopify store, preparing your brand, and working with Cartaisy.
         </p>
       </div>
 
@@ -124,32 +166,7 @@ export default function DocsPage() {
 
             <div className="grid md:grid-cols-2 gap-4">
               {section.links.map((link) => (
-                <Link
-                  key={link.title}
-                  href={link.href}
-                  className={`group p-6 transition-colors hover:border-[#B6C4A1] ${inkPanelClass} ${
-                    link.comingSoon ? 'pointer-events-none opacity-60' : ''
-                  }`}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[4px] border border-[#666962] text-[#B6C4A1]">
-                      <link.icon className="w-6 h-6" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-medium text-[#f6f3ee] transition-colors group-hover:text-[#B6C4A1]">
-                          {link.title}
-                        </h3>
-                        {link.comingSoon && (
-                          <span className="rounded-[4px] border border-[#666962] px-2 py-0.5 text-xs text-[#c5c7c1]">
-                            Soon
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[#a3a69f] text-sm mt-1">{link.description}</p>
-                    </div>
-                  </div>
-                </Link>
+                <DocCard key={link.title} link={link} />
               ))}
             </div>
           </section>

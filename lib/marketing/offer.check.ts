@@ -483,8 +483,15 @@ for (const rel of [
 ]) {
   assert.match(readFileSync(join(root, rel), 'utf8'), /surface="ink"/, rel);
 }
-assert.equal(readFileSync(join(root, 'app/docs/quickstart/page.tsx'), 'utf8').includes('surface="ink"'), false);
-assert.equal(readFileSync(join(root, 'app/docs/api/page.tsx'), 'utf8').includes('surface="ink"'), false);
+for (const rel of ['app/docs/quickstart/page.tsx', 'app/docs/api/page.tsx']) {
+  const page = readFileSync(join(root, rel), 'utf8');
+  assert.match(page, /surface="ink"/, rel);
+  assert.match(page, /inkProseClass/, rel);
+  assert.match(page, /inkPrimaryClass/, rel);
+}
+for (const rel of ['app/blog/page.tsx', 'app/careers/page.tsx', 'app/newsletter/page.tsx', 'app/not-found.tsx', 'app/(auth)/login/page.tsx']) {
+  assert.equal(readFileSync(join(root, rel), 'utf8').includes('surface="ink"'), false, rel);
+}
 const publicInk = readFileSync(join(root, 'lib/marketing/publicInk.ts'), 'utf8');
 assert.match(publicInk, /max-w-\[68ch\]/);
 assert.match(walkForm, /inkFieldClass/);
@@ -500,8 +507,20 @@ assert.match(faqPage, /marker:content-none/);
 assert.match(faqPage, /group-open:rotate-90/);
 assert.match(faqPage, /inkProseClass/);
 const docsIndex = readFileSync(join(root, 'app/docs/page.tsx'), 'utf8');
-assert.match(docsIndex, /Soon/);
+assert.match(docsIndex, /Guides for connecting your Shopify store, preparing your brand, and working with Cartaisy\./);
+assert.match(docsIndex, /Coming soon/);
 assert.match(docsIndex, /comingSoon/);
+assert.equal(docsIndex.includes('opacity-60'), false);
+assert.equal(docsIndex.includes('>Soon<'), false);
+assert.equal(docsIndex.includes('/docs/quickstart#dashboard'), false);
+assert.equal(docsIndex.includes('/docs/shopify#webhooks'), false);
+assert.equal(docsIndex.includes('/docs/api#authentication'), false);
+assert.match(docsIndex, /href: '\/docs\/quickstart'/);
+assert.match(docsIndex, /href: '\/docs\/shopify'/);
+assert.match(docsIndex, /href: '\/docs\/api'/);
+assert.match(docsIndex, /href: '\/docs\/faq'/);
+assert.match(docsIndex, /href: '\/contact'/);
+assert.match(docsIndex, /if \(link\.comingSoon \|\| !link\.href\) \{\s*return <div/);
 assert.equal(docsIndex.includes('bg-purple-600'), false);
 assert.match(publicInk, /min-h-12/);
 assert.match(publicInk, /rounded-\[4px\]/);
@@ -519,8 +538,8 @@ assert.equal(secondarySlice.includes('#C7FF4D'), false);
 assert.match(home, /inkPrimaryMotionClass/);
 assert.match(nav, /inkPrimaryMotionClass/);
 assert.match(readFileSync(join(root, 'components/cookies/CookieBanner.tsx'), 'utf8'), /filledAction = `\$\{actionBase\} bg-white text-slate-950 \$\{inkPrimaryMotionClass\}`/);
-assert.match(readFileSync(join(root, 'app/docs/quickstart/page.tsx'), 'utf8'), /inkPrimaryMotionClass/);
-assert.match(readFileSync(join(root, 'app/docs/api/page.tsx'), 'utf8'), /inkPrimaryMotionClass/);
+assert.match(readFileSync(join(root, 'app/docs/quickstart/page.tsx'), 'utf8'), /Check if Cartaisy fits your store/);
+assert.match(readFileSync(join(root, 'app/docs/api/page.tsx'), 'utf8'), /public API key/);
 assert.match(publicInk, /text-\[#111210\]/);
 assert.match(contactForm, /inkFieldClass/);
 assert.match(contactForm, /inkPrimaryClass/);

@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import PageLayout from '@/components/landing/PageLayout';
 import { homePlatform, offerPaths, ownership } from '@/lib/marketing/offer';
-import { inkPrimaryMotionClass } from '@/lib/marketing/publicInk';
+import { inkPrimaryClass, inkProseClass, inkPanelClass } from '@/lib/marketing/publicInk';
 import { generateMetadata as genMeta } from '@/lib/seo';
 
 export const metadata: Metadata = genMeta({
@@ -36,22 +36,23 @@ const steps = [
 
 export default function QuickStartPage() {
   return (
-    <PageLayout maxWidth="4xl" backHref="/docs" backLabel="Back to Docs">
-      <h1 className="text-4xl font-semibold text-white">Quick start</h1>
-      <p className="mt-3 text-slate-300">This is the merchant path. It is not a four-click publish.</p>
+    <PageLayout surface="ink" maxWidth="4xl" backHref="/docs" backLabel="Back to Docs">
+      <article className={inkProseClass}>
+      <h1 className="text-4xl font-semibold leading-tight text-[#f6f3ee]">Quick start</h1>
+      <p className="mt-3">This is the merchant path. It is not a four-click publish.</p>
       <ol className="mt-8 space-y-4">
         {steps.map((step, index) => (
-          <li key={step.title} className="rounded-xl border border-white/10 bg-white/5 p-5">
-            <h2 className="text-lg font-semibold text-white">
+          <li key={step.title} className={`p-5 ${inkPanelClass}`}>
+            <h2 className="text-lg font-semibold text-[#f6f3ee]">
               {index + 1}. {step.title}
             </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-200">{step.body}</p>
+            <p className="mt-2 text-sm leading-6">{step.body}</p>
           </li>
         ))}
       </ol>
       <section className="mt-10">
-        <h2 className="text-2xl font-semibold text-white">Prerequisites</h2>
-        <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-200">
+        <h2 className="text-2xl font-semibold leading-tight text-[#f6f3ee]">Prerequisites</h2>
+        <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-7">
           <li>A Shopify store before catalog sync. Pre-launch merchants can still request a walkthrough.</li>
           <li>An invite from Cartaisy before creating an account.</li>
           <li>{ownership.accounts}</li>
@@ -59,10 +60,11 @@ export default function QuickStartPage() {
         </ul>
       </section>
       <div className="mt-8">
-        <Link href={offerPaths.fit} className={`inline-flex min-h-11 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 ${inkPrimaryMotionClass}`}>
+        <Link href={offerPaths.fit} className={inkPrimaryClass}>
           Check if Cartaisy fits your store
         </Link>
       </div>
+      </article>
     </PageLayout>
   );
 }
