@@ -608,6 +608,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Docs index cards and the two guide pages. No cookie, pricing, or feature-copy change.
 - Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
 
+### Open cookie panel keeps footer controls reachable
+
+- Date: 2026-10-07.
+- Decision: While the privacy panel is open, the page reserves bottom space equal to the panel’s measured viewport height, including the taller preferences view, and removes that space when the panel closes. Footer Cookie Settings uses the muted ink footer link color and a white hover. Banner wording, Accept and Save lime hover, and consent rules stay as they are. Login, signup, and password pages keep their existing spacer.
+- Reason: At 360, 510, and 825 the fixed panel covered footer links and Cookie Settings at the end of the scroll, so those controls could not be clicked before consent.
+- Impact: Public page scroll space and the footer Cookie Settings link. No pricing, feature, or consent-copy change.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
+
 ## Related docs/issues:
 
 - Shared context: backend repo `docs/cartaisy/README.md`.

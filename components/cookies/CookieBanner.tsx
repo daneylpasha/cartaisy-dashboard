@@ -13,6 +13,7 @@ const actionBase =
   'inline-flex h-12 items-center justify-center rounded-[4px] px-2 text-center text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121212]';
 const outlinedAction = `${actionBase} border border-white/50 bg-transparent text-white`;
 const filledAction = `${actionBase} bg-white text-slate-950 ${inkPrimaryMotionClass}`;
+const authBannerSpacer = new Set(['/login', '/signup', '/forgot-password', '/reset-password']);
 
 export default function CookieBanner() {
   const pathname = usePathname();
@@ -42,6 +43,37 @@ export default function CookieBanner() {
   };
   const dismissRef = useRef(dismissPreferences);
   dismissRef.current = dismissPreferences;
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const panel = panelRef.current;
+    const skip =
+      !showBanner ||
+      !panel ||
+      isOnboardingWizardPath(pathname) ||
+      authBannerSpacer.has(pathname ?? '');
+    if (skip) {
+      root.style.paddingBottom = '';
+      root.style.scrollPaddingBottom = '';
+      return;
+    }
+    const apply = () => {
+      const reserve = Math.max(0, Math.ceil(window.innerHeight - panel.getBoundingClientRect().top));
+      const space = `${reserve}px`;
+      root.style.paddingBottom = space;
+      root.style.scrollPaddingBottom = space;
+    };
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(panel);
+    window.addEventListener('resize', apply);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', apply);
+      root.style.paddingBottom = '';
+      root.style.scrollPaddingBottom = '';
+    };
+  }, [showBanner, showDetails, pathname]);
 
   useEffect(() => {
     if (!showDetails) return;

@@ -14,7 +14,10 @@ export default function CookieSettingsButton({ className = '' }: CookieSettingsB
   return (
     <button
       onClick={openSettings}
-      className={cn('inline-flex items-center gap-2 text-slate-400 transition-colors hover:text-purple-400', className)}
+      className={cn(
+        'inline-flex items-center gap-2 text-[#a3a69f] transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300',
+        className,
+      )}
     >
       <Cookie size={16} />
       <span>Cookie Settings</span>

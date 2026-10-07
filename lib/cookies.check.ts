@@ -44,6 +44,14 @@ assert.match(bannerSource, /role=\{showDetails \? 'dialog' : 'region'\}/);
 assert.match(bannerSource, /consentAfterPreferencesDismiss\(consent\)/);
 assert.match(bannerSource, /dismissRef\.current\(\)/);
 assert.equal(bannerSource.includes('Cookies run this site'), false);
+assert.match(bannerSource, /paddingBottom/);
+assert.match(bannerSource, /scrollPaddingBottom/);
+assert.match(bannerSource, /authBannerSpacer/);
+const settingsButton = readFileSync(join(here, '../components/cookies/CookieSettingsButton.tsx'), 'utf8');
+assert.equal(settingsButton.includes('hover:text-purple-400'), false);
+assert.equal(settingsButton.includes('text-slate-400'), false);
+assert.match(settingsButton, /text-\[#a3a69f\]/);
+assert.match(settingsButton, /hover:text-white/);
 
 const storedOff = { necessary: true, analytics: false, marketing: false };
 const dismissed = consentAfterPreferencesDismiss(storedOff);
