@@ -584,6 +584,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: `PageLayout` ink surface is opt-in. Form validation, save, status copy, routes, and offer limits are unchanged.
 - Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
 
+### Pricing, walkthrough, features, about, docs, and legal pages use the homepage ink
+
+- Date: 2026-10-07.
+- Decision: `/pricing`, `/schedule-demo`, `/features`, `/about`, `/docs`, `/docs/faq`, `/docs/shopify`, `/terms`, `/privacy`, and `/cookies` use the same opt-in ink shell as contact, fit, and the demo wrapper. Walkthrough fields and buttons use the contact and fit field classes. Legal and long-form docs sit in a 68ch measure. The FAQ disclosure uses a chevron on the existing `details` element. Docs “Soon” cards stay. `/docs/quickstart` and `/docs/api` stay on the purple gradient for a later pass. The homepage artwork, auth, dashboard, demo step cards, and cookie banner stay as they are.
+- Reason: Owner-led styling consistency after the contact and fit ink treatment was verified. No new claims or policy sentences.
+- Impact: Page chrome and form chrome only. Walkthrough validation, save, and request-only copy are unchanged.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
+
 ## Related docs/issues:
 
 - Shared context: backend repo `docs/cartaisy/README.md`.

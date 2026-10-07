@@ -466,12 +466,43 @@ assert.match(readFileSync(join(root, 'app/page.tsx'), 'utf8'), /marketingTypeCla
 assert.match(readFileSync(join(root, 'components/landing/PageLayout.tsx'), 'utf8'), /marketingTypeClass/);
 assert.match(readFileSync(join(root, 'components/landing/PageLayout.tsx'), 'utf8'), /bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900/);
 assert.match(readFileSync(join(root, 'components/landing/PageLayout.tsx'), 'utf8'), /surface === 'ink'/);
-for (const rel of ['app/contact/page.tsx', 'app/fit/page.tsx', 'app/demo/page.tsx']) {
+for (const rel of [
+  'app/contact/page.tsx',
+  'app/fit/page.tsx',
+  'app/demo/page.tsx',
+  'app/pricing/page.tsx',
+  'app/schedule-demo/page.tsx',
+  'app/features/page.tsx',
+  'app/about/page.tsx',
+  'app/docs/page.tsx',
+  'app/docs/faq/page.tsx',
+  'app/docs/shopify/page.tsx',
+  'app/terms/page.tsx',
+  'app/privacy/page.tsx',
+  'app/cookies/page.tsx',
+]) {
   assert.match(readFileSync(join(root, rel), 'utf8'), /surface="ink"/, rel);
 }
-assert.equal(readFileSync(join(root, 'app/pricing/page.tsx'), 'utf8').includes('surface="ink"'), false);
-assert.equal(readFileSync(join(root, 'app/schedule-demo/page.tsx'), 'utf8').includes('surface="ink"'), false);
+assert.equal(readFileSync(join(root, 'app/docs/quickstart/page.tsx'), 'utf8').includes('surface="ink"'), false);
+assert.equal(readFileSync(join(root, 'app/docs/api/page.tsx'), 'utf8').includes('surface="ink"'), false);
 const publicInk = readFileSync(join(root, 'lib/marketing/publicInk.ts'), 'utf8');
+assert.match(publicInk, /max-w-\[68ch\]/);
+assert.match(walkForm, /inkFieldClass/);
+assert.match(walkForm, /inkPrimaryClass/);
+assert.match(walkForm, /\/api\/walkthrough/);
+assert.match(walkForm, /did not reserve a calendar time/);
+assert.match(walkForm, /did not connect Shopify/);
+assert.equal(/ring-purple|text-purple|bg-white\/5|min-h-11/.test(walkForm), false);
+const faqPage = readFileSync(join(root, 'app/docs/faq/page.tsx'), 'utf8');
+assert.match(faqPage, /ChevronRight/);
+assert.match(faqPage, /list-none/);
+assert.match(faqPage, /marker:content-none/);
+assert.match(faqPage, /group-open:rotate-90/);
+assert.match(faqPage, /inkProseClass/);
+const docsIndex = readFileSync(join(root, 'app/docs/page.tsx'), 'utf8');
+assert.match(docsIndex, /Soon/);
+assert.match(docsIndex, /comingSoon/);
+assert.equal(docsIndex.includes('bg-purple-600'), false);
 assert.match(publicInk, /min-h-12/);
 assert.match(publicInk, /rounded-\[4px\]/);
 assert.match(publicInk, /bg-\[#1c1e1a\]/);
