@@ -109,6 +109,8 @@ export const eligibility = {
 
 export const supportEmail = 'support@cartaisy.com';
 export const privacyEmail = 'privacy@cartaisy.com';
+export const operatorIdentity =
+  'Cartaisy is a product of RenderNext LLC, a company registered in Texas, United States.';
 
 export const ownership = {
   accounts:

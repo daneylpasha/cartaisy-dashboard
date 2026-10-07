@@ -26,6 +26,7 @@ import {
   iosReadiness,
   offerExcludes,
   offerPositioning,
+  operatorIdentity,
   ownership,
   publicFaqs,
 } from '@/lib/marketing/offer';
@@ -386,6 +387,17 @@ assert.match(termsPage, /before the next renewal/);
 assert.match(termsPage, /serious misuse, a security/);
 assert.match(termsPage, /not\s+limited to the time before access ends/);
 assert.match(termsPage, /give notice before access ends/);
+assert.equal(
+  operatorIdentity,
+  'Cartaisy is a product of RenderNext LLC, a company registered in Texas, United States.'
+);
+for (const rel of ['app/terms/page.tsx', 'app/privacy/page.tsx', 'app/cookies/page.tsx', 'app/contact/page.tsx']) {
+  assert.match(readFileSync(join(root, rel), 'utf8'), /\{operatorIdentity\}/);
+}
+assert.match(termsPage, /laws of Texas and applicable United States federal law/);
+assert.equal(termsPage.includes('jurisdiction in which Cartaisy operates'), false);
+assert.equal(termsPage.includes('binding arbitration'), false);
+assert.equal(termsPage.includes('courts of competent'), false);
 assert.equal(/does not (offer a money-back guarantee|set a cancellation|publish a cancellation)/i.test(termsPage), false);
 assert.equal(privacyPage.includes('Request portability of your data'), false);
 assert.match(privacyPage, /does not provide a self-serve export download/);

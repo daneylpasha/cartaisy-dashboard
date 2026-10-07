@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import PageLayout from '@/components/landing/PageLayout';
+import { operatorIdentity } from '@/lib/marketing/offer';
 import { generateMetadata as genMeta } from '@/lib/seo';
 
 export const metadata: Metadata = genMeta({
@@ -13,7 +14,8 @@ export default function TermsOfService() {
   return (
     <PageLayout>
       <h1 className="text-4xl font-bold text-white mb-4">Terms of Service</h1>
-      <p className="text-gray-400 mb-12">Last updated: October 2026.</p>
+      <p className="text-gray-400">Last updated: October 2026.</p>
+      <p className="mt-3 mb-12 text-gray-400">{operatorIdentity}</p>
 
       <div className="space-y-10 text-gray-300">
         <section>
@@ -154,10 +156,7 @@ export default function TermsOfService() {
         <section>
           <h2 className="text-2xl font-semibold text-white mb-4">10. Governing Law</h2>
           <p className="leading-relaxed">
-            These Terms shall be governed by and construed in accordance with the laws of the jurisdiction in
-            which Cartaisy operates, without regard to its conflict of law provisions. Any disputes arising
-            under these Terms shall be resolved through binding arbitration or in the courts of competent
-            jurisdiction.
+            These Terms are governed by the laws of Texas and applicable United States federal law.
           </p>
         </section>
 

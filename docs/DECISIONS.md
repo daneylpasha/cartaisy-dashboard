@@ -568,6 +568,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: `app/terms/page.tsx`, `app/privacy/page.tsx`, `lib/marketing/offer.ts`, pricing, and the public FAQ. No Stripe, checkout, or auto-charge UI. Dashboard download and customer-deletion controls are unchanged and were not run. Human review is required because this is public policy wording.
 - Related docs: `docs/STATUS.md`, `docs/TESTING.md`, `docs/DATA_DELETION.md`, `Cartaisy_C01_Implementation_Completion_Report.md`.
 
+### Cartaisy is a product of RenderNext LLC
+
+- Date: 2026-10-07.
+- Decision: Public terms, privacy, cookies, and contact say Cartaisy is a product of RenderNext LLC, a company registered in Texas, United States. The terms are governed by the laws of Texas and applicable United States federal law. The site does not publish a street address, city, county, registration number, arbitration requirement, or exclusive court. Product contact stays `support@cartaisy.com`. Privacy contact stays `privacy@cartaisy.com`.
+- Reason: Founder confirmation of the operator. The old terms named the jurisdiction where Cartaisy operates and required binding arbitration or a court of competent jurisdiction.
+- Impact: Those four public pages and `lib/marketing/offer.ts`. Commercial renewal, cancel, refund, retention, and export rules are unchanged. The internal support checklist is in `docs/SUPPORT_PROCESS.md`. No one is named as the inbox owner yet. Human review is required because this is public identity and governing law.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`, `docs/SUPPORT_PROCESS.md`.
+
 ## Related docs/issues:
 
 - Shared context: backend repo `docs/cartaisy/README.md`.
