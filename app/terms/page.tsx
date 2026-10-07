@@ -13,7 +13,7 @@ export default function TermsOfService() {
   return (
     <PageLayout>
       <h1 className="text-4xl font-bold text-white mb-4">Terms of Service</h1>
-      <p className="text-gray-400 mb-12">Last updated: October 2026. Commercial wording was corrected to match the product. This page does not add a new refund or offboarding policy.</p>
+      <p className="text-gray-400 mb-12">Last updated: October 2026.</p>
 
       <div className="space-y-10 text-gray-300">
         <section>
