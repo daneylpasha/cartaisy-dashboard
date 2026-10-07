@@ -6,7 +6,8 @@ import { Mail } from "lucide-react";
 import { offerPaths, offerPositioning, supportEmail } from "@/lib/marketing/offer";
 import { CookieSettingsButton } from "@/components/cookies";
 
-const linkClass = "text-sm text-[#a3a69f] transition-colors hover:text-white";
+const linkClass =
+  "inline-flex min-h-11 items-center text-sm text-[#a3a69f] transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300";
 
 export default function LandingFooter() {
   const footerLinks = {
@@ -37,8 +38,8 @@ export default function LandingFooter() {
   return (
     <footer className="border-t border-[#2D302B] bg-[#111210]">
       <div className="mx-auto w-full max-w-[1280px] px-5 py-12 sm:px-6 lg:px-12">
-        <div className="mb-12 grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-6">
-          <div className="space-y-6 lg:col-span-2">
+        <div className="mb-8 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-6 gap-y-8 md:grid-cols-4 lg:grid-cols-6">
+          <div className="col-span-2 space-y-6 md:col-span-4 lg:col-span-2">
             <Link href="/" className="inline-flex w-fit rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300">
               <Image src="/cartaisy-white-logo.png" width={130} height={31} alt="Cartaisy" />
             </Link>
@@ -60,8 +61,8 @@ export default function LandingFooter() {
           <FooterColumn title="Company" links={footerLinks.company} />
           <FooterColumn title="Resources" links={footerLinks.resources} />
           <div>
-            <h3 className="mb-4 font-semibold text-white">Legal</h3>
-            <ul className="space-y-3">
+            <h3 className="mb-2 font-semibold text-white">Legal</h3>
+            <ul className="flex flex-col">
               {footerLinks.legal.map((link) => (
                 <li key={link.label}>
                   <a href={link.href} className={linkClass}>
@@ -70,19 +71,20 @@ export default function LandingFooter() {
                 </li>
               ))}
               <li>
-                <CookieSettingsButton className="text-sm" />
+                <CookieSettingsButton className="min-h-11 text-sm" />
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-[#2D302B] pt-8">
-          <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-            <p className="text-sm text-[#a3a69f]">© {new Date().getFullYear()} Cartaisy. All rights reserved.</p>
-            <a href={`mailto:${supportEmail}`} className="text-sm text-[#a3a69f] hover:text-white">
-              {supportEmail}
-            </a>
-          </div>
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-[#2D302B] pt-8">
+          <p className="text-sm text-[#a3a69f]">© {new Date().getFullYear()} Cartaisy. All rights reserved.</p>
+          <a
+            href={`mailto:${supportEmail}`}
+            className="inline-flex min-h-11 items-center text-sm text-[#a3a69f] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+          >
+            {supportEmail}
+          </a>
         </div>
       </div>
     </footer>
@@ -92,8 +94,8 @@ export default function LandingFooter() {
 function FooterColumn({ title, links }: { title: string; links: { label: string; href: string }[] }) {
   return (
     <div>
-      <h3 className="mb-4 font-semibold text-white">{title}</h3>
-      <ul className="space-y-3">
+      <h3 className="mb-2 font-semibold text-white">{title}</h3>
+      <ul className="flex flex-col">
         {links.map((link) => (
           <li key={link.label}>
             <a href={link.href} className={linkClass}>
