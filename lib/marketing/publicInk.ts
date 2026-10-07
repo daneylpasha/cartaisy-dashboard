@@ -3,8 +3,12 @@
 export const inkFieldClass =
   'w-full min-h-12 rounded-[4px] border border-[#666962] bg-[#1c1e1a] px-3 text-base text-[#f6f3ee] placeholder:text-[#a3a69f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B6C4A1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111210] disabled:cursor-not-allowed disabled:opacity-50';
 
+/** Hover and press for white primary actions. Disabled controls do not take the lime state. */
+export const inkPrimaryMotionClass =
+  'transition-[background-color,color,border-color] duration-[180ms] ease-out [&:hover:not(:disabled)]:bg-[#C7FF4D] [&:hover:not(:disabled)]:text-[#111210] [&:active:not(:disabled)]:bg-[#C7FF4D] [&:active:not(:disabled)]:text-[#111210] motion-reduce:transition-none';
+
 export const inkPrimaryClass =
-  'inline-flex min-h-12 items-center justify-center gap-2 rounded-[4px] bg-white px-4 text-sm font-semibold text-[#111210] transition-colors hover:bg-[#f6f3ee] hover:text-[#111210] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B6C4A1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111210] disabled:cursor-not-allowed disabled:opacity-60';
+  `inline-flex min-h-12 items-center justify-center gap-2 rounded-[4px] bg-white px-4 text-sm font-semibold text-[#111210] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B6C4A1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111210] disabled:cursor-not-allowed disabled:opacity-60 ${inkPrimaryMotionClass}`;
 
 export const inkSecondaryClass =
   'inline-flex min-h-12 items-center justify-center rounded-[4px] border border-[#666962] px-4 text-sm font-semibold text-[#f6f3ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B6C4A1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111210]';

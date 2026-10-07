@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { offerPaths } from "@/lib/marketing/offer";
+import { inkPrimaryMotionClass } from "@/lib/marketing/publicInk";
 
 const navLinks = [
   { href: offerPaths.fit, label: "Fit" },
@@ -66,7 +67,7 @@ export default function LandingNavbar() {
           </Link>
           <Link
             href={offerPaths.fit}
-            className={`inline-flex h-12 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 ${focusRing}`}
+            className={`inline-flex h-12 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 ${focusRing} ${inkPrimaryMotionClass}`}
           >
             Check fit
           </Link>
@@ -105,7 +106,7 @@ export default function LandingNavbar() {
               </Link>
               <Link
                 href={offerPaths.fit}
-                className={`inline-flex h-12 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 ${focusRing}`}
+                className={`inline-flex h-12 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 ${focusRing} ${inkPrimaryMotionClass}`}
                 onClick={close}
               >
                 Check fit

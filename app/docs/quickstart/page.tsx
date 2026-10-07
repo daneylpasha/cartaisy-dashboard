@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import PageLayout from '@/components/landing/PageLayout';
 import { homePlatform, offerPaths, ownership } from '@/lib/marketing/offer';
+import { inkPrimaryMotionClass } from '@/lib/marketing/publicInk';
 import { generateMetadata as genMeta } from '@/lib/seo';
 
 export const metadata: Metadata = genMeta({
@@ -58,7 +59,7 @@ export default function QuickStartPage() {
         </ul>
       </section>
       <div className="mt-8">
-        <Link href={offerPaths.fit} className="inline-flex min-h-11 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950">
+        <Link href={offerPaths.fit} className={`inline-flex min-h-11 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 ${inkPrimaryMotionClass}`}>
           Check if Cartaisy fits your store
         </Link>
       </div>

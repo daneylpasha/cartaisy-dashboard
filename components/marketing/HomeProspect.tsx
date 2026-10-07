@@ -8,12 +8,13 @@ import {
   offerPaths,
   offerPositioning,
 } from '@/lib/marketing/offer';
+import { inkPrimaryMotionClass } from '@/lib/marketing/publicInk';
 
 const offerPoints = homeIncludes.filter((item) => item.title !== 'Your brand');
 
 const shell = 'mx-auto w-full max-w-[1280px] px-5 sm:px-6 lg:px-12';
 const primaryAction =
-  'inline-flex h-12 items-center justify-center rounded-[4px] bg-white px-5 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black';
+  `inline-flex h-12 items-center justify-center rounded-[4px] bg-white px-5 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black ${inkPrimaryMotionClass}`;
 const secondaryAction =
   'inline-flex h-12 items-center justify-center rounded-[4px] border border-white/15 px-5 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black';
 const band = 'mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20';

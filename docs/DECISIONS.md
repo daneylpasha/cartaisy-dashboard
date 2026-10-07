@@ -592,6 +592,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Page chrome and form chrome only. Walkthrough validation, save, and request-only copy are unchanged.
 - Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
 
+### White primary actions turn lime on hover
+
+- Date: 2026-10-07.
+- Decision: Public white primary actions stay white at rest. Hover and press use `#C7FF4D` with `#111210` text, with a 180ms transition on background, color, and border. Reduced motion removes that transition. A disabled control does not take the lime state. Outline buttons, auth, and the dashboard do not use this hover.
+- Reason: Owner-approved hover chrome for the shared primary family, including the homepage, navigation, inner-page primaries, form submits, and cookie Accept and Save.
+- Impact: `inkPrimaryMotionClass` in `lib/marketing/publicInk.ts`. No copy, layout, or route change.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
+
 ## Related docs/issues:
 
 - Shared context: backend repo `docs/cartaisy/README.md`.

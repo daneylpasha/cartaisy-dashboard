@@ -7,11 +7,12 @@ import Link from 'next/link';
 import { useCookieConsent } from './CookieConsentProvider';
 import { CookieConsent, consentAfterPreferencesDismiss, isOnboardingWizardPath } from '@/lib/cookies';
 import { marketingTypeClass } from '@/lib/fonts/manrope';
+import { inkPrimaryMotionClass } from '@/lib/marketing/publicInk';
 
 const actionBase =
   'inline-flex h-12 items-center justify-center rounded-[4px] px-2 text-center text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#121212]';
 const outlinedAction = `${actionBase} border border-white/50 bg-transparent text-white`;
-const filledAction = `${actionBase} bg-white text-slate-950`;
+const filledAction = `${actionBase} bg-white text-slate-950 ${inkPrimaryMotionClass}`;
 
 export default function CookieBanner() {
   const pathname = usePathname();
