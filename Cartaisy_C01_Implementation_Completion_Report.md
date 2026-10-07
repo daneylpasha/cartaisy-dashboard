@@ -77,7 +77,7 @@ Public marketing layouts use Manrope. “Wherever you are in your Shopify journe
 | C01-R13 | Hide App Store acquisition | Done. No public listing link is offered as the way to buy. The install-then-claim-then-invite path is documented as TODO. |
 | C01-R14 | No unqualified iOS claim | Done. `docs/IOS_READINESS.md` records the TODO. |
 | C01-R15 | Dead trust elements | Done. Placeholder social links, the unreachable demo modal, and the invalid Calendly embed are removed. |
-| C01-R16 | Terms and privacy | Public terms and privacy say a data copy is requested through the contact form or support@cartaisy.com, and that there is no self-serve export download. Refund, cancellation, retention, and termination-notice wording are unchanged. Mailbox monitoring is not confirmed, so operational readiness stays open. |
+| C01-R16 | Terms and privacy | Public terms, privacy, pricing, and the FAQ use the approved October 2026 rules for price, external billing, renewal only when agreed, cancel-before-renewal, the listed refunds, notice without a day count, support-only data copies, and privacy contact at privacy@cartaisy.com. Personal-data requests are not limited to the time before access ends. No retention deadline is published. Mailbox monitoring is not confirmed, so operational readiness stays open. |
 | C01-R17 | Shopify scopes | Done. The public Shopify page says the exact permissions are not confirmed on the site. Railway `SHOPIFY_SCOPES` confirmation and the App Store do-not-link note are in `docs/SHOPIFY_ACCESS.md`, not on the public page. |
 | C01-R18 | Responsive prospect journey | Checked at about 1280px and 390px. Homepage, fit, and the mobile nav were usable. Full keyboard and screen-reader QA is still for the founder. |
 
@@ -128,7 +128,7 @@ No backend repository change was required. The operator check reuses the existin
 - No new price, testimonial, rating, download count, or guarantee.
 - No public Shopify App Store acquisition funnel. Install, then claim, then invite stays a TODO.
 - No public TestFlight, Play, or sample-app download.
-- No invented cancellation, refund, or offboarding policy.
+- No in-app billing, card checkout, or auto-charge. The published cancellation and refund rules are the approved October 2026 text, not a new billing feature.
 - No production deploy and no merge.
 
 ## G. Verification

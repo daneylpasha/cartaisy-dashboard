@@ -26,6 +26,7 @@ import {
   iosReadiness,
   offerExcludes,
   offerPositioning,
+  ownership,
   publicFaqs,
 } from '@/lib/marketing/offer';
 import {
@@ -376,11 +377,26 @@ assert.equal(termsPage.includes('where possible'), false);
 assert.match(termsPage, /does not provide a self-serve export download/);
 assert.match(termsPage, /href="\/contact"/);
 assert.match(termsPage, /mailto:support@cartaisy\.com/);
-assert.match(termsPage, /does not offer a money-back guarantee/);
+assert.match(termsPage, /does not give a partial refund for unused subscription time/);
+assert.match(termsPage, /corrects billing errors/);
+assert.match(termsPage, /refunds a setup fee if you cancel before work starts/);
+assert.match(termsPage, /Refunds required by law still apply/);
+assert.match(termsPage, /renews automatically only when that written agreement says so/);
+assert.match(termsPage, /before the next renewal/);
+assert.match(termsPage, /serious misuse, a security/);
+assert.match(termsPage, /not\s+limited to the time before access ends/);
+assert.match(termsPage, /give notice before access ends/);
+assert.equal(/does not (offer a money-back guarantee|set a cancellation|publish a cancellation)/i.test(termsPage), false);
 assert.equal(privacyPage.includes('Request portability of your data'), false);
 assert.match(privacyPage, /does not provide a self-serve export download/);
 assert.match(privacyPage, /href="\/contact"/);
-assert.match(privacyPage, /We retain your personal information for as long as necessary/);
+assert.match(privacyPage, /not limited to the time before access ends/);
+assert.match(privacyPage, /mailto:privacy@cartaisy\.com/);
+assert.match(privacyPage, /only while it is needed for the service and for legal obligations/);
+assert.equal(privacyPage.includes('mailto:support@cartaisy.com'), false);
+assert.match(ownership.exit, /support@cartaisy\.com/);
+assert.match(ownership.exit, /partial refund for unused subscription time/);
+assert.equal(/does not publish a cancellation/i.test(ownership.exit), false);
 assert.equal(/JSON|CSV|business days|monitored/i.test(`${termsPage}\n${privacyPage}`), false);
 const layoutSource = readFileSync(join(root, 'app/layout.tsx'), 'utf8');
 assert.equal(layoutSource.includes('<VercelAnalytics'), false);

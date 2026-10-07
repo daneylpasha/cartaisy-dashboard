@@ -555,10 +555,18 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 ### A data copy is requested through support
 
 - Date: 2026-10-07.
-- Decision: A merchant or user asks Cartaisy for a copy of data Cartaisy holds through the contact form or `support@cartaisy.com`. This product does not provide a self-serve export download. Public copy does not promise a file format, a turnaround, or which records are included. Public copy does not say the support mailbox is monitored. Retention periods, refunds, cancellation, auto-renew, and termination notice are not decided by this entry.
+- Decision: A merchant or user asks Cartaisy for a copy of data Cartaisy holds through the contact form or `support@cartaisy.com`. This product does not provide a self-serve export download. Public copy does not promise a file format, a turnaround, or which records are included. Public copy does not say the support mailbox is monitored. The commercial rules that followed this entry are in “Commercial terms are the October 2026 agreement.”
 - Reason: Founder confirmation for C01. The terms page said a person may export data before termination where possible, and the privacy page listed portability, without a self-serve export in the public product.
 - Impact: `app/terms/page.tsx` termination paragraph and `app/privacy/page.tsx` rights list. FAQ and offer strings did not claim a self-serve export, so they stay. Existing dashboard download controls are unchanged. Mailbox forwarding and regular monitoring stay open. Human review is required because this is public policy wording.
 - Related docs: `docs/STATUS.md`, `docs/TESTING.md`, `Cartaisy_C01_Implementation_Completion_Report.md`.
+
+### Commercial terms are the October 2026 agreement
+
+- Date: 2026-10-07.
+- Decision: The price and any billing period are agreed with the merchant before work starts. Recurring fees are in that written agreement. A recurring fee renews automatically only when the agreement says so. Billing stays outside the product. There is no in-app card checkout. The merchant cancels by emailing `support@cartaisy.com` or using the contact form before the next renewal, and access continues through the period already paid. Cartaisy does not refund unused subscription time. Cartaisy corrects billing errors, refunds a setup fee cancelled before work starts, and makes refunds the law requires. Cartaisy may suspend or end access immediately for serious misuse, a security issue, or a legal requirement. Otherwise it gives notice and does not publish a day count. Personal-data requests (access, correction, deletion, and a copy) can be made at any time, not only before access ends, through the contact form or `privacy@cartaisy.com`. There is no self-serve export download. Personal information is kept only while needed for the service and legal obligations, then deleted or anonymized. No retention deadline is published.
+- Reason: Founder approval of the concise C01 commercial and privacy policy. Earlier public copy said the site did not set a cancellation or refund policy, and it limited a data copy to the time before access ended.
+- Impact: `app/terms/page.tsx`, `app/privacy/page.tsx`, `lib/marketing/offer.ts`, pricing, and the public FAQ. No Stripe, checkout, or auto-charge UI. Dashboard download and customer-deletion controls are unchanged and were not run. Human review is required because this is public policy wording.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`, `docs/DATA_DELETION.md`, `Cartaisy_C01_Implementation_Completion_Report.md`.
 
 ## Related docs/issues:
 

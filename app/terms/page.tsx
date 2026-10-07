@@ -5,7 +5,7 @@ import { generateMetadata as genMeta } from '@/lib/seo';
 
 export const metadata: Metadata = genMeta({
   title: 'Terms of Service',
-  description: 'Cartaisy terms. The product is an invite-only managed Shopify shopping app. This page does not set a price, trial, or refund guarantee.',
+  description: 'Cartaisy terms. The product is an invite-only managed Shopify shopping app. Price and billing are agreed before work starts. This product does not charge a card.',
   keywords: ['terms', 'conditions', 'legal', 'agreement'],
 });
 
@@ -28,7 +28,7 @@ export default function TermsOfService() {
         <section>
           <h2 className="text-2xl font-semibold text-white mb-4">2. Description of Service</h2>
           <p className="leading-relaxed mb-4">
-            Cartaisy provides a managed branded shopping app for a Shopify store. Shoppers browse and use a cart in the app, then pay on Shopify hosted checkout. Cartaisy does not take that payment. Accounts are invite-only. The public site describes one managed offer, a setup engagement plus a recurring fee, agreed before work starts. This page does not publish a price.
+            Cartaisy provides a managed branded shopping app for a Shopify store. Shoppers browse and use a cart in the app, then pay on Shopify hosted checkout. Cartaisy does not take that payment. Accounts are invite-only. The public site describes one managed offer: a setup engagement plus a recurring fee. The price and any billing period are agreed before work starts. This page does not publish a price.
           </p>
           <ul className="list-disc list-inside space-y-2 ml-4">
             <li>Connect an invited store to Shopify through the Cartaisy backend</li>
@@ -71,13 +71,24 @@ export default function TermsOfService() {
           <h2 className="text-2xl font-semibold text-white mb-4">5. Subscription and Payment</h2>
           <div className="space-y-4">
             <p className="leading-relaxed">
-              <strong className="text-white">Commercial terms:</strong> Cartaisy does not run card checkout, PayPal, or a free trial inside this product. Any setup fee and recurring fee are agreed with you outside the product before work starts. This page does not state an amount.
+              <strong className="text-white">Price and billing period:</strong> The price and any billing period are agreed with you before work starts. Recurring fees and the billing period are in that written agreement. This page does not state an amount. Cartaisy does not run card checkout, PayPal, or a free trial inside this product, and it does not capture cards or bill you in the app.
             </p>
             <p className="leading-relaxed">
-              <strong className="text-white">Changes:</strong> A change to those agreed terms is something you and Cartaisy confirm. This page does not describe an automatic billing cycle.
+              <strong className="text-white">Automatic renewal:</strong> A recurring fee renews automatically only when that written agreement says so. Billing stays outside this product.
             </p>
             <p className="leading-relaxed">
-              <strong className="text-white">Refunds and ending the work:</strong> This page does not offer a money-back guarantee and does not set a cancellation or offboarding policy. Questions about an agreement you already have should go through the contact form.
+              <strong className="text-white">Cancel:</strong> Email{' '}
+              <a href="mailto:support@cartaisy.com" className="text-purple-400 hover:text-purple-300">
+                support@cartaisy.com
+              </a>{' '}
+              or use the{' '}
+              <Link href="/contact" className="text-purple-400 hover:text-purple-300">
+                contact form
+              </Link>{' '}
+              before the next renewal. Access continues through the period you have already paid.
+            </p>
+            <p className="leading-relaxed">
+              <strong className="text-white">Refunds:</strong> Cartaisy does not give a partial refund for unused subscription time. Cartaisy corrects billing errors. Cartaisy refunds a setup fee if you cancel before work starts. Refunds required by law still apply.
             </p>
           </div>
         </section>
@@ -116,28 +127,27 @@ export default function TermsOfService() {
 
         <section>
           <h2 className="text-2xl font-semibold text-white mb-4">9. Termination</h2>
-          <p className="leading-relaxed mb-4">
-            We may terminate or suspend your account and access to the Service immediately, without prior notice
-            or liability, for any reason, including but not limited to:
+          <p className="leading-relaxed">
+            We may suspend or end your access immediately, without prior notice, for serious misuse, a security
+            issue, or a legal requirement. Otherwise we give notice before access ends. This page does not state
+            a number of days for that notice.
           </p>
-          <ul className="list-disc list-inside space-y-2 ml-4">
-            <li>Breach of these Terms</li>
-            <li>An agreement with Cartaisy that has ended</li>
-            <li>Request by law enforcement or government agencies</li>
-            <li>Discontinuance or material modification of the Service</li>
-            <li>Unexpected technical or security issues</li>
-          </ul>
           <p className="leading-relaxed mt-4">
-            Upon termination, your right to use the Service will immediately cease. To request a copy of data
-            Cartaisy holds, use the{' '}
+            Upon termination, your right to use the Service will immediately cease. A copy of data Cartaisy holds
+            is available only when you ask. Use the{' '}
             <Link href="/contact" className="text-purple-400 hover:text-purple-300">
               contact form
             </Link>{' '}
             or email{' '}
             <a href="mailto:support@cartaisy.com" className="text-purple-400 hover:text-purple-300">
               support@cartaisy.com
-            </a>{' '}
-            before access ends. This product does not provide a self-serve export download.
+            </a>
+            . Requests to access, correct, or delete personal information, or to receive a copy of it, are not
+            limited to the time before access ends. You can make them at any time by emailing{' '}
+            <a href="mailto:privacy@cartaisy.com" className="text-purple-400 hover:text-purple-300">
+              privacy@cartaisy.com
+            </a>
+            . This product does not provide a self-serve export download.
           </p>
         </section>
 

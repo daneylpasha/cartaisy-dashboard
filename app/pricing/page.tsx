@@ -55,6 +55,12 @@ export default function PricingPage() {
           Costs outside Cartaisy
         </h2>
         <p className="mt-3 text-sm leading-6 text-slate-200">{ownership.accounts}</p>
+      </section>
+
+      <section className="mt-10 rounded-xl border border-white/10 bg-white/5 p-5" aria-labelledby="pricing-stop">
+        <h2 id="pricing-stop" className="text-xl font-semibold text-white">
+          If you stop
+        </h2>
         <p className="mt-3 text-sm leading-6 text-slate-300">{ownership.exit}</p>
       </section>
 

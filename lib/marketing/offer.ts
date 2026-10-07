@@ -50,7 +50,7 @@ export const offerSeo = {
 export const managedOffer = {
   name: 'One managed offer',
   structure:
-    'Setup, then a recurring fee. Both are agreed with you before work starts. Cartaisy does not publish a dollar amount on this site, and the product does not charge a card.',
+    'The price and any billing period are agreed with you before work starts. Recurring fees are in that written agreement. A recurring fee renews automatically only when the agreement says so. Billing stays outside this product. Cartaisy does not publish a dollar amount on this site, and this product does not charge a card or run checkout.',
   notIncludedInTheProduct:
     'There is no free trial, no automatic checkout, and no menu of Starter, Growth, Pro, or Enterprise plans.',
 } as const;
@@ -107,13 +107,16 @@ export const eligibility = {
     'If you do not plan to use Shopify, or you want an app to create customers you do not have, start with the website. Cartaisy does not acquire customers for you and does not guarantee sales.',
 } as const;
 
+export const supportEmail = 'support@cartaisy.com';
+export const privacyEmail = 'privacy@cartaisy.com';
+
 export const ownership = {
   accounts:
     'You own the Apple Developer account and the Google Play account, and you own the store listings under those accounts. Apple and Google charge their own program fees. Those fees are not Cartaisy prices, and this site does not quote them.',
   expo: 'Builds run on a Cartaisy-managed Expo project unless a later agreement says otherwise.',
   firebase:
     'A per-store Firebase project is a later dependency for push. Push is not part of this offer.',
-  exit: 'This site does not publish a cancellation, refund, or offboarding policy. Those terms are part of the agreement you make with Cartaisy before work starts, and they are not decided in the product.',
+  exit: `To cancel, email ${supportEmail} or use the contact form before the next renewal. Access continues through the period you have already paid. Cartaisy does not give a partial refund for unused subscription time. Cartaisy corrects billing errors, refunds a setup fee cancelled before work starts, and makes refunds the law requires.`,
 } as const;
 
 export const checkoutWording =
@@ -127,8 +130,6 @@ export const shopifyScopesDisclosure =
 
 export const appStoreAcquisitionTodo =
   'A Shopify App Store install does not create a Cartaisy account. Signup stays invite-only. Claiming a store requires a signed-in store admin. This site does not offer an App Store listing as the way to start.';
-
-export const supportEmail = 'support@cartaisy.com';
 
 /** Short homepage copy. Facts stay aligned with the constants above. */
 export const homeManaged =
@@ -248,7 +249,7 @@ export const publicFaqs: { question: string; answer: string }[] = [
   },
   {
     question: 'Who owns the app store accounts?',
-    answer: `${ownership.accounts} ${ownership.expo} ${ownership.exit}`,
+    answer: `${ownership.accounts} ${ownership.expo}`,
   },
   {
     question: 'Is the iOS app ready?',

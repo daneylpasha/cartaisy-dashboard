@@ -102,27 +102,27 @@ export default function PrivacyPolicy() {
             <li>Request correction of inaccurate data</li>
             <li>Request deletion of your personal information</li>
             <li>Object to or restrict processing of your data</li>
-            <li>
-              Ask Cartaisy for a copy of the personal information we hold by using the{' '}
-              <Link href="/contact" className="text-purple-400 hover:text-purple-300">
-                contact form
-              </Link>{' '}
-              or emailing{' '}
-              <a href="mailto:support@cartaisy.com" className="text-purple-400 hover:text-purple-300">
-                support@cartaisy.com
-              </a>
-              . This product does not provide a self-serve export download.
-            </li>
+            <li>Ask for a copy of the personal information we hold</li>
             <li>Withdraw consent at any time</li>
           </ul>
+          <p className="leading-relaxed mt-4">
+            These requests are not limited to the time before access ends. You can make them at any time. Use the{' '}
+            <Link href="/contact" className="text-purple-400 hover:text-purple-300">
+              contact form
+            </Link>{' '}
+            or email{' '}
+            <a href="mailto:privacy@cartaisy.com" className="text-purple-400 hover:text-purple-300">
+              privacy@cartaisy.com
+            </a>
+            . This product does not provide a self-serve export download.
+          </p>
         </section>
 
         <section>
           <h2 className="text-2xl font-semibold text-white mb-4">8. Data Retention</h2>
           <p className="leading-relaxed">
-            We retain your personal information for as long as necessary to fulfill the purposes outlined in this
-            Privacy Policy, unless a longer retention period is required or permitted by law. When we no longer
-            need your information, we will securely delete or anonymize it.
+            We keep personal information only while it is needed for the service and for legal obligations. When it
+            is no longer needed, we delete or anonymize it.
           </p>
         </section>
 
@@ -148,8 +148,8 @@ export default function PrivacyPolicy() {
           <h2 className="text-2xl font-semibold text-white mb-4">11. Contact Us</h2>
           <p className="leading-relaxed">
             If you have any questions about this Privacy Policy, please contact us at:{' '}
-            <a href="mailto:support@cartaisy.com" className="text-purple-400 hover:text-purple-300">
-              support@cartaisy.com
+            <a href="mailto:privacy@cartaisy.com" className="text-purple-400 hover:text-purple-300">
+              privacy@cartaisy.com
             </a>
           </p>
         </section>
