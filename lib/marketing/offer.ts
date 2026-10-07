@@ -127,8 +127,48 @@ export const checkoutWording =
 export const iosReadiness =
   'iOS is not ready for a merchant app. Saving an iOS request is not a live iPhone app.';
 
-export const shopifyScopesDisclosure =
-  'The exact Shopify access permissions are not confirmed on this site. Cartaisy requests them when your store connects. An older list of permissions is not the current set.';
+export const shopifyPermissionsQuestion = 'Which Shopify permissions does Cartaisy ask for?';
+
+export const shopifyPermissionsIntro =
+  'When connecting your store, Cartaisy is configured to request access to the Shopify data listed below. The access granted to an individual store may differ.';
+
+export const shopifyPermissionCategories = [
+  'Products: read and change product data.',
+  'Inventory: read and update stock levels; read store locations.',
+  'Orders: read and create or update order data.',
+  'Customers: read store customer records.',
+  'Storefront: read product listings, inventory, tags and collections; access carts/checkouts and customer records.',
+] as const;
+
+export const shopifyPermissionsCaveat =
+  'Requested access is broader than the features currently used. This list describes configured permissions, rather than a promise that every permission is used for every store.';
+
+export const shopifyPermissionNamesSummary = 'Technical permission names';
+
+export const shopifyPermissionNames = [
+  'read_products',
+  'write_products',
+  'read_orders',
+  'write_orders',
+  'read_customers',
+  'read_inventory',
+  'write_inventory',
+  'read_locations',
+  'unauthenticated_read_product_listings',
+  'unauthenticated_read_product_inventory',
+  'unauthenticated_read_product_tags',
+  'unauthenticated_read_collection_listings',
+  'unauthenticated_write_checkouts',
+  'unauthenticated_read_checkouts',
+  'unauthenticated_write_customers',
+  'unauthenticated_read_customers',
+] as const;
+
+export const shopifyScopesDisclosure = [
+  shopifyPermissionsIntro,
+  ...shopifyPermissionCategories,
+  shopifyPermissionsCaveat,
+].join(' ');
 
 export const appStoreAcquisitionTodo =
   'A Shopify App Store install does not create a Cartaisy account. Signup stays invite-only. Claiming a store requires a signed-in store admin. This site does not offer an App Store listing as the way to start.';
@@ -262,7 +302,7 @@ export const publicFaqs: { question: string; answer: string }[] = [
     answer: appStoreAcquisitionTodo,
   },
   {
-    question: 'Which Shopify permissions does Cartaisy ask for?',
+    question: shopifyPermissionsQuestion,
     answer: shopifyScopesDisclosure,
   },
   {

@@ -624,6 +624,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Public copy order on those two pages. Shared offer facts are unchanged.
 - Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
 
+### Public Shopify permissions list
+
+- Date: 2026-10-07.
+- Decision: `/docs/shopify` and the permissions FAQ share one module: the approved intro, five capability lines, the broader-than-used caveat, and the 16 configured names inside “Technical permission names.” The public text does not say Shopify shows that list at install and does not say every permission is used. Live granted scopes were not re-queried. Usage classifications stay in `docs/SHOPIFY_SCOPES_USAGE.md`.
+- Reason: Founder-approved public wording for C01 R17. The old “not confirmed on this site” sentence is retired.
+- Impact: Public permissions copy only. No Shopify OAuth, scope, or environment change.
+- Related docs: `docs/SHOPIFY_ACCESS.md`, `docs/SHOPIFY_SCOPES_USAGE.md`, `docs/STATUS.md`, `docs/TESTING.md`.
+
 ## Related docs/issues:
 
 - Shared context: backend repo `docs/cartaisy/README.md`.

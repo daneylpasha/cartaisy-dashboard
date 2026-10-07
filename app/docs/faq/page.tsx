@@ -2,7 +2,8 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import PageLayout from '@/components/landing/PageLayout';
-import { offerPaths, publicFaqs } from '@/lib/marketing/offer';
+import ShopifyPermissionsDisclosure from '@/components/marketing/ShopifyPermissionsDisclosure';
+import { offerPaths, publicFaqs, shopifyPermissionsQuestion } from '@/lib/marketing/offer';
 import { inkPanelClass, inkPrimaryClass, inkProseClass, inkSecondaryClass } from '@/lib/marketing/publicInk';
 import { generateMetadata as genMeta } from '@/lib/seo';
 
@@ -25,7 +26,11 @@ export default function FAQPage() {
               <ChevronRight className="size-4 shrink-0 text-[#B6C4A1] transition-transform group-open:rotate-90" aria-hidden />
               <span>{faq.question}</span>
             </summary>
-            <p className="mt-3 text-sm leading-7">{faq.answer}</p>
+            {faq.question === shopifyPermissionsQuestion ? (
+              <ShopifyPermissionsDisclosure />
+            ) : (
+              <p className="mt-3 text-sm leading-7">{faq.answer}</p>
+            )}
           </details>
         ))}
       </div>

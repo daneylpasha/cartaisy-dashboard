@@ -1,13 +1,14 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
 import PageLayout from '@/components/landing/PageLayout';
-import { appStoreAcquisitionTodo, checkoutWording, offerPaths, shopifyScopesDisclosure } from '@/lib/marketing/offer';
+import ShopifyPermissionsDisclosure from '@/components/marketing/ShopifyPermissionsDisclosure';
+import { appStoreAcquisitionTodo, checkoutWording, offerPaths } from '@/lib/marketing/offer';
 import { inkPrimaryClass, inkProseClass } from '@/lib/marketing/publicInk';
 import { generateMetadata as genMeta } from '@/lib/seo';
 
 export const metadata: Metadata = genMeta({
   title: 'Shopify Integration',
-  description: 'How Cartaisy connects a Shopify store, what syncs, and why the public scope list is not published.',
+  description: 'How Cartaisy connects a Shopify store, what syncs, and which Shopify permissions the connection is configured to request.',
   keywords: ['Shopify integration', 'Cartaisy Shopify'],
 });
 
@@ -30,7 +31,7 @@ export default function ShopifyIntegrationPage() {
 
       <section className="mt-10" aria-labelledby="scopes-heading">
         <h2 id="scopes-heading" className="text-2xl font-semibold leading-tight text-[#f6f3ee]">Permissions</h2>
-        <p className="mt-3 text-sm leading-7">{shopifyScopesDisclosure}</p>
+        <ShopifyPermissionsDisclosure />
       </section>
 
       <section className="mt-10" aria-labelledby="app-store-heading">

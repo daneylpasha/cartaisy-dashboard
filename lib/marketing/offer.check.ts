@@ -29,6 +29,13 @@ import {
   operatorIdentity,
   ownership,
   publicFaqs,
+  shopifyPermissionCategories,
+  shopifyPermissionNames,
+  shopifyPermissionNamesSummary,
+  shopifyPermissionsCaveat,
+  shopifyPermissionsIntro,
+  shopifyPermissionsQuestion,
+  shopifyScopesDisclosure,
 } from '@/lib/marketing/offer';
 import {
   acceptAllConsent,
@@ -185,14 +192,68 @@ assert.equal(merged[1]?.preferredWindow, 'Tuesday morning');
 assert.equal(merged[2]?.outcome, 'prelaunch_fit');
 assert.equal(JSON.stringify(merged).includes('ipAddress'), false);
 const shopifyDocs = readFileSync(join(root, 'app/docs/shopify/page.tsx'), 'utf8');
-assert.equal(shopifyDocs.includes('read_products'), false);
-assert.match(shopifyDocs, /shopifyScopesDisclosure/);
+assert.match(shopifyDocs, /ShopifyPermissionsDisclosure/);
+assert.match(shopifyDocs, />Permissions</);
+assert.match(shopifyDocs, /checkoutWording/);
+assert.equal(shopifyDocs.includes('not confirmed on this site'), false);
 assert.equal(/Railway|SHOPIFY_SCOPES|do not link/i.test(shopifyDocs), false);
+assert.equal(shopifyPermissionNames.length, 16);
+assert.deepEqual(shopifyPermissionNames, [
+  'read_products',
+  'write_products',
+  'read_orders',
+  'write_orders',
+  'read_customers',
+  'read_inventory',
+  'write_inventory',
+  'read_locations',
+  'unauthenticated_read_product_listings',
+  'unauthenticated_read_product_inventory',
+  'unauthenticated_read_product_tags',
+  'unauthenticated_read_collection_listings',
+  'unauthenticated_write_checkouts',
+  'unauthenticated_read_checkouts',
+  'unauthenticated_write_customers',
+  'unauthenticated_read_customers',
+]);
+assert.equal(shopifyPermissionsIntro, 'When connecting your store, Cartaisy is configured to request access to the Shopify data listed below. The access granted to an individual store may differ.');
+assert.deepEqual([...shopifyPermissionCategories], [
+  'Products: read and change product data.',
+  'Inventory: read and update stock levels; read store locations.',
+  'Orders: read and create or update order data.',
+  'Customers: read store customer records.',
+  'Storefront: read product listings, inventory, tags and collections; access carts/checkouts and customer records.',
+]);
+assert.equal(shopifyPermissionsCaveat, 'Requested access is broader than the features currently used. This list describes configured permissions, rather than a promise that every permission is used for every store.');
+assert.equal(shopifyPermissionNamesSummary, 'Technical permission names');
+assert.equal(shopifyScopesDisclosure.includes('not confirmed on this site'), false);
+assert.match(shopifyScopesDisclosure, /When connecting your store/);
+const permissionsUi = readFileSync(join(root, 'components/marketing/ShopifyPermissionsDisclosure.tsx'), 'utf8');
+assert.match(permissionsUi, /<details/);
+assert.match(permissionsUi, /<summary/);
+assert.match(permissionsUi, /shopifyPermissionNames\.map/);
+assert.match(permissionsUi, /break-all/);
+const faqPermissions = readFileSync(join(root, 'app/docs/faq/page.tsx'), 'utf8');
+assert.match(faqPermissions, /shopifyPermissionsQuestion/);
+assert.match(faqPermissions, /ShopifyPermissionsDisclosure/);
+const permissionsFaq = publicFaqs.find((item) => item.question === shopifyPermissionsQuestion);
+assert.match(permissionsFaq?.answer ?? '', /When connecting your store/);
+assert.equal((permissionsFaq?.answer ?? '').includes('not confirmed on this site'), false);
 const scopesNote = readFileSync(join(root, 'docs/SHOPIFY_ACCESS.md'), 'utf8');
 assert.match(scopesNote, /SHOPIFY_SCOPES/);
 assert.match(scopesNote, /Railway/);
+assert.match(scopesNote, /not re-queried/);
 assert.match(scopesNote, /Do not link a Shopify App Store listing/);
-assert.match(readFileSync(join(root, 'lib/marketing/offer.ts'), 'utf8'), /not confirmed on this site/);
+const usageNote = readFileSync(join(root, 'docs/SHOPIFY_SCOPES_USAGE.md'), 'utf8');
+assert.match(usageNote, /9e4c2b4e3e5e/);
+assert.match(usageNote, /a3d3e7b00824/);
+assert.match(usageNote, /USED_READ/);
+assert.match(usageNote, /USED_WRITE/);
+assert.match(usageNote, /CAPABILITY_ONLY/);
+assert.match(usageNote, /write_products/);
+assert.match(usageNote, /unauthenticated_write_customers/);
+assert.match(usageNote, /Cart API/);
+assert.equal(readFileSync(join(root, 'lib/marketing/offer.ts'), 'utf8').includes('not confirmed on this site'), false);
 const pricingTitle = generateMetadata({ title: 'Pricing', description: 'One managed offer.' });
 const homeTitle = generateMetadata({ title: 'Home', description: 'Home.' });
 assert.deepEqual(pricingTitle.title, { absolute: 'Pricing | Cartaisy' });
