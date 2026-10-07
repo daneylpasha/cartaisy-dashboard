@@ -15,10 +15,10 @@ export default function FeaturesPage() {
   return (
     <PageLayout surface="ink" maxWidth="4xl">
       <p className="text-sm font-medium uppercase tracking-wide text-[#B6C4A1]">{offerPositioning.eyebrow}</p>
-      <h1 className="mt-3 text-4xl font-semibold text-[#f6f3ee]">What the app actually does</h1>
-      <p className="mt-4 max-w-2xl text-base leading-7 text-[#c5c7c1]">{checkoutWording}</p>
-      <p className="mt-3 max-w-2xl text-base font-normal leading-[1.6] text-[#c5c7c1]">{homePlatform.android}</p>
-      <p className="mt-2 max-w-2xl text-base font-normal leading-[1.6] text-[#c5c7c1]">{homePlatform.ios}</p>
+      <h1 className="mt-3 text-4xl font-semibold text-[#f6f3ee]">Bring your Shopify store into a branded app.</h1>
+      <p className="mt-4 max-w-2xl text-base leading-7 text-[#c5c7c1]">
+        Connect your catalog, shape your brand, and manage your app setup with Cartaisy.
+      </p>
 
       <section id="shopify-integration" className="mt-10 scroll-mt-28">
         <h2 className="text-2xl font-semibold text-[#f6f3ee]">Supported</h2>
@@ -27,6 +27,15 @@ export default function FeaturesPage() {
             <li key={item.title} className={`${inkPanelClass} p-4`}>
               <h3 className="font-semibold text-[#f6f3ee]">{item.title}</h3>
               <p className="mt-2 text-sm leading-6 text-[#c5c7c1]">{item.body}</p>
+              {item.title === 'Shopify hosted checkout' ? (
+                <p className="mt-2 text-sm leading-6 text-[#c5c7c1]">{checkoutWording}</p>
+              ) : null}
+              {item.title === 'A tracked build request' ? (
+                <>
+                  <p className="mt-2 text-sm leading-6 text-[#c5c7c1]">{homePlatform.android}</p>
+                  <p className="mt-2 text-sm leading-6 text-[#c5c7c1]">{homePlatform.ios}</p>
+                </>
+              ) : null}
             </li>
           ))}
         </ul>

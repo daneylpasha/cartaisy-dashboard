@@ -453,6 +453,33 @@ assert.match(bannerSource, /Save preferences/);
 assert.match(bannerSource, /id="cookie-analytics"/);
 assert.match(bannerSource, /id="cookie-necessary"/);
 assert.equal(offerExcludes.length, 9);
+const pricingPage = readFileSync(join(root, 'app/pricing/page.tsx'), 'utf8');
+assert.match(pricingPage, />One managed offer</);
+assert.match(
+  pricingPage,
+  /Managed app setup for your Shopify store, with pricing and a billing period agreed before work begins\./,
+);
+assert.match(pricingPage, /Billing details/);
+assert.match(pricingPage, /managedOffer\.structure/);
+assert.match(pricingPage, /managedOffer\.notIncludedInTheProduct/);
+assert.match(pricingPage, /What it does not include/);
+assert.match(pricingPage, /ownership\.accounts/);
+assert.match(pricingPage, /ownership\.exit/);
+assert.match(pricingPage, /offerPaths\.fit/);
+assert.match(pricingPage, /offerPaths\.walkthrough/);
+assert.ok(pricingPage.indexOf('id="pricing-includes"') < pricingPage.indexOf('Billing details'));
+assert.ok(pricingPage.indexOf('Billing details') < pricingPage.indexOf('id="pricing-excludes"'));
+const featuresPage = readFileSync(join(root, 'app/features/page.tsx'), 'utf8');
+assert.match(featuresPage, /Bring your Shopify store into a branded app\./);
+assert.match(featuresPage, /Connect your catalog, shape your brand, and manage your app setup with Cartaisy\./);
+assert.match(featuresPage, /checkoutWording/);
+assert.match(featuresPage, /homePlatform\.android/);
+assert.match(featuresPage, /homePlatform\.ios/);
+assert.match(featuresPage, /Not offered/);
+assert.match(featuresPage, /offerPaths\.fit/);
+assert.ok(featuresPage.indexOf('Connect your catalog, shape your brand, and manage your app setup with Cartaisy.') < featuresPage.indexOf('{checkoutWording}'));
+assert.ok(featuresPage.indexOf('{checkoutWording}') < featuresPage.indexOf('homePlatform.android'));
+assert.equal(/live merchant app|now available|download today/i.test(featuresPage), false);
 for (const rel of ['app/about/page.tsx', 'app/features/page.tsx', 'app/docs/quickstart/page.tsx', 'app/fit/page.tsx']) {
   const page = readFileSync(join(root, rel), 'utf8');
   assert.equal(/August 2026|sample branded build|sample build/i.test(page), false, rel);

@@ -23,8 +23,9 @@ export default function PricingPage() {
     <PageLayout surface="ink" maxWidth="4xl">
       <p className="text-sm font-medium uppercase tracking-wide text-[#B6C4A1]">{offerPositioning.eyebrow}</p>
       <h1 className="mt-3 text-4xl font-semibold text-[#f6f3ee]">One managed offer</h1>
-      <p className="mt-4 max-w-2xl text-base leading-7 text-[#c5c7c1]">{managedOffer.structure}</p>
-      <p className="mt-3 max-w-2xl text-base leading-7 text-[#c5c7c1]">{managedOffer.notIncludedInTheProduct}</p>
+      <p className="mt-4 max-w-2xl text-base leading-7 text-[#c5c7c1]">
+        Managed app setup for your Shopify store, with pricing and a billing period agreed before work begins.
+      </p>
 
       <section className="mt-10" aria-labelledby="pricing-includes">
         <h2 id="pricing-includes" className="text-2xl font-semibold text-[#f6f3ee]">
@@ -38,6 +39,14 @@ export default function PricingPage() {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className="mt-10" aria-labelledby="pricing-billing">
+        <h2 id="pricing-billing" className="text-2xl font-semibold text-[#f6f3ee]">
+          Billing details
+        </h2>
+        <p className="mt-4 max-w-2xl text-base leading-7 text-[#c5c7c1]">{managedOffer.structure}</p>
+        <p className="mt-3 max-w-2xl text-base leading-7 text-[#c5c7c1]">{managedOffer.notIncludedInTheProduct}</p>
       </section>
 
       <section className="mt-10" aria-labelledby="pricing-excludes">

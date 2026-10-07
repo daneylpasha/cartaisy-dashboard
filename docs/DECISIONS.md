@@ -616,6 +616,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Public page scroll space and the footer Cookie Settings link. No pricing, feature, or consent-copy change.
 - Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
 
+### Pricing and features lead with the offer
+
+- Date: 2026-10-07.
+- Decision: `/pricing` keeps the heading “One managed offer” and one setup sentence. The existing renewal, external billing, no-trial, no-checkout, and no-tier facts move into Billing details, after included work and before exclusions. `/features` uses the heading “Bring your Shopify store into a branded app.” and one setup sentence. Checkout, wallet, and Android/iOS availability stay in the existing cards, with the same limits.
+- Reason: Owner review. Both pages were opening with exclusions. The hierarchy follows a benefit-first order without new capabilities, prices, or results.
+- Impact: Public copy order on those two pages. Shared offer facts are unchanged.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
+
 ## Related docs/issues:
 
 - Shared context: backend repo `docs/cartaisy/README.md`.
