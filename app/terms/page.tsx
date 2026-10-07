@@ -131,8 +131,7 @@ export default function TermsOfService() {
           <h2 className="text-2xl font-semibold text-white mb-4">9. Termination</h2>
           <p className="leading-relaxed">
             We may suspend or end your access immediately, without prior notice, for serious misuse, a security
-            issue, or a legal requirement. Otherwise we give notice before access ends. This page does not state
-            a number of days for that notice.
+            issue, or a legal requirement. Otherwise we give notice before access ends.
           </p>
           <p className="leading-relaxed mt-4">
             Upon termination, your right to use the Service will immediately cease. A copy of data Cartaisy holds

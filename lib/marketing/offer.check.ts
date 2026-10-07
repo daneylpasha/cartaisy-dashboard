@@ -295,6 +295,8 @@ assert.match(contactForm, /role="status"/);
 assert.match(contactForm, /role="alert"/);
 assert.match(contactForm, /tabIndex=\{-1\}/);
 assert.match(contactForm, /successRef\.current\?\.focus\(\)/);
+assert.equal(contactForm.includes('sales@rendernext.io'), false);
+assert.match(contactForm, /mailto:\$\{supportEmail\}/);
 assert.match(demo, /homePlatform\.android/);
 assert.match(demo, /homePlatform\.ios/);
 assert.equal(/operator|allowed store|staging store|\bbinary\b/i.test(home), false);
@@ -367,6 +369,10 @@ assert.match(cookiesPage, /does not set _gid/);
 assert.match(cookiesPage, /Vercel Analytics and Speed Insights/);
 assert.match(cookiesPage, /only after you allow analytics/);
 assert.match(cookiesPage, /Last updated: October 2026/);
+assert.equal(cookiesPage.includes('therefore anonymous'), false);
+assert.equal(cookiesPage.includes('anonymously'), false);
+assert.match(cookiesPage, /subject to\s+your consent/);
+assert.match(cookiesPage, /href="\/privacy"/);
 const privacyPage = readFileSync(join(root, 'app/privacy/page.tsx'), 'utf8');
 assert.equal(privacyPage.includes('location data'), false);
 assert.match(privacyPage, /IP address on a fit check/);
@@ -386,7 +392,8 @@ assert.match(termsPage, /renews automatically only when that written agreement s
 assert.match(termsPage, /before the next renewal/);
 assert.match(termsPage, /serious misuse, a security/);
 assert.match(termsPage, /not\s+limited to the time before access ends/);
-assert.match(termsPage, /give notice before access ends/);
+assert.match(termsPage, /Otherwise we give notice before access ends/);
+assert.equal(termsPage.includes('number of days for that notice'), false);
 assert.equal(
   operatorIdentity,
   'Cartaisy is a product of RenderNext LLC, a company registered in Texas, United States.'

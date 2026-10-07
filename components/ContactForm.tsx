@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Mail, Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { analytics } from '@/lib/analytics';
+import { supportEmail } from '@/lib/marketing/offer';
 
 interface FormData {
   name: string;
@@ -211,10 +212,10 @@ export default function ContactForm() {
             For general inquiries and support
           </p>
           <a
-            href="mailto:sales@rendernext.io"
+            href={`mailto:${supportEmail}`}
             className="text-purple-400 hover:text-purple-300 transition-colors"
           >
-            sales@rendernext.io
+            {supportEmail}
           </a>
         </div>
 

@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import PageLayout from '@/components/landing/PageLayout';
 import { operatorIdentity } from '@/lib/marketing/offer';
 import { generateMetadata as genMeta } from '@/lib/seo';
@@ -43,9 +44,12 @@ export default function CookiePolicy() {
             <div className="bg-white/5 rounded-lg p-6 border border-white/10">
               <h3 className="text-lg font-medium text-purple-300 mb-3">Analytics Cookies</h3>
               <p className="leading-relaxed">
-                These cookies help us understand how visitors interact with our website by collecting
-                and reporting information anonymously. This data helps us improve how our website works.
-                All information collected by these cookies is aggregated and therefore anonymous.
+                Analytics cookies help us understand how the site is used and improve it. They are subject to
+                your consent and our{' '}
+                <Link href="/privacy" className="text-purple-400 hover:text-purple-300">
+                  Privacy Policy
+                </Link>
+                .
               </p>
             </div>
 
