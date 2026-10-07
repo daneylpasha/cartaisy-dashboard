@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import PageLayout from '@/components/landing/PageLayout';
 import FitCheckForm from '@/components/marketing/FitCheckForm';
+import { inkPanelClass } from '@/lib/marketing/publicInk';
 import { homePlatform, offerPositioning } from '@/lib/marketing/offer';
 import { generateMetadata as genMeta } from '@/lib/seo';
 
@@ -12,20 +13,20 @@ export const metadata: Metadata = genMeta({
 
 export default function FitPage() {
   return (
-    <PageLayout maxWidth="2xl" showBackLink>
-      <p className="text-sm font-medium uppercase tracking-wide text-purple-200">{offerPositioning.eyebrow}</p>
-      <h1 className="mt-3 text-4xl font-semibold text-white">Check if Cartaisy fits your store</h1>
-      <p className="mt-4 text-base leading-7 text-slate-200">
+    <PageLayout surface="ink" maxWidth="2xl" showBackLink>
+      <p className="text-sm font-medium uppercase tracking-wide text-[#B6C4A1]">{offerPositioning.eyebrow}</p>
+      <h1 className="mt-3 text-4xl font-semibold text-[#f6f3ee]">Check if Cartaisy fits your store</h1>
+      <p className="mt-4 text-base leading-7 text-[#c5c7c1]">
         You do not need an account to check fit. Tell us about your business and your Shopify plans. You can explore fit before your store is live.
       </p>
       <div className="mt-8">
         <FitCheckForm />
       </div>
-      <details className="mt-8 rounded-xl border border-white/10 bg-white/5 p-5">
-        <summary className="cursor-pointer rounded-sm text-base font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300">
+      <details className={`mt-8 p-5 ${inkPanelClass}`}>
+        <summary className="flex min-h-12 cursor-pointer items-center rounded-[4px] text-base font-semibold text-[#f6f3ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B6C4A1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111210]">
           Offer details
         </summary>
-        <div className="mt-4 space-y-2 text-sm leading-6 text-slate-300">
+        <div className="mt-4 space-y-2 text-sm leading-6 text-[#c5c7c1]">
           <p>{homePlatform.android}</p>
           <p>{homePlatform.ios}</p>
         </div>

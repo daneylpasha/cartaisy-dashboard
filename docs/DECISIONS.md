@@ -576,6 +576,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Those four public pages and `lib/marketing/offer.ts`. Commercial renewal, cancel, refund, retention, and export rules are unchanged. The internal support checklist is in `docs/SUPPORT_PROCESS.md`. No one is named as the inbox owner yet. Human review is required because this is public identity and governing law.
 - Related docs: `docs/STATUS.md`, `docs/TESTING.md`, `docs/SUPPORT_PROCESS.md`.
 
+### Contact, fit, and the demo shell use the homepage ink
+
+- Date: 2026-10-07.
+- Decision: `/contact`, `/fit`, and the public `/demo` wrapper use the homepage ink `#111210`. Headings use `#f6f3ee`. Body uses `#c5c7c1`. Links and focus use sage `#B6C4A1`. Contact and fit fields use opaque `#1c1e1a`, a 1px `#666962` border (the homepage rule `#2D302B` lifted so the line is about 3:1 on the field), a 4px radius, and a 48px minimum height on single-line inputs. Placeholder `#a3a69f` is about 6.8:1 on the field. Body `#c5c7c1` is about 11:1 on the page. Primary actions are white with ink text. Secondary actions are an outline. The demo page removes the outer gray frame around Connect and Brand. Those step cards stay as they are. Other marketing pages keep the purple PageLayout gradient.
+- Reason: Owner-approved UI consistency for those three public surfaces. The homepage, footer, cookies, auth, and embedded dashboard steps stay.
+- Impact: `PageLayout` ink surface is opt-in. Form validation, save, status copy, routes, and offer limits are unchanged.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
+
 ## Related docs/issues:
 
 - Shared context: backend repo `docs/cartaisy/README.md`.

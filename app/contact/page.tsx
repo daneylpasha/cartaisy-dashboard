@@ -12,10 +12,10 @@ export const metadata: Metadata = genMeta({
 
 export default function ContactPage() {
   return (
-    <PageLayout>
-      <h1 className="text-4xl font-bold text-white mb-4">Contact Us</h1>
-      <p className="text-gray-400 mb-4">{operatorIdentity}</p>
-      <p className="text-gray-400 mb-12">
+    <PageLayout surface="ink">
+      <h1 className="text-4xl font-bold text-[#f6f3ee] mb-4">Contact Us</h1>
+      <p className="text-[#c5c7c1] mb-4">{operatorIdentity}</p>
+      <p className="text-[#c5c7c1] mb-12">
         Have a question or need help? We&apos;re here for you.
       </p>
 

@@ -7,6 +7,7 @@ import { BrandingStep } from '@/components/onboarding/steps/BrandingStep';
 import { DEFAULT_PRIMARY_COLOR } from '@/lib/onboarding/branding';
 import type { BrandingDraft, LockedCatalog, ShopifyConnectionSnapshot, SyncGate } from '@/lib/onboarding/types';
 import { checkoutWording, homePlatform, offerExcludes, offerPaths, offerPositioning } from '@/lib/marketing/offer';
+import { inkPanelClass, inkPrimaryClass, inkSecondaryClass } from '@/lib/marketing/publicInk';
 
 const connection: ShopifyConnectionSnapshot = {
   statusKnown: true,
@@ -45,8 +46,8 @@ const emptyDraft: BrandingDraft = {
 };
 
 const sectionTitle =
-  'font-heading text-[1.75rem] font-semibold leading-[1.1] tracking-[-0.025em] text-white sm:text-[2rem]';
-const body = 'max-w-[62ch] text-base font-normal leading-[1.6] text-slate-300';
+  'font-heading text-[1.75rem] font-semibold leading-[1.1] tracking-[-0.025em] text-[#f6f3ee] sm:text-[2rem]';
+const body = 'max-w-[62ch] text-base font-normal leading-[1.6] text-[#c5c7c1]';
 
 export default function ProductTour() {
   const [draft, setDraft] = useState<BrandingDraft>(emptyDraft);
@@ -67,7 +68,7 @@ export default function ProductTour() {
   return (
     <div className="space-y-14" data-product-tour="">
       <header>
-        <p className="text-sm font-medium uppercase tracking-normal text-purple-200">{offerPositioning.eyebrow}</p>
+        <p className="text-sm font-medium uppercase tracking-normal text-[#B6C4A1]">{offerPositioning.eyebrow}</p>
         <h1 className="font-heading mt-4 text-[2rem] font-semibold leading-[1.1] tracking-[-0.025em] text-[#f6f3ee] sm:text-[2.75rem]">
           Explore your store-to-app setup.
         </h1>
@@ -80,7 +81,7 @@ export default function ProductTour() {
         aria-atomic="true"
         className={
           notice
-            ? 'rounded-[4px] border border-white/15 bg-white/5 px-4 py-3 text-sm leading-6 text-slate-100'
+            ? `${inkPanelClass} px-4 py-3 text-sm leading-6 text-[#c5c7c1]`
             : 'sr-only'
         }
       >
@@ -94,7 +95,7 @@ export default function ProductTour() {
           </h2>
           <p className={`mt-3 ${body}`}>Enter a store address to see the step. This tour does not open Shopify.</p>
         </div>
-        <div className="min-w-0 rounded-[4px] bg-[#f6f6f7] p-3 sm:p-6">
+        <div className="min-w-0">
           <ConnectStep
             tourMode
             connection={connection}
@@ -124,7 +125,7 @@ export default function ProductTour() {
           </h2>
           <p className={`mt-3 ${body}`}>Set the name, colors, and images. Files you pick stay in this browser.</p>
         </div>
-        <div className="min-w-0 rounded-[4px] bg-[#f6f6f7] p-3 sm:p-6">
+        <div className="min-w-0">
           <BrandingStep
             tourMode
             draft={draft}
@@ -169,23 +170,23 @@ export default function ProductTour() {
       <div className="flex flex-col gap-3 sm:flex-row">
         <Link
           href={offerPaths.walkthrough}
-          className="inline-flex h-12 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+          className={inkPrimaryClass}
         >
           {offerPositioning.walkthroughCta}
         </Link>
         <Link
           href={offerPaths.fit}
-          className="inline-flex h-12 items-center justify-center rounded-[4px] border border-white/20 px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+          className={inkSecondaryClass}
         >
           {offerPositioning.primaryCta}
         </Link>
       </div>
 
-      <details className="rounded-[4px] border border-white/10 bg-white/5 px-5 py-4">
-        <summary className="cursor-pointer text-base font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300">
+      <details className={`${inkPanelClass} px-5 py-4`}>
+        <summary className="flex min-h-12 cursor-pointer items-center rounded-[4px] text-base font-semibold text-[#f6f3ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B6C4A1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#111210]">
           Offer limits
         </summary>
-        <div className="mt-4 space-y-3 text-base font-normal leading-[1.6] text-slate-200">
+        <div className="mt-4 space-y-3 text-base font-normal leading-[1.6] text-[#c5c7c1]">
           <p>{homePlatform.android}</p>
           <p>{homePlatform.ios}</p>
           <ul className="list-disc space-y-2 pl-5">

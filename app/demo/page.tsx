@@ -11,7 +11,7 @@ export const metadata: Metadata = genMeta({
 
 export default function DemoPage() {
   return (
-    <PageLayout maxWidth="6xl" showBackLink>
+    <PageLayout surface="ink" maxWidth="6xl" showBackLink>
       <ProductTour />
     </PageLayout>
   );

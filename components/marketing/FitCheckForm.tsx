@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { offerPaths, offerPositioning } from '@/lib/marketing/offer';
 import { type FitGoal, type FitResult, type FitStage } from '@/lib/marketing/fitCheck';
+import { inkChoiceClass, inkFieldClass, inkPanelClass, inkPrimaryClass, inkSecondaryClass } from '@/lib/marketing/publicInk';
 
-const fieldClass =
-  'mt-2 w-full min-h-11 rounded-lg border border-white/15 bg-white/5 px-3 text-white placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300';
+const fieldClass = `mt-2 ${inkFieldClass}`;
 
 type Status = 'idle' | 'submitting' | 'success' | 'error';
 
@@ -63,21 +63,21 @@ export default function FitCheckForm() {
         ref={successRef}
         role="status"
         tabIndex={-1}
-        className="rounded-2xl border border-white/15 bg-white/5 p-6 sm:p-8"
+        className={`${inkPanelClass} p-6 sm:p-8`}
       >
-        <p className="text-sm font-medium uppercase tracking-wide text-purple-200">Fit check result</p>
-        <h2 className="mt-3 text-2xl font-semibold text-white">{result.title}</h2>
-        <p className="mt-4 text-base leading-7 text-slate-200">{result.summary}</p>
+        <p className="text-sm font-medium uppercase tracking-wide text-[#B6C4A1]">Fit check result</p>
+        <h2 className="mt-3 text-2xl font-semibold text-[#f6f3ee]">{result.title}</h2>
+        <p className="mt-4 text-base leading-7 text-[#c5c7c1]">{result.summary}</p>
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Link
             href={offerPaths.walkthrough}
-            className="inline-flex min-h-11 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+            className={inkPrimaryClass}
           >
             {offerPositioning.walkthroughCta}
           </Link>
           <Link
             href={offerPaths.demo}
-            className="inline-flex min-h-11 items-center justify-center rounded-[4px] border border-white/20 px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+            className={inkSecondaryClass}
           >
             {offerPositioning.secondaryCta}
           </Link>
@@ -89,33 +89,33 @@ export default function FitCheckForm() {
   return (
     <form onSubmit={onSubmit} className="space-y-6" noValidate>
       {status === 'error' && error && (
-        <p role="alert" className="rounded-lg border border-red-300/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+        <p role="alert" className="rounded-[4px] border border-red-300/40 bg-red-500/10 px-4 py-3 text-sm text-red-100">
           {error}
         </p>
       )}
 
       <div>
-        <label htmlFor="fit-name" className="text-sm font-medium text-white">
+        <label htmlFor="fit-name" className="text-sm font-medium text-[#c5c7c1]">
           Name
         </label>
         <input id="fit-name" name="name" autoComplete="name" required value={name} onChange={(event) => setName(event.target.value)} className={fieldClass} />
       </div>
       <div>
-        <label htmlFor="fit-email" className="text-sm font-medium text-white">
+        <label htmlFor="fit-email" className="text-sm font-medium text-[#c5c7c1]">
           Email
         </label>
         <input id="fit-email" name="email" type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} className={fieldClass} />
       </div>
 
       <fieldset className="space-y-3">
-        <legend className="text-sm font-medium text-white">Where are you with Shopify?</legend>
+        <legend className="text-sm font-medium text-[#c5c7c1]">Where are you with Shopify?</legend>
         <StageOption id="stage-operating" value="operating" current={stage} onChange={setStage} label="I already run a Shopify store" />
         <StageOption id="stage-prelaunch" value="prelaunch" current={stage} onChange={setStage} label="I am planning a Shopify store" />
         <StageOption id="stage-not" value="not_shopify" current={stage} onChange={setStage} label="I am not planning to use Shopify" />
       </fieldset>
 
       <fieldset className="space-y-3">
-        <legend className="text-sm font-medium text-white">What do you want?</legend>
+        <legend className="text-sm font-medium text-[#c5c7c1]">What do you want?</legend>
         <StageOption
           id="goal-app"
           value="branded_app"
@@ -133,8 +133,8 @@ export default function FitCheckForm() {
       </fieldset>
 
       <div>
-        <label htmlFor="fit-store" className="text-sm font-medium text-white">
-          Store URL <span className="font-normal text-slate-300">(optional)</span>
+        <label htmlFor="fit-store" className="text-sm font-medium text-[#c5c7c1]">
+          Store URL <span className="font-normal text-[#a3a69f]">(optional)</span>
         </label>
         <input
           id="fit-store"
@@ -147,14 +147,14 @@ export default function FitCheckForm() {
           aria-describedby="fit-store-help"
           className={fieldClass}
         />
-        <p id="fit-store-help" className="mt-2 text-sm leading-6 text-slate-300">
+        <p id="fit-store-help" className="mt-2 text-sm leading-6 text-[#c5c7c1]">
           You can leave this blank if your store is still in planning.
         </p>
       </div>
 
       <div>
-        <label htmlFor="fit-note" className="text-sm font-medium text-white">
-          Anything we should know <span className="font-normal text-slate-300">(optional)</span>
+        <label htmlFor="fit-note" className="text-sm font-medium text-[#c5c7c1]">
+          Anything we should know <span className="font-normal text-[#a3a69f]">(optional)</span>
         </label>
         <textarea id="fit-note" name="note" rows={4} value={note} onChange={(event) => setNote(event.target.value)} className={fieldClass} />
       </div>
@@ -162,7 +162,7 @@ export default function FitCheckForm() {
       <button
         type="submit"
         disabled={status === 'submitting'}
-        className="inline-flex min-h-11 w-full items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 disabled:opacity-60 sm:w-auto"
+        className={`${inkPrimaryClass} w-full sm:w-auto`}
       >
         {status === 'submitting' ? 'Saving…' : 'See if Cartaisy fits'}
       </button>
@@ -184,7 +184,7 @@ function StageOption<T extends string>({
   label: string;
 }) {
   return (
-    <label htmlFor={id} className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border border-white/10 px-3 py-3 text-sm leading-6 text-slate-100 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-purple-300">
+    <label htmlFor={id} className={inkChoiceClass}>
       <input
         id={id}
         type="radio"

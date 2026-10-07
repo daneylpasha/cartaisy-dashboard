@@ -464,6 +464,32 @@ assert.equal(readFileSync(join(root, 'app/layout.tsx'), 'utf8').includes('manrop
 assert.equal(readFileSync(join(root, 'app/dashboard/layout.tsx'), 'utf8').includes('marketingTypeClass'), false);
 assert.match(readFileSync(join(root, 'app/page.tsx'), 'utf8'), /marketingTypeClass/);
 assert.match(readFileSync(join(root, 'components/landing/PageLayout.tsx'), 'utf8'), /marketingTypeClass/);
+assert.match(readFileSync(join(root, 'components/landing/PageLayout.tsx'), 'utf8'), /bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900/);
+assert.match(readFileSync(join(root, 'components/landing/PageLayout.tsx'), 'utf8'), /surface === 'ink'/);
+for (const rel of ['app/contact/page.tsx', 'app/fit/page.tsx', 'app/demo/page.tsx']) {
+  assert.match(readFileSync(join(root, rel), 'utf8'), /surface="ink"/, rel);
+}
+assert.equal(readFileSync(join(root, 'app/pricing/page.tsx'), 'utf8').includes('surface="ink"'), false);
+assert.equal(readFileSync(join(root, 'app/schedule-demo/page.tsx'), 'utf8').includes('surface="ink"'), false);
+const publicInk = readFileSync(join(root, 'lib/marketing/publicInk.ts'), 'utf8');
+assert.match(publicInk, /min-h-12/);
+assert.match(publicInk, /rounded-\[4px\]/);
+assert.match(publicInk, /bg-\[#1c1e1a\]/);
+assert.match(publicInk, /border-\[#666962\]/);
+assert.match(publicInk, /#B6C4A1/);
+assert.match(publicInk, /bg-white/);
+assert.match(publicInk, /text-\[#111210\]/);
+assert.match(contactForm, /inkFieldClass/);
+assert.match(contactForm, /inkPrimaryClass/);
+assert.equal(contactForm.includes('bg-purple-600'), false);
+assert.equal(/bg-white\/5|ring-purple|text-purple/.test(contactForm), false);
+assert.match(fitForm, /inkFieldClass/);
+assert.match(fitForm, /inkChoiceClass/);
+assert.equal(/ring-purple|text-purple|bg-white\/5|min-h-11/.test(fitForm), false);
+assert.equal(demo.includes('bg-[#f6f6f7]'), false);
+assert.equal(/text-purple|ring-purple/.test(demo), false);
+assert.match(demoMarkup, /bg-white/);
+assert.match(demoMarkup, /rounded-2xl/);
 assert.match(readFileSync(join(root, 'app/(auth)/layout.tsx'), 'utf8'), /marketingTypeClass/);
 assert.ok(publicFaqs.length >= 12);
 

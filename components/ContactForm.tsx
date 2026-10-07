@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Mail, Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { analytics } from '@/lib/analytics';
 import { supportEmail } from '@/lib/marketing/offer';
+import { inkFieldClass, inkPanelClass, inkPrimaryClass, inkTextLinkClass } from '@/lib/marketing/publicInk';
 
 interface FormData {
   name: string;
@@ -84,16 +85,17 @@ export default function ContactForm() {
             ref={successRef}
             role="status"
             tabIndex={-1}
-            className="bg-green-500/10 border border-green-500/20 rounded-xl p-8 text-center"
+            className={`${inkPanelClass} p-8 text-center`}
           >
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" aria-hidden />
-            <h2 className="text-2xl font-semibold text-white mb-2">Message Sent!</h2>
-            <p className="text-gray-400 mb-6">
+            <h2 className="text-2xl font-semibold text-[#f6f3ee] mb-2">Message Sent!</h2>
+            <p className="text-[#c5c7c1] mb-6">
               Thank you for reaching out. We&apos;ll get back to you as soon as possible.
             </p>
             <button
+              type="button"
               onClick={resetForm}
-              className="text-purple-400 hover:text-purple-300 transition-colors"
+              className={`${inkTextLinkClass} mx-auto`}
             >
               Send another message
             </button>
@@ -102,14 +104,14 @@ export default function ContactForm() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Error Message */}
             {status === 'error' && (
-              <div role="alert" className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+              <div role="alert" className="flex items-center gap-3 rounded-[4px] border border-red-500/20 bg-red-500/10 p-4">
                 <AlertCircle className="w-5 h-5 text-red-400 shrink-0" aria-hidden />
                 <p className="text-red-300 text-sm">{errorMessage}</p>
               </div>
             )}
 
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="name" className="mb-2 block text-sm font-medium text-[#c5c7c1]">
                 Your Name <span className="text-red-400">*</span>
               </label>
               <input
@@ -120,13 +122,13 @@ export default function ContactForm() {
                 onChange={handleChange}
                 required
                 disabled={status === 'submitting'}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className={inkFieldClass}
                 placeholder="John Doe"
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="email" className="mb-2 block text-sm font-medium text-[#c5c7c1]">
                 Email Address <span className="text-red-400">*</span>
               </label>
               <input
@@ -137,13 +139,13 @@ export default function ContactForm() {
                 onChange={handleChange}
                 required
                 disabled={status === 'submitting'}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className={inkFieldClass}
                 placeholder="john@example.com"
               />
             </div>
 
             <div>
-              <label htmlFor="subject" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="subject" className="mb-2 block text-sm font-medium text-[#c5c7c1]">
                 Subject
               </label>
               <select
@@ -152,19 +154,19 @@ export default function ContactForm() {
                 value={formData.subject}
                 onChange={handleChange}
                 disabled={status === 'submitting'}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className={inkFieldClass}
               >
-                <option value="" className="bg-slate-900">Select a subject</option>
-                <option value="General Inquiry" className="bg-slate-900">General question</option>
-                <option value="Fit question" className="bg-slate-900">Question about fit</option>
-                <option value="Walkthrough" className="bg-slate-900">Walkthrough</option>
-                <option value="Technical Support" className="bg-slate-900">Technical support</option>
-                <option value="Something else" className="bg-slate-900">Something else</option>
+                <option value="" className="bg-[#1c1e1a] text-[#f6f3ee]">Select a subject</option>
+                <option value="General Inquiry" className="bg-[#1c1e1a] text-[#f6f3ee]">General question</option>
+                <option value="Fit question" className="bg-[#1c1e1a] text-[#f6f3ee]">Question about fit</option>
+                <option value="Walkthrough" className="bg-[#1c1e1a] text-[#f6f3ee]">Walkthrough</option>
+                <option value="Technical Support" className="bg-[#1c1e1a] text-[#f6f3ee]">Technical support</option>
+                <option value="Something else" className="bg-[#1c1e1a] text-[#f6f3ee]">Something else</option>
               </select>
             </div>
 
             <div>
-              <label htmlFor="message" className="block text-sm font-medium text-gray-300 mb-2">
+              <label htmlFor="message" className="mb-2 block text-sm font-medium text-[#c5c7c1]">
                 Message <span className="text-red-400">*</span>
               </label>
               <textarea
@@ -175,7 +177,7 @@ export default function ContactForm() {
                 required
                 disabled={status === 'submitting'}
                 rows={6}
-                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`${inkFieldClass} resize-none`}
                 placeholder="How can we help you?"
               />
             </div>
@@ -183,7 +185,7 @@ export default function ContactForm() {
             <button
               type="submit"
               disabled={status === 'submitting'}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-600/50 disabled:cursor-not-allowed text-white rounded-[4px] font-medium transition-colors"
+              className={`${inkPrimaryClass} w-full`}
             >
               {status === 'submitting' ? (
                 <>
@@ -203,28 +205,28 @@ export default function ContactForm() {
 
       {/* Contact Info Sidebar */}
       <div className="space-y-8">
-        <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-          <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center mb-4">
-            <Mail className="w-6 h-6 text-purple-400" />
+        <div className={`${inkPanelClass} p-6`}>
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-[4px] border border-[#666962] text-[#B6C4A1]">
+            <Mail className="w-6 h-6" />
           </div>
-          <h3 className="text-lg font-semibold text-white mb-2">Email Us</h3>
-          <p className="text-gray-400 mb-3">
+          <h3 className="mb-2 text-lg font-semibold text-[#f6f3ee]">Email Us</h3>
+          <p className="mb-3 text-[#c5c7c1]">
             For general inquiries and support
           </p>
           <a
             href={`mailto:${supportEmail}`}
-            className="text-purple-400 hover:text-purple-300 transition-colors"
+            className={inkTextLinkClass}
           >
             {supportEmail}
           </a>
         </div>
 
-        <div className="text-gray-400 text-sm">
+        <div className="text-sm text-[#c5c7c1]">
           <p className="mb-2">
-            <strong className="text-white">Want a walkthrough?</strong>
+            <strong className="text-[#f6f3ee]">Want a walkthrough?</strong>
           </p>
           <p>
-            <a href="/schedule-demo" className="text-purple-400 hover:text-purple-300 transition-colors">
+            <a href="/schedule-demo" className={inkTextLinkClass}>
               Request a walkthrough →
             </a>
           </p>
