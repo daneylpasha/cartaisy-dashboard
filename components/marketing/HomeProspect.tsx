@@ -3,7 +3,6 @@ import Link from 'next/link';
 import {
   homeAudiences,
   homeIncludes,
-  homeManaged,
   offerExcludes,
   offerPaths,
   offerPositioning,
@@ -29,6 +28,16 @@ const heroSupport =
   'Give your brand a dedicated mobile shopping experience, built around your Shopify catalog and checkout. Explore the product and plan your setup with Cartaisy.';
 
 const brandControls = ['App name', 'Logo', 'Brand colors', 'App icon', 'Splash image'] as const;
+const youBring = [
+  'Your Shopify store and catalog',
+  'Your brand assets',
+  'Your Apple Developer and Google Play accounts and listings',
+] as const;
+const withCartaisy = [
+  'Guided store connection and catalog sync',
+  'Supported brand and home configuration',
+  'Preparation of a tracked build request',
+] as const;
 const [headlineLead, headlineRest] = offerPositioning.headline.split(', ');
 
 export default function HomeProspect() {
@@ -85,6 +94,34 @@ export default function HomeProspect() {
         </ul>
       </section>
 
+      <section className="bg-black" aria-labelledby="product-tour-heading">
+        <div className={`${shell} py-16 lg:py-24`}>
+          <p className="text-sm font-medium uppercase tracking-normal text-purple-200">Product tour</p>
+          <h2
+            id="product-tour-heading"
+            className="font-heading mt-4 text-[2rem] font-semibold leading-[1.1] tracking-[-0.025em] text-[#f6f3ee] lg:text-[2.75rem]"
+          >
+            Explore the product before you decide.
+          </h2>
+          <p className={`mt-4 max-w-[46ch] ${supportCopy}`}>
+            See the branding settings you can explore in Cartaisy’s product tour.
+          </p>
+          <Link href={offerPaths.demo} className={`mt-8 ${primaryAction}`}>
+            Open the interactive tour
+          </Link>
+          <Image
+            src="/marketing/c01-brand-step-arc.png"
+            alt="A sample branding setup in Cartaisy, showing the app name field, the logo, icon, and splash fields, and the color controls."
+            width={2520}
+            height={2296}
+            loading="lazy"
+            quality={90}
+            sizes="(min-width: 1280px) 1184px, 100vw"
+            className="mt-10 h-auto w-full"
+          />
+        </div>
+      </section>
+
       <section
         className="scroll-mt-28 bg-[linear-gradient(180deg,#100e13_0%,#17141d_48%,#100e13_100%)]"
         aria-labelledby="brand-heading"
@@ -105,9 +142,14 @@ export default function HomeProspect() {
                 <li key={item}>{item}</li>
               ))}
             </ul>
-            <p className={`mt-6 max-w-[48ch] ${supportCopy}`}>
-              Logo and colors can update without a new build. The native icon, launcher name, and splash require a new build.
-            </p>
+            <details className="mt-6 max-w-[48ch]">
+              <summary className="cursor-pointer rounded-sm text-base font-medium text-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300">
+                Branding details
+              </summary>
+              <p className={`mt-3 ${supportCopy}`}>
+                Logo and colors can update without a new build. The native icon, launcher name, and splash require a new build.
+              </p>
+            </details>
           </div>
           <figure className="order-2 min-w-0 lg:order-1">
             <Image
@@ -127,9 +169,29 @@ export default function HomeProspect() {
       <section className="bg-[#121212]" aria-labelledby="included-heading">
         <div className={band}>
           <h2 id="included-heading" className={sectionHeading}>
-            What managed includes
+            A clearer setup, with you in control.
           </h2>
-          <p className={`mt-4 max-w-3xl ${supportCopy}`}>{homeManaged}</p>
+          <p className={`mt-4 max-w-3xl ${supportCopy}`}>
+            Work through your Shopify connection, catalog, branding and home layout with Cartaisy.
+          </p>
+          <div className="mt-8 grid gap-8 md:grid-cols-2">
+            <div>
+              <h3 className={cardTitle}>You bring</h3>
+              <ul className="mt-4 space-y-2 text-base font-normal leading-[1.6] text-slate-200">
+                {youBring.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3 className={cardTitle}>With Cartaisy</h3>
+              <ul className="mt-4 space-y-2 text-base font-normal leading-[1.6] text-slate-200">
+                {withCartaisy.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
           <ul className="mt-8 grid items-stretch gap-4 md:grid-cols-3">
             {offerPoints.map((item) => (
               <li key={item.title} className={card}>
@@ -140,9 +202,9 @@ export default function HomeProspect() {
           </ul>
           <Link
             href={offerPaths.pricing}
-            className="mt-8 inline-flex min-h-11 items-center text-base font-semibold text-white underline decoration-white/30 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300"
+            className="mt-8 inline-flex min-h-11 items-center text-base font-semibold text-white underline decoration-white/30 underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 rounded-sm"
           >
-            {offerPositioning.pricingCta}
+            See what the offer includes
           </Link>
           <details className="mt-4 rounded-xl border border-white/10 bg-white/5 p-5">
             <summary className="cursor-pointer text-base font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 rounded-sm">

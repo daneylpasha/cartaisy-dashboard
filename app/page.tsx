@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import LandingNavbar from '@/components/landing/LandingNavbar';
 import LandingFooter from '@/components/landing/LandingFooter';
 import FAQSection from '@/components/landing/FAQSection';
+import HomeClose from '@/components/marketing/HomeClose';
 import HomeProspect from '@/components/marketing/HomeProspect';
 import RedirectIfSignedIn from '@/components/marketing/RedirectIfSignedIn';
 import { marketingTypeClass } from '@/lib/fonts/manrope';
@@ -21,6 +22,7 @@ export default function HomePage() {
       <LandingNavbar />
       <HomeProspect />
       <FAQSection />
+      <HomeClose />
       <LandingFooter />
     </main>
   );

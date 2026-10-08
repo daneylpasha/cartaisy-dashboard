@@ -315,7 +315,15 @@ assert.equal(home.includes('offerPositioning.primaryCta'), false);
 assert.equal(home.includes('offerPositioning.secondaryCta'), false);
 assert.match(home, /Shopify catalog/);
 assert.ok(home.indexOf('c01-hero-still.webp') < home.indexOf('{capabilities.map'));
-assert.ok(home.indexOf('{capabilities.map') < home.indexOf('id="brand-heading"'));
+assert.ok(home.indexOf('{capabilities.map') < home.indexOf('id="product-tour-heading"'));
+assert.ok(home.indexOf('id="product-tour-heading"') < home.indexOf('id="brand-heading"'));
+assert.match(home, /Product tour/);
+assert.match(home, /Explore the product before you decide\./);
+assert.match(home, /See the branding settings you can explore in Cartaisy’s product tour\./);
+assert.match(home, /Open the interactive tour/);
+assert.match(home, /c01-brand-step-arc\.png/);
+assert.match(home, /A sample branding setup in Cartaisy/);
+assert.equal(/figcaption/.test(home), false);
 assert.ok(home.indexOf('id="included-heading"') < home.indexOf('id="path-heading"'));
 assert.ok(home.indexOf('id="path-heading"') < home.indexOf('id="who-heading"'));
 assert.match(home, /offerExcludes/);
@@ -327,6 +335,24 @@ assert.deepEqual(
   ['Already selling on Shopify', 'Planning your Shopify store', 'Exploring your next step']
 );
 assert.equal(/guarantee/i.test(homeAudiences.map((item) => `${item.title} ${item.body}`).join('\n')), false);
+assert.match(home, /A clearer setup, with you in control\./);
+assert.match(home, /Work through your Shopify connection, catalog, branding and home layout with Cartaisy\./);
+assert.match(home, /You bring/);
+assert.match(home, /Your Shopify store and catalog/);
+assert.match(home, /Your brand assets/);
+assert.match(home, /Your Apple Developer and Google Play accounts and listings/);
+assert.match(home, /With Cartaisy/);
+assert.match(home, /Guided store connection and catalog sync/);
+assert.match(home, /Supported brand and home configuration/);
+assert.match(home, /Preparation of a tracked build request/);
+assert.match(home, /See what the offer includes/);
+assert.equal(home.includes('offerPositioning.pricingCta'), false);
+assert.equal(/What managed includes/.test(home), false);
+assert.match(home, /<summary[^>]*>\s*Branding details\s*<\/summary>/);
+assert.match(
+  home,
+  /Logo and colors can update without a new build\. The native icon, launcher name, and splash require a new build\./,
+);
 assert.match(home, /Offer limits/);
 assert.match(home, /aria-label=\{`\$\{headlineLead\}, \$\{headlineRest\}`\}/);
 assert.match(
@@ -335,6 +361,24 @@ assert.match(
 );
 assert.match(home, /h-12 items-center justify-center rounded-\[4px\]/);
 assert.equal(/h-12[^"\n]*rounded-xl/.test(home), false);
+const faq = readFileSync(join(root, 'components/landing/FAQSection.tsx'), 'utf8');
+assert.match(faq, /Before you get started\./);
+assert.match(faq, /What results should I expect\?/);
+assert.match(faq, /Read all FAQs/);
+assert.match(faq, /offerPaths\.docsFaq/);
+assert.match(faq, /faq\.question === 'Does Cartaisy guarantee sales\?'/);
+assert.equal(homeFaqs.some((item) => item.question === 'Does Cartaisy guarantee sales?'), true);
+assert.equal(publicFaqs.some((item) => item.question === 'What results should I expect?'), false);
+const close = readFileSync(join(root, 'components/marketing/HomeClose.tsx'), 'utf8');
+assert.match(close, /Let’s talk about your store\./);
+assert.match(
+  close,
+  /Explore Cartaisy, share what you want to build, and discuss the scope and price before work begins\./,
+);
+assert.match(close, /Cartaisy is a product of RenderNext LLC, registered in Texas, United States\./);
+assert.match(close, /#e7efe4/);
+assert.match(close, /inkPrimaryMotionClass/);
+assert.equal(/\$49|testimonial|free trial/i.test(close), false);
 const nav = readFileSync(join(root, 'components/landing/LandingNavbar.tsx'), 'utf8');
 assert.match(nav, /rounded-\[4px\]/);
 assert.match(nav, /bg-\[#111210\]/);
@@ -347,7 +391,7 @@ assert.match(nav, /Check fit/);
 assert.match(nav, /offerPaths\.walkthrough/);
 assert.match(nav, /offerPaths\.fit/);
 assert.equal(/backdrop-blur|rounded-2xl|rounded-xl/.test(nav), false);
-assert.ok(home.indexOf('offerPaths.pricing') < home.indexOf('<details'));
+assert.ok(home.indexOf('See what the offer includes') < home.indexOf('Offer limits'));
 assert.equal(/homePlatform|Availability|Illustrative/.test(home), false);
 const fitPage = readFileSync(join(root, 'app/fit/page.tsx'), 'utf8');
 assert.match(fitPage, /You do not need an account to check fit\. Tell us about your business and your Shopify plans\. You can explore fit before your store is live\./);
