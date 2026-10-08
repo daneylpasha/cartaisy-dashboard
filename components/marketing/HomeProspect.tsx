@@ -19,7 +19,14 @@ const secondaryAction =
   'inline-flex h-12 items-center justify-center rounded-[4px] border border-white/15 px-5 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black';
 const band = 'mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20';
 const card = 'flex h-full flex-col rounded-xl border border-white/10 bg-white/5 p-5';
-const sectionHeading = 'text-3xl font-semibold leading-[1.1] tracking-[-0.025em] text-white';
+const sectionHeading =
+  'font-heading text-[2rem] font-semibold leading-[1.1] tracking-[-0.025em] text-white lg:text-[2.75rem]';
+const supportCopy = 'text-base font-normal leading-[1.6] text-slate-300 lg:text-[1.25rem]';
+const cardTitle = 'text-xl font-semibold leading-snug text-white';
+const cardBody = 'mt-2 text-base font-normal leading-[1.6] text-slate-200';
+const capabilities = ['Your brand', 'Shopify catalog', 'Shopify checkout'] as const;
+const heroSupport =
+  'Give your brand a dedicated mobile shopping experience, built around your Shopify catalog and checkout. Explore the product and plan your setup with Cartaisy.';
 
 const brandControls = ['App name', 'Logo', 'Brand colors', 'App icon', 'Splash image'] as const;
 const [headlineLead, headlineRest] = offerPositioning.headline.split(', ');
@@ -35,22 +42,20 @@ export default function HomeProspect() {
             <p className="text-sm font-medium uppercase tracking-normal text-purple-200">{offerPositioning.eyebrow}</p>
             <h1
               aria-label={`${headlineLead}, ${headlineRest}`}
-              className="font-heading mt-4 text-[2rem] font-semibold leading-[1.1] tracking-[-0.025em] text-[#f6f3ee] min-[400px]:text-[2.375rem] sm:text-[2.75rem] lg:text-[2.75rem] xl:text-[3.125rem]"
+              className="font-heading mt-4 text-[2.375rem] font-semibold leading-[1.05] tracking-[-0.025em] text-[#f6f3ee] sm:text-[2.75rem] lg:text-[3.75rem] xl:text-[4rem]"
             >
               <span>{headlineLead},</span>
               <span>{' '}</span>
               <br className="hidden lg:block" aria-hidden="true" />
               <span>{headlineRest}</span>
             </h1>
-            <p className="mt-5 max-w-[52ch] text-base font-normal leading-[1.6] text-slate-300 sm:text-lg">
-              {offerPositioning.subhead}
-            </p>
+            <p className={`mt-5 max-w-[42ch] ${supportCopy}`}>{heroSupport}</p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Link href={offerPaths.fit} className={primaryAction}>
-                {offerPositioning.primaryCta}
+              <Link href={offerPaths.demo} className={primaryAction}>
+                See how it works
               </Link>
-              <Link href={offerPaths.demo} className={secondaryAction}>
-                {offerPositioning.secondaryCta}
+              <Link href={offerPaths.walkthrough} className={secondaryAction}>
+                Request a walkthrough
               </Link>
             </div>
           </div>
@@ -67,6 +72,18 @@ export default function HomeProspect() {
             />
           </figure>
         </div>
+        <ul className={`${shell} mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 text-base font-medium text-[#c5c7c1]`}>
+          {capabilities.map((item, index) => (
+            <li key={item} className="inline-flex min-w-0 items-center gap-3">
+              {index > 0 ? (
+                <span className="text-white/30" aria-hidden="true">
+                  /
+                </span>
+              ) : null}
+              {item}
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section
@@ -77,19 +94,19 @@ export default function HomeProspect() {
           <div className="order-1 lg:order-2">
             <h2
               id="brand-heading"
-              className="font-heading text-[2rem] font-semibold leading-[1.1] tracking-[-0.025em] text-[#f6f3ee] sm:text-[2.5rem] lg:text-[3rem]"
+              className="font-heading text-[2rem] font-semibold leading-[1.1] tracking-[-0.025em] text-[#f6f3ee] lg:text-[2.75rem]"
             >
               Your brand, made mobile.
             </h2>
-            <p className="mt-4 max-w-[48ch] text-base font-normal leading-[1.6] text-slate-300 sm:text-lg">
+            <p className={`mt-4 max-w-[48ch] ${supportCopy}`}>
               Bring your logo, colors, and app assets into a shopping experience that feels like your store.
             </p>
-            <ul className="mt-6 grid grid-cols-2 gap-x-6 gap-y-3 text-sm font-medium leading-6 text-slate-200">
+            <ul className="mt-6 grid grid-cols-2 gap-x-6 gap-y-3 text-base font-medium leading-6 text-slate-200">
               {brandControls.map((item) => (
                 <li key={item}>{item}</li>
               ))}
             </ul>
-            <p className="mt-6 max-w-[48ch] text-base font-normal leading-[1.6] text-slate-300">
+            <p className={`mt-6 max-w-[48ch] ${supportCopy}`}>
               Logo and colors can update without a new build. The native icon, launcher name, and splash require a new build.
             </p>
           </div>
@@ -108,33 +125,17 @@ export default function HomeProspect() {
         </div>
       </section>
 
-      <section aria-labelledby="who-heading">
-        <div className={band}>
-          <h2 id="who-heading" className={sectionHeading}>
-            Wherever you are in your Shopify journey
-          </h2>
-          <ul className="mt-8 grid items-stretch gap-4 md:grid-cols-3">
-            {homeAudiences.map((item) => (
-              <li key={item.title} className={card}>
-                <h3 className="text-base font-semibold text-white">{item.title}</h3>
-                <p className="mt-2 text-base font-normal leading-[1.6] text-slate-200">{item.body}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
       <section className="bg-[#121212]" aria-labelledby="included-heading">
         <div className={band}>
           <h2 id="included-heading" className={sectionHeading}>
             What managed includes
           </h2>
-          <p className="mt-4 max-w-3xl text-base font-normal leading-[1.6] text-slate-200">{homeManaged}</p>
+          <p className={`mt-4 max-w-3xl ${supportCopy}`}>{homeManaged}</p>
           <ul className="mt-8 grid items-stretch gap-4 md:grid-cols-3">
             {offerPoints.map((item) => (
               <li key={item.title} className={card}>
-                <h3 className="text-base font-semibold text-white">{item.title}</h3>
-                <p className="mt-2 text-base font-normal leading-[1.6] text-slate-200">{item.body}</p>
+                <h3 className={cardTitle}>{item.title}</h3>
+                <p className={cardBody}>{item.body}</p>
               </li>
             ))}
           </ul>
@@ -176,11 +177,11 @@ export default function HomeProspect() {
               <div>
                 <h2
                   id="path-heading"
-                  className="font-heading text-[1.75rem] font-semibold leading-[1.1] tracking-[-0.025em] text-[#1b3a2f] sm:text-[2rem]"
+                  className="font-heading text-[2rem] font-semibold leading-[1.1] tracking-[-0.025em] text-[#1b3a2f] lg:text-[2.75rem]"
                 >
                   A guided path from store to app.
                 </h2>
-                <p className="mt-4 max-w-[64ch] text-base font-normal leading-[1.6] text-[#244538] lg:max-w-[36ch]">
+                <p className="mt-4 max-w-[64ch] text-base font-normal leading-[1.6] text-[#244538] lg:max-w-[36ch] lg:text-[1.25rem]">
                   Connect your Shopify store, sync your catalog, set your brand, and prepare your app build with guidance from Cartaisy.
                 </p>
                 <Link
@@ -192,6 +193,22 @@ export default function HomeProspect() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="who-heading">
+        <div className={band}>
+          <h2 id="who-heading" className={sectionHeading}>
+            Wherever you are in your Shopify journey
+          </h2>
+          <ul className="mt-8 grid items-stretch gap-4 md:grid-cols-3">
+            {homeAudiences.map((item) => (
+              <li key={item.title} className={card}>
+                <h3 className={cardTitle}>{item.title}</h3>
+                <p className={cardBody}>{item.body}</p>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
     </>

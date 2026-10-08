@@ -303,10 +303,21 @@ assert.equal(offerPositioning.primaryCta, 'Check if Cartaisy fits your store');
 assert.equal(offerPositioning.secondaryCta, 'See Cartaisy in action');
 assert.equal(/free trial|operator|binary|staging store/i.test(offerPositioning.subhead), false);
 const home = readFileSync(join(root, 'components/marketing/HomeProspect.tsx'), 'utf8');
-assert.match(home, /offerPositioning\.primaryCta/);
-assert.match(home, /offerPositioning\.secondaryCta/);
-assert.match(home, /offerPaths\.fit/);
-assert.match(home, /offerPaths\.demo/);
+assert.match(
+  home,
+  /Give your brand a dedicated mobile shopping experience, built around your Shopify catalog and checkout\. Explore the product and plan your setup with Cartaisy\./,
+);
+assert.match(home, /See how it works/);
+assert.match(home, /Request a walkthrough/);
+assert.match(home, /href=\{offerPaths\.demo\}/);
+assert.match(home, /href=\{offerPaths\.walkthrough\}/);
+assert.equal(home.includes('offerPositioning.primaryCta'), false);
+assert.equal(home.includes('offerPositioning.secondaryCta'), false);
+assert.match(home, /Shopify catalog/);
+assert.ok(home.indexOf('c01-hero-still.webp') < home.indexOf('{capabilities.map'));
+assert.ok(home.indexOf('{capabilities.map') < home.indexOf('id="brand-heading"'));
+assert.ok(home.indexOf('id="included-heading"') < home.indexOf('id="path-heading"'));
+assert.ok(home.indexOf('id="path-heading"') < home.indexOf('id="who-heading"'));
 assert.match(home, /offerExcludes/);
 assert.match(home, /homeAudiences/);
 assert.match(home, /Wherever you are in your Shopify journey/);
@@ -327,6 +338,11 @@ assert.match(nav, /bg-\[#111210\]/);
 assert.match(nav, /border-\[#2D302B\]/);
 assert.match(nav, /#B6C4A1/);
 assert.match(nav, /aria-current/);
+assert.match(nav, /pathname === "\/"/);
+assert.match(nav, /Request a walkthrough/);
+assert.match(nav, /Check fit/);
+assert.match(nav, /offerPaths\.walkthrough/);
+assert.match(nav, /offerPaths\.fit/);
 assert.equal(/backdrop-blur|rounded-2xl|rounded-xl/.test(nav), false);
 assert.ok(home.indexOf('offerPaths.pricing') < home.indexOf('<details'));
 assert.equal(/homePlatform|Availability|Illustrative/.test(home), false);

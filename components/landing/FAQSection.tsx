@@ -4,7 +4,7 @@ export default function FAQSection() {
   return (
     <section className="bg-[#121212]" aria-labelledby="faq-heading">
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-        <h2 id="faq-heading" className="text-3xl font-semibold leading-[1.1] tracking-[-0.025em] text-white">
+        <h2 id="faq-heading" className="font-heading text-[2rem] font-semibold leading-[1.1] tracking-[-0.025em] text-white lg:text-[2.75rem]">
           Questions
         </h2>
         <div className="mt-6 space-y-3">

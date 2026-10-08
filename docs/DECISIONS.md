@@ -640,6 +640,14 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Those two card bodies. No layout, style, or other-page copy change.
 - Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
 
+### Homepage leads with the product
+
+- Date: 2026-10-08.
+- Decision: The homepage hero keeps its headline and STILL artwork. The supporting paragraph, hero actions, capability row, and section order follow the founder-approved H1 cut. The header action is Request a walkthrough only on `/`. Shared offer facts and other routes stay as they are.
+- Reason: Founder-authorized homepage refinement. The page should show the product and the setup path without implying a launch or a download.
+- Impact: Homepage copy, order, and type scale. Fit stays in the navigation.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
+
 ## Related docs/issues:
 
 - Shared context: backend repo `docs/cartaisy/README.md`.

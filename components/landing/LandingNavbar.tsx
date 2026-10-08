@@ -45,6 +45,10 @@ export default function LandingNavbar() {
   }, [open]);
 
   const close = () => setOpen(false);
+  const headerCta =
+    pathname === "/"
+      ? { href: offerPaths.walkthrough, label: "Request a walkthrough" }
+      : { href: offerPaths.fit, label: "Check fit" };
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-[#2D302B] bg-[#111210]">
@@ -66,10 +70,10 @@ export default function LandingNavbar() {
             Sign In
           </Link>
           <Link
-            href={offerPaths.fit}
+            href={headerCta.href}
             className={`inline-flex h-12 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 ${focusRing} ${inkPrimaryMotionClass}`}
           >
-            Check fit
+            {headerCta.label}
           </Link>
         </div>
 
@@ -105,11 +109,11 @@ export default function LandingNavbar() {
                 Sign In
               </Link>
               <Link
-                href={offerPaths.fit}
+                href={headerCta.href}
                 className={`inline-flex h-12 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 ${focusRing} ${inkPrimaryMotionClass}`}
                 onClick={close}
               >
-                Check fit
+                {headerCta.label}
               </Link>
             </div>
           </div>
