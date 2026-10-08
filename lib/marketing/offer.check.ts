@@ -329,7 +329,10 @@ assert.deepEqual(
 assert.equal(/guarantee/i.test(homeAudiences.map((item) => `${item.title} ${item.body}`).join('\n')), false);
 assert.match(home, /Offer limits/);
 assert.match(home, /aria-label=\{`\$\{headlineLead\}, \$\{headlineRest\}`\}/);
-assert.match(home, /<span>\{headlineLead\},<\/span>\s*\n\s*<span>\{' '\}<\/span>\s*\n\s*<br className="hidden lg:block" aria-hidden="true" \/>/);
+assert.match(
+  home,
+  /<span className="min-\[1200px\]:block min-\[1200px\]:whitespace-nowrap">\{headlineLead\},<\/span>\s*\n\s*<span className="min-\[1200px\]:hidden">\{' '\}<\/span>\s*\n\s*<span className="min-\[1200px\]:block">\{headlineRest\}<\/span>/,
+);
 assert.match(home, /h-12 items-center justify-center rounded-\[4px\]/);
 assert.equal(/h-12[^"\n]*rounded-xl/.test(home), false);
 const nav = readFileSync(join(root, 'components/landing/LandingNavbar.tsx'), 'utf8');

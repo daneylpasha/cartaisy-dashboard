@@ -36,7 +36,7 @@ export default function HomeProspect() {
     <>
       <section className="overflow-x-clip pb-4 pt-24 sm:pt-28">
         <div
-          className={`${shell} grid items-center gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-10 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] xl:gap-12`}
+          className={`${shell} grid items-center gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:gap-10 min-[1200px]:grid-cols-[minmax(max-content,1.05fr)_minmax(18rem,0.95fr)] min-[1200px]:gap-12`}
         >
           <div className="min-w-0">
             <p className="text-sm font-medium uppercase tracking-normal text-purple-200">{offerPositioning.eyebrow}</p>
@@ -44,10 +44,9 @@ export default function HomeProspect() {
               aria-label={`${headlineLead}, ${headlineRest}`}
               className="font-heading mt-4 text-[2.375rem] font-semibold leading-[1.05] tracking-[-0.025em] text-[#f6f3ee] sm:text-[2.75rem] lg:text-[3.75rem] xl:text-[4rem]"
             >
-              <span>{headlineLead},</span>
-              <span>{' '}</span>
-              <br className="hidden lg:block" aria-hidden="true" />
-              <span>{headlineRest}</span>
+              <span className="min-[1200px]:block min-[1200px]:whitespace-nowrap">{headlineLead},</span>
+              <span className="min-[1200px]:hidden">{' '}</span>
+              <span className="min-[1200px]:block">{headlineRest}</span>
             </h1>
             <p className={`mt-5 max-w-[42ch] ${supportCopy}`}>{heroSupport}</p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
