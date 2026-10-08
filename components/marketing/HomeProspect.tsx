@@ -114,35 +114,23 @@ export default function HomeProspect() {
             <picture className="hidden sm:block">
               <source media="(max-width: 639px)" srcSet={emptyPixel} />
               <img
-                src="/marketing/c01-brand-step-arc.png"
-                alt="A sample branding setup in Cartaisy, showing the app name, logo, icon, splash, and color fields."
-                width={2520}
-                height={2296}
-                className="mx-auto h-auto w-full max-w-[880px]"
+                src="/marketing/cartaisy-branding-poster-v1-desktop.png"
+                alt="A styled branding illustration of app naming and color fields, with the fictional name ARC and forest and stone settings."
+                width={1536}
+                height={1024}
+                className="mx-auto h-auto w-full max-w-[1104px]"
               />
             </picture>
-            <div className="mx-auto w-full max-w-[360px] space-y-4 sm:hidden">
-              <picture>
-                <source media="(min-width: 640px)" srcSet={emptyPixel} />
-                <img
-                  src="/marketing/c01-brand-step-arc-name.png"
-                  alt="A sample branding setup in Cartaisy, showing the app name field."
-                  width={918}
-                  height={306}
-                  className="h-auto w-full"
-                />
-              </picture>
-              <picture>
-                <source media="(min-width: 640px)" srcSet={emptyPixel} />
-                <img
-                  src="/marketing/c01-brand-step-arc-colors.png"
-                  alt="A sample branding setup in Cartaisy, showing the primary and secondary color settings."
-                  width={918}
-                  height={1056}
-                  className="h-auto w-full"
-                />
-              </picture>
-            </div>
+            <picture className="sm:hidden">
+              <source media="(min-width: 640px)" srcSet={emptyPixel} />
+              <img
+                src="/marketing/cartaisy-branding-poster-v1-mobile.png"
+                alt="A styled branding illustration of app naming and color fields, with the fictional name ARC and forest and stone settings."
+                width={1122}
+                height={1402}
+                className="mx-auto h-auto w-full max-w-[1104px]"
+              />
+            </picture>
           </div>
         </div>
       </section>
