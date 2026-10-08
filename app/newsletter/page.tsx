@@ -23,7 +23,7 @@ export default function NewsletterPage() {
           Subscribe to Our Newsletter
         </h1>
         <p className="text-lg text-gray-300 mb-8">
-          Get weekly insights on mobile commerce, conversion tips, and be the first to know about new Cartaisy features.
+          Notes on the Cartaisy offer and product changes. No sales promises.
         </p>
 
         <div className="bg-white/5 rounded-xl p-8 border border-white/10 mb-8">

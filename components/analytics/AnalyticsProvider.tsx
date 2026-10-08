@@ -2,6 +2,7 @@
 
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, Suspense } from 'react';
+import { getStoredConsent, optionalAnalyticsAllowed } from '@/lib/cookies';
 
 // Google Analytics Measurement ID
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
@@ -13,6 +14,7 @@ export function usePageTracking() {
 
   useEffect(() => {
     if (!GA_MEASUREMENT_ID) return;
+    if (!optionalAnalyticsAllowed(getStoredConsent())) return;
 
     const url = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : '');
 

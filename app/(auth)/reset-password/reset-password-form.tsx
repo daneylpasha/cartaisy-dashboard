@@ -271,7 +271,7 @@ export function ResetPasswordForm() {
 
             <Button
               type="submit"
-              className="h-11 w-full disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-700 disabled:opacity-100"
+              className="h-11 w-full rounded-[4px] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-700 disabled:opacity-100"
               disabled={busy}
             >
               {isLoading ? (

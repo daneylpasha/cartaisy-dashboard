@@ -5,7 +5,7 @@ import { generateMetadata as genMeta } from '@/lib/seo';
 
 export const metadata: Metadata = genMeta({
   title: 'Careers',
-  description: 'Join the Cartaisy team and help shape the future of mobile commerce for Shopify merchants. Remote-friendly, great culture.',
+  description: 'Cartaisy is not listing open roles. You can still write to the team.',
   keywords: ['careers', 'jobs', 'remote work', 'hiring'],
 });
 
@@ -64,7 +64,7 @@ export default function CareersPage() {
           <ul className="space-y-4 text-gray-300">
             <li className="flex items-start gap-3">
               <span className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></span>
-              <span>Work on products that help thousands of merchants grow their businesses</span>
+              <span>Work on a managed shopping app for Shopify stores</span>
             </li>
             <li className="flex items-start gap-3">
               <span className="w-2 h-2 bg-purple-500 rounded-full mt-2 flex-shrink-0"></span>

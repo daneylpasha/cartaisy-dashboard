@@ -42,3 +42,6 @@ jobs:
 
       - name: App switcher checks
         run: npm run test:auth-stores
+
+      - name: C01 commercial checks
+        run: npm run test:c01

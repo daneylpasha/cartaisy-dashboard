@@ -1,66 +1,28 @@
-'use client';
-
-import { useEffect } from 'react';
-import { useSession } from '@/lib/auth';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import HeroSection from '@/components/landing/HeroSection';
-import FeaturesSection from '@/components/landing/FeaturesSection';
-import DashboardFeaturesSection from '@/components/landing/DashboardFeaturesSection';
-import MobileAppFeaturesSection from '@/components/landing/MobileAppFeaturesSection';
+import type { Metadata } from 'next';
 import LandingNavbar from '@/components/landing/LandingNavbar';
 import LandingFooter from '@/components/landing/LandingFooter';
-import dynamic from 'next/dynamic';
+import FAQSection from '@/components/landing/FAQSection';
+import HomeClose from '@/components/marketing/HomeClose';
+import HomeProspect from '@/components/marketing/HomeProspect';
+import RedirectIfSignedIn from '@/components/marketing/RedirectIfSignedIn';
+import { marketingTypeClass } from '@/lib/fonts/manrope';
+import { offerSeo } from '@/lib/marketing/offer';
+import { generateMetadata as genMeta } from '@/lib/seo';
 
-const FAQSection = dynamic(() => import('@/components/landing/FAQSection'));
+export const metadata: Metadata = genMeta({
+  title: 'Home',
+  description: offerSeo.description,
+  keywords: [...offerSeo.keywords],
+});
 
-export default function LandingPage() {
-  const { status } = useSession();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (status === 'authenticated') {
-      router.push('/dashboard');
-    }
-  }, [status, router]);
-
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <motion.div
-          className="text-center"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
-          <motion.div
-            className="w-12 h-12 border-2 border-purple-500/30 border-t-purple-500 rounded-full mx-auto"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          />
-          <motion.p
-            className="mt-4 text-slate-400"
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          >
-            Loading...
-          </motion.p>
-        </motion.div>
-      </div>
-    );
-  }
-
-  if (status === 'authenticated') {
-    return null;
-  }
-
+export default function HomePage() {
   return (
-    <main className="min-h-screen bg-black text-white overflow-x-hidden">
+    <main id="main-content" className={`${marketingTypeClass} min-h-screen bg-black text-white`}>
+      <RedirectIfSignedIn />
       <LandingNavbar />
-      <HeroSection />
-      <FeaturesSection />
-      <DashboardFeaturesSection />
-      <MobileAppFeaturesSection />
+      <HomeProspect />
       <FAQSection />
+      <HomeClose />
       <LandingFooter />
     </main>
   );

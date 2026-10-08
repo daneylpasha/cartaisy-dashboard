@@ -11,31 +11,40 @@ import {
   Settings,
   Shield,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import PageLayout from '@/components/landing/PageLayout';
+import { inkPanelClass, inkPrimaryClass } from '@/lib/marketing/publicInk';
 import { generateMetadata as genMeta } from '@/lib/seo';
+
+type DocLink = {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  href?: string;
+  comingSoon?: boolean;
+};
 
 export const metadata: Metadata = genMeta({
   title: 'Documentation',
-  description: 'Cartaisy documentation - guides, tutorials, and API reference to help you build and manage your Shopify mobile app.',
+  description: 'How Cartaisy onboarding, Shopify connection, and the managed offer work. No public API product.',
   keywords: ['documentation', 'guides', 'tutorials', 'API', 'help'],
 });
 
 const docSections = [
   {
     title: 'Getting Started',
-    description: 'Everything you need to launch your mobile app',
+    description: 'The path from a fit check to an invited dashboard',
     links: [
       {
         icon: Rocket,
         title: 'Quick Start Guide',
-        description: 'Get up and running in minutes',
+        description: 'Fit check, walkthrough, invite, then setup',
         href: '/docs/quickstart',
       },
       {
         icon: Settings,
         title: 'Dashboard Overview',
         description: 'Navigate the Cartaisy dashboard',
-        href: '/docs/quickstart#dashboard',
         comingSoon: true,
       },
     ],
@@ -54,26 +63,24 @@ const docSections = [
         icon: Zap,
         title: 'Webhook Configuration',
         description: 'Set up real-time data sync',
-        href: '/docs/shopify#webhooks',
         comingSoon: true,
       },
     ],
   },
   {
     title: 'API',
-    description: 'For developers building custom integrations',
+    description: 'Not a public custom-integration product',
     links: [
       {
         icon: Code,
         title: 'API Reference',
-        description: 'REST API endpoints and authentication',
+        description: 'Why this offer has no public API',
         href: '/docs/api',
       },
       {
         icon: Shield,
         title: 'Authentication',
         description: 'JWT tokens and security',
-        href: '/docs/api#authentication',
         comingSoon: true,
       },
     ],
@@ -98,17 +105,53 @@ const docSections = [
   },
 ];
 
+function DocCard({ link }: { link: DocLink }) {
+  const content = (
+    <div className="flex items-start gap-4">
+      <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-[4px] border border-[#666962] text-[#B6C4A1]">
+        <link.icon className="w-6 h-6" />
+      </div>
+      <div className="flex-1">
+        <div className="flex items-center gap-2">
+          <h3 className={`text-lg font-medium text-[#f6f3ee] ${link.comingSoon ? '' : 'transition-colors group-hover:text-[#B6C4A1]'}`}>
+            {link.title}
+          </h3>
+          {link.comingSoon ? (
+            <span className="rounded-[4px] border border-[#666962] px-2 py-0.5 text-xs text-[#c5c7c1]">
+              Coming soon
+            </span>
+          ) : null}
+        </div>
+        <p className="text-[#a3a69f] text-sm mt-1">{link.description}</p>
+      </div>
+    </div>
+  );
+
+  if (link.comingSoon || !link.href) {
+    return <div className={`p-6 ${inkPanelClass}`}>{content}</div>;
+  }
+
+  return (
+    <Link
+      href={link.href}
+      className={`group p-6 transition-colors hover:border-[#B6C4A1] ${inkPanelClass}`}
+    >
+      {content}
+    </Link>
+  );
+}
+
 export default function DocsPage() {
   return (
-    <PageLayout maxWidth="5xl">
+    <PageLayout surface="ink" maxWidth="5xl">
       {/* Header */}
       <div className="text-center mb-16">
-        <div className="w-20 h-20 bg-purple-500/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
-          <Book className="w-10 h-10 text-purple-400" />
+        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-[4px] border border-[#666962] text-[#B6C4A1]">
+          <Book className="w-10 h-10" />
         </div>
-        <h1 className="text-4xl font-bold text-white mb-4">Documentation</h1>
-        <p className="text-gray-400 text-lg max-w-lg mx-auto">
-          Everything you need to build, customize, and manage your Shopify mobile app with Cartaisy.
+        <h1 className="text-4xl font-bold text-[#f6f3ee] mb-4">Documentation</h1>
+        <p className="text-[#c5c7c1] text-lg max-w-lg mx-auto">
+          Guides for connecting your Shopify store, preparing your brand, and working with Cartaisy.
         </p>
       </div>
 
@@ -117,38 +160,13 @@ export default function DocsPage() {
         {docSections.map((section) => (
           <section key={section.title}>
             <div className="mb-6">
-              <h2 className="text-2xl font-semibold text-white">{section.title}</h2>
-              <p className="text-gray-400">{section.description}</p>
+              <h2 className="text-2xl font-semibold text-[#f6f3ee]">{section.title}</h2>
+              <p className="text-[#c5c7c1]">{section.description}</p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
               {section.links.map((link) => (
-                <Link
-                  key={link.title}
-                  href={link.href}
-                  className={`group bg-white/5 rounded-xl p-6 border border-white/10 hover:bg-white/[0.07] hover:border-purple-500/30 transition-all ${
-                    link.comingSoon ? 'opacity-60 pointer-events-none' : ''
-                  }`}
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-purple-500/30 transition-colors">
-                      <link.icon className="w-6 h-6 text-purple-400" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-medium text-white group-hover:text-purple-300 transition-colors">
-                          {link.title}
-                        </h3>
-                        {link.comingSoon && (
-                          <span className="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-400">
-                            Soon
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-gray-400 text-sm mt-1">{link.description}</p>
-                    </div>
-                  </div>
-                </Link>
+                <DocCard key={link.title} link={link} />
               ))}
             </div>
           </section>
@@ -157,14 +175,14 @@ export default function DocsPage() {
 
       {/* Help CTA */}
       <div className="mt-16 text-center">
-        <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl p-8 border border-purple-500/20">
-          <h3 className="text-xl font-semibold text-white mb-2">Can&apos;t find what you&apos;re looking for?</h3>
-          <p className="text-gray-400 mb-6">
+        <div className={`${inkPanelClass} p-8`}>
+          <h3 className="text-xl font-semibold text-[#f6f3ee] mb-2">Can&apos;t find what you&apos;re looking for?</h3>
+          <p className="text-[#c5c7c1] mb-6">
             Our support team is here to help you with any questions.
           </p>
           <Link
             href="/contact"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+            className={inkPrimaryClass}
           >
             Contact Support
           </Link>

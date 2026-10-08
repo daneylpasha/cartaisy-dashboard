@@ -1,143 +1,70 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { Rocket, UserPlus, Link2, Palette, Upload, CheckCircle } from 'lucide-react';
 import PageLayout from '@/components/landing/PageLayout';
+import { homePlatform, offerPaths, ownership } from '@/lib/marketing/offer';
+import { inkPrimaryClass, inkProseClass, inkPanelClass } from '@/lib/marketing/publicInk';
 import { generateMetadata as genMeta } from '@/lib/seo';
 
 export const metadata: Metadata = genMeta({
-  title: 'Quick Start Guide',
-  description: 'Get started with Cartaisy in minutes. Step-by-step guide to set up your Shopify mobile app.',
-  keywords: ['quickstart', 'getting started', 'setup guide', 'tutorial'],
+  title: 'Quick Start',
+  description: 'How a merchant goes from a fit check to an invite, Shopify connection, brand, and a build request.',
+  keywords: ['Cartaisy quick start'],
 });
 
 const steps = [
   {
-    number: 1,
-    icon: UserPlus,
-    title: 'Create Your Account',
-    description: 'Sign up for a Cartaisy account using your email or Shopify store.',
-    status: 'documented',
+    title: 'Check fit',
+    body: 'Use the public fit check. No login. A store URL is optional if you have not launched.',
   },
   {
-    number: 2,
-    icon: Link2,
-    title: 'Connect Your Shopify Store',
-    description: 'Authorize Cartaisy to sync with your Shopify store. Products, collections, and orders will sync automatically.',
-    status: 'documented',
+    title: 'Request a walkthrough',
+    body: 'We follow up by email. The form does not book a calendar by itself.',
   },
   {
-    number: 3,
-    icon: Palette,
-    title: 'Customize Your App',
-    description: 'Use the drag-and-drop App Builder to design your home screen with carousels, banners, and collections.',
-    status: 'coming',
+    title: 'Accept an invite',
+    body: 'Signup stays closed until Cartaisy sends a link. Login is for people who already have an account.',
   },
   {
-    number: 4,
-    icon: Upload,
-    title: 'Publish to App Stores',
-    description: 'Submit your app to the Apple App Store and Google Play Store. We handle the technical requirements.',
-    status: 'coming',
+    title: 'Connect Shopify, then brand',
+    body: 'Connect the store, set name, logo, colors, icon, and splash, and publish a home or leave the smart default.',
+  },
+  {
+    title: 'Request a build',
+    body: `${homePlatform.android} ${homePlatform.ios}`,
   },
 ];
 
 export default function QuickStartPage() {
   return (
-    <PageLayout maxWidth="4xl" backHref="/docs" backLabel="Back to Docs">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <div className="w-14 h-14 bg-green-500/20 rounded-xl flex items-center justify-center">
-          <Rocket className="w-7 h-7 text-green-400" />
-        </div>
-        <div>
-          <h1 className="text-4xl font-bold text-white">Quick Start Guide</h1>
-          <p className="text-gray-400">Get your mobile app live in 4 simple steps</p>
-        </div>
-      </div>
-
-      {/* Coming Soon Banner */}
-      <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 rounded-xl p-6 border border-yellow-500/20 mb-12">
-        <h3 className="text-lg font-semibold text-white mb-2">Full Guide Coming Soon</h3>
-        <p className="text-gray-400">
-          We&apos;re preparing detailed documentation with screenshots and video tutorials.
-          Here&apos;s a preview of what&apos;s coming.
-        </p>
-      </div>
-
-      {/* Steps Preview */}
-      <div className="space-y-6 mb-12">
+    <PageLayout surface="ink" maxWidth="4xl" backHref="/docs" backLabel="Back to Docs">
+      <article className={inkProseClass}>
+      <h1 className="text-4xl font-semibold leading-tight text-[#f6f3ee]">Quick start</h1>
+      <p className="mt-3">This is the merchant path. It is not a four-click publish.</p>
+      <ol className="mt-8 space-y-4">
         {steps.map((step, index) => (
-          <div
-            key={step.number}
-            className={`relative bg-white/5 rounded-xl p-6 border border-white/10 ${
-              step.status === 'coming' ? 'opacity-60' : ''
-            }`}
-          >
-            {/* Connector line */}
-            {index < steps.length - 1 && (
-              <div className="absolute left-11 top-20 w-0.5 h-8 bg-white/10" />
-            )}
-
-            <div className="flex items-start gap-4">
-              <div className="w-14 h-14 bg-purple-500/20 rounded-xl flex items-center justify-center flex-shrink-0 relative">
-                <span className="text-2xl font-bold text-purple-400">{step.number}</span>
-                {step.status === 'documented' && (
-                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                    <CheckCircle className="w-3 h-3 text-white" />
-                  </div>
-                )}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-3">
-                  <h3 className="text-xl font-semibold text-white">{step.title}</h3>
-                  {step.status === 'coming' && (
-                    <span className="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-400">
-                      Coming Soon
-                    </span>
-                  )}
-                </div>
-                <p className="text-gray-400 mt-2">{step.description}</p>
-              </div>
-            </div>
-          </div>
+          <li key={step.title} className={`p-5 ${inkPanelClass}`}>
+            <h2 className="text-lg font-semibold text-[#f6f3ee]">
+              {index + 1}. {step.title}
+            </h2>
+            <p className="mt-2 text-sm leading-6">{step.body}</p>
+          </li>
         ))}
-      </div>
-
-      {/* Prerequisites */}
-      <section className="mb-12">
-        <h2 className="text-2xl font-semibold text-white mb-4">Prerequisites</h2>
-        <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-          <ul className="space-y-3 text-gray-400">
-            <li className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-              <span>An active Shopify store with products</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-              <span>Store owner or staff account with API access</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-              <span>Apple Developer account (for iOS app)</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-              <span>Google Play Developer account (for Android app)</span>
-            </li>
-          </ul>
-        </div>
+      </ol>
+      <section className="mt-10">
+        <h2 className="text-2xl font-semibold leading-tight text-[#f6f3ee]">Prerequisites</h2>
+        <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-7">
+          <li>A Shopify store before catalog sync. Pre-launch merchants can still request a walkthrough.</li>
+          <li>An invite from Cartaisy before creating an account.</li>
+          <li>{ownership.accounts}</li>
+          <li>{ownership.expo}</li>
+        </ul>
       </section>
-
-      {/* CTA */}
-      <div className="text-center">
-        <p className="text-gray-400 mb-4">Ready to get started?</p>
-        <Link
-          href="/contact"
-          className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
-        >
-          Get Started
+      <div className="mt-8">
+        <Link href={offerPaths.fit} className={inkPrimaryClass}>
+          Check if Cartaisy fits your store
         </Link>
       </div>
+      </article>
     </PageLayout>
   );
 }

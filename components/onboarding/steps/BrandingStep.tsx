@@ -51,6 +51,11 @@ interface BrandingStepProps {
   onRetry: () => void;
   /** Build list for this store. Omitted shows how to get the first build. */
   installPreview?: InstallPreviewModel;
+  /** Public /demo only. The signed-in wizard keeps this title as the page heading. */
+  tourMode?: boolean;
+  onPublishHome?: () => void;
+  onGoLive?: () => void;
+  onBuildMyApp?: () => void;
 }
 
 export function BrandingStep({
@@ -77,6 +82,10 @@ export function BrandingStep({
   onContinue,
   onRetry,
   installPreview,
+  tourMode = false,
+  onPublishHome,
+  onGoLive,
+  onBuildMyApp,
 }: BrandingStepProps) {
   const trimmedName = draft.appName.trim();
   const nameReady = trimmedName.length >= 2 && !isPlatformWordmark(trimmedName);
@@ -85,15 +94,23 @@ export function BrandingStep({
     Boolean(loadError) || !nameReady || !primaryValid || !secondaryValid || uploadsBusy;
   const iconLogo = useCopyLogoAsIcon(draft.logoUrl, uploadsBusy, onIconFile, onImageError);
   const splashLogo = useCopyLogoAsSplash(draft.logoUrl, uploadsBusy, onSplashFile, onImageError);
+  const TitleTag = tourMode ? 'h3' : 'h1';
+  const tour = tourMode
+    ? {
+        onPublishHome: onPublishHome ?? (() => undefined),
+        onGoLive: onGoLive ?? (() => undefined),
+        onBuildMyApp: onBuildMyApp ?? (() => undefined),
+      }
+    : undefined;
 
   return (
     <section className="rounded-2xl border border-slate-200/80 bg-white px-5 py-8 shadow-[0_1px_2px_rgba(15,23,42,0.04)] sm:px-10 sm:py-10">
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start lg:gap-x-12">
         <div className="min-w-0 lg:col-start-1">
           <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Step 2</p>
-          <h1 className="font-heading mt-3 text-[1.75rem] font-semibold tracking-tight text-slate-950">
+          <TitleTag className="font-heading mt-3 text-[1.75rem] font-semibold tracking-tight text-slate-950">
             Confirm your brand
-          </h1>
+          </TitleTag>
           <p className="mt-3 max-w-lg text-[15px] leading-7 text-slate-600">{brandStepLead(installPreview)}</p>
           {warning && (
             <div className="mt-8">
@@ -103,7 +120,7 @@ export function BrandingStep({
         </div>
 
         <div className="mt-8 lg:sticky lg:top-6 lg:col-start-2 lg:row-span-2 lg:mt-0 lg:self-start">
-          <BrandInstallPreview model={installPreview} />
+          <BrandInstallPreview model={installPreview} tour={tour} />
         </div>
 
         <div className="min-w-0 lg:col-start-1">

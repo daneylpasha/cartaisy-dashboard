@@ -1,3 +1,5 @@
+import { getStoredConsent, optionalAnalyticsAllowed } from '@/lib/cookies';
+
 type EventParams = {
   action: string;
   category: string;
@@ -8,6 +10,7 @@ type EventParams = {
 // Track custom events
 export function trackEvent({ action, category, label, value }: EventParams) {
   if (typeof window === 'undefined' || !window.gtag) return;
+  if (!optionalAnalyticsAllowed(getStoredConsent())) return;
 
   window.gtag('event', action, {
     event_category: category,

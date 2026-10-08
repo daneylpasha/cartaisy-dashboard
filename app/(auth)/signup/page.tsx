@@ -8,9 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Eye, EyeOff, CheckCircle2, Circle, Loader2, ShieldX, Clock } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle2, Circle, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AuthOrDivider, GoogleContinueButton } from '@/components/auth/GoogleContinueButton';
+import { SignupAccessHandoff, signupTokenFailure } from '@/components/auth/SignupAccessHandoff';
 import { isGoogleSignInEnabled } from '@/lib/auth/googleSession';
 
 interface TokenData {
@@ -108,17 +109,22 @@ function SignupForm() {
   useEffect(() => {
     const validateToken = async () => {
       if (!token) {
+        const missing = signupTokenFailure({ token: null, validation: null });
         setIsValidatingToken(false);
         setTokenValid(false);
-        setTokenError('no_token');
+        setTokenError(missing.ok ? 'no_token' : missing.tokenError);
         return;
       }
 
       try {
         const res = await fetch(`/api/auth/validate-token?token=${token}`);
         const data = await res.json();
+        const decision = signupTokenFailure({
+          token,
+          validation: { valid: Boolean(data.valid), error: typeof data.error === 'string' ? data.error : undefined },
+        });
 
-        if (data.valid) {
+        if (decision.ok) {
           setTokenValid(true);
           setTokenData(data.data);
           // Pre-fill email and store name from token
@@ -126,11 +132,15 @@ function SignupForm() {
           if (data.data.storeName) setStoreName(data.data.storeName);
         } else {
           setTokenValid(false);
-          setTokenError(data.error || 'Invalid token');
+          setTokenError(decision.tokenError);
         }
       } catch {
+        const decision = signupTokenFailure({
+          token,
+          validation: { valid: false, error: 'Failed to validate token' },
+        });
         setTokenValid(false);
-        setTokenError('Failed to validate token');
+        setTokenError(decision.ok ? 'Failed to validate token' : decision.tokenError);
       } finally {
         setIsValidatingToken(false);
       }
@@ -261,46 +271,7 @@ function SignupForm() {
   }
 
   if (!tokenValid) {
-    const expired = tokenError.includes('expired');
-    const missing = tokenError === 'no_token';
-    const Icon = expired ? Clock : ShieldX;
-
-    return (
-      <Card>
-        <CardContent className="flex flex-col items-center gap-5 py-2 text-center">
-          <div
-            className={cn(
-              'flex size-12 items-center justify-center rounded-full',
-              missing ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'
-            )}
-          >
-            <Icon className="size-6" aria-hidden />
-          </div>
-          <div className="space-y-2">
-            <h1 className="font-heading text-2xl font-semibold tracking-tight text-slate-950">
-              {missing ? 'Access required' : expired ? 'Link expired' : 'Invalid link'}
-            </h1>
-            <p className="text-sm leading-6 text-slate-600">
-              {missing
-                ? 'Signup is invite-only. You need a valid onboarding link to create an account.'
-                : expired
-                  ? 'This signup link has expired. Contact us for a new onboarding link.'
-                  : tokenError === 'Token has already been used'
-                    ? 'This signup link has already been used.'
-                    : 'This signup link is invalid or has been revoked.'}
-            </p>
-          </div>
-          {missing && (
-            <div className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm leading-6 text-slate-600">
-              If you are a store owner and would like to use Cartaisy, contact us for an onboarding link.
-            </div>
-          )}
-          <Button variant="outline" className="h-11 w-full" asChild>
-            <Link href="/login">Go to login</Link>
-          </Button>
-        </CardContent>
-      </Card>
-    );
+    return <SignupAccessHandoff tokenError={tokenError} />;
   }
 
   const storeLocked = !!tokenData?.storeName;
@@ -437,7 +408,7 @@ function SignupForm() {
 
           <Button
             type="submit"
-            className="h-11 w-full disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-700 disabled:opacity-100"
+            className="h-11 w-full rounded-[4px] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-700 disabled:opacity-100"
             disabled={busy || !passwordsMatch || storeName.length < 2}
           >
             {isLoading ? (

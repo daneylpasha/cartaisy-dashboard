@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCookieConsent } from '@/components/cookies';
+import { marketingTypeClass } from '@/lib/fonts/manrope';
 
 const SURFACE = '#f5f5f6';
 
@@ -11,7 +12,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
   const { showBanner } = useCookieConsent();
 
   return (
-    <div className="flex min-h-dvh flex-col bg-[#f5f5f6] text-slate-950">
+    <div className={`${marketingTypeClass} flex min-h-dvh flex-col bg-[#f5f5f6] text-slate-950`}>
       <style>{`html, body { background-color: ${SURFACE} !important; }`}</style>
       <div className="flex flex-1 flex-col">
         <div className="flex-1" aria-hidden />

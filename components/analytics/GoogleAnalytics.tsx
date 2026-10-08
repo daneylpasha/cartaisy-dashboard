@@ -9,16 +9,14 @@ export default function GoogleAnalytics() {
 
   return (
     <>
-      {/* Default consent to denied */}
-      <Script id="google-consent-default" strategy="beforeInteractive">
+      <Script id="google-consent-default" strategy="afterInteractive">
         {`
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
-
+          window['ga-disable-${GA_MEASUREMENT_ID}'] = false;
           gtag('consent', 'default', {
-            'analytics_storage': 'denied',
+            'analytics_storage': 'granted',
             'ad_storage': 'denied',
-            'wait_for_update': 500,
           });
         `}
       </Script>

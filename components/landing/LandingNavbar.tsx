@@ -1,209 +1,155 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-
-const MotionLink = motion.create(Link);
 import Image from "next/image";
-import { Sparkles, Menu, X } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Menu, X } from "lucide-react";
+import { offerPaths } from "@/lib/marketing/offer";
+import { inkPrimaryMotionClass } from "@/lib/marketing/publicInk";
+
+const navLinks = [
+  { href: offerPaths.fit, label: "Fit" },
+  { href: offerPaths.pricing, label: "Pricing" },
+  { href: offerPaths.demo, label: "Product tour" },
+  { href: offerPaths.features, label: "Features" },
+  { href: offerPaths.docs, label: "Docs" },
+];
+
+const shell = "mx-auto flex w-full max-w-[1280px] items-center px-5 sm:px-6 lg:px-12";
+const focusRing =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#111210]";
+
+function isCurrent(pathname: string, href: string) {
+  return pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));
+}
 
 export default function LandingNavbar() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const menuId = useId();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+        buttonRef.current?.focus();
+      }
     };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    window.addEventListener("keydown", onKey);
+    panelRef.current?.querySelector<HTMLElement>("a")?.focus();
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
 
-  const navLinks = [
-    { href: "/features", label: "Features" },
-    { href: "/pricing", label: "Pricing" },
-    { href: "/docs", label: "Docs" },
-    { href: "/about", label: "About" },
-    { href: "/contact", label: "Contact" },
-  ];
+  const close = () => setOpen(false);
+  const headerCta =
+    pathname === "/"
+      ? { href: offerPaths.walkthrough, label: "Request a walkthrough" }
+      : { href: offerPaths.fit, label: "Check fit" };
 
   return (
-    <motion.nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isScrolled ? "py-3" : "py-5"
-      }`}
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-    >
-      {/* Backdrop blur and background */}
-      <div
-        className={`absolute inset-0 transition-all duration-500 ${
-          isScrolled
-            ? "bg-slate-950/90 backdrop-blur-xl"
-            : "bg-gradient-to-b from-black/50 to-transparent backdrop-blur-sm"
-        }`}
-      />
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-[#2D302B] bg-[#111210]">
+      <div className={`${shell} h-[68px] justify-between gap-3 lg:h-20`}>
+        <Link href="/" className={`shrink-0 rounded-sm ${focusRing}`}>
+          <Image src="/cartaisy-white-logo.png" width={120} height={29} alt="Cartaisy" />
+        </Link>
 
-      {/* Bottom gradient border - visible on scroll */}
-      <div
-        className={`absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent transition-opacity duration-300 ${
-          isScrolled ? "opacity-100" : "opacity-0"
-        }`}
-      />
+        <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
+          {navLinks.map((link) => (
+            <NavLink key={link.href} href={link.href} pathname={pathname}>
+              {link.label}
+            </NavLink>
+          ))}
+        </nav>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-6 relative">
-        <div className="flex items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <motion.div
-              className="relative"
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-              {/* Glow effect */}
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl blur-lg opacity-40 group-hover:opacity-50 transition-opacity duration-300" />
-              <Image src="/cartaisy-white-logo.png" width={130} height={31} alt="Cartaisy" />
-              {/* Logo icon */}
-              {/* <div className="relative w-11 h-11 bg-gradient-to-br from-purple-600 via-violet-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/25">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div> */}
-            </motion.div>
-
-            {/* Logo text */}
-            {/* <motion.span
-              className="text-2xl font-bold bg-gradient-to-r from-white via-purple-100 to-pink-100 bg-clip-text text-transparent"
-              whileHover={{ scale: 1.02 }}
-            >
-              Cartaisy
-            </motion.span> */}
+        <div className="hidden items-center gap-4 lg:flex">
+          <Link href="/login" className={`text-sm font-medium text-[#a3a69f] hover:text-white ${focusRing} rounded-sm px-1 py-2`}>
+            Sign In
           </Link>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-1">
-            {navLinks.map((link, index) => (
-              <MotionLink
-                key={link.href}
-                href={link.href}
-                className="relative px-4 py-2 text-sm text-slate-300 hover:text-white transition-colors group"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.08 * index, duration: 0.35 }}
-              >
-                {link.label}
-                {/* Animated underline */}
-                <span className="absolute bottom-0 left-2 right-2 h-px bg-gradient-to-r from-purple-500 to-pink-500 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
-              </MotionLink>
-            ))}
-          </div>
-
-          {/* CTA Buttons */}
-          <motion.div
-            className="hidden md:flex items-center gap-3"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2, duration: 0.35 }}
+          <Link
+            href={headerCta.href}
+            className={`inline-flex h-12 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 ${focusRing} ${inkPrimaryMotionClass}`}
           >
-            {/* Sign In */}
-            <Link
-              href="/login"
-              className="px-5 py-2.5 text-sm text-slate-300 hover:text-white transition-colors"
-            >
-              Sign In
-            </Link>
-
-            {/* Get Started - Primary CTA */}
-            <Link href="/contact">
-              <motion.button
-                className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-semibold text-white shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                Get Started
-              </motion.button>
-            </Link>
-          </motion.div>
-
-          {/* Mobile Menu Button */}
-          <motion.button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden relative p-2 text-white"
-            whileTap={{ scale: 0.95 }}
-          >
-            <AnimatePresence mode="wait">
-              {isMobileMenuOpen ? (
-                <motion.div
-                  key="close"
-                  initial={{ rotate: -90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 90, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <X size={24} />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="menu"
-                  initial={{ rotate: 90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: -90, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Menu size={24} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.button>
+            {headerCta.label}
+          </Link>
         </div>
 
-        {/* Mobile Menu */}
-        <AnimatePresence>
-          {isMobileMenuOpen && (
-            <motion.div
-              className="md:hidden absolute top-full left-0 right-0 bg-slate-950/95 backdrop-blur-xl border-t border-white/10"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-            >
-              <div className="px-6 py-6 space-y-1">
-                {navLinks.map((link, index) => (
-                  <MotionLink
-                    key={link.href}
-                    href={link.href}
-                    className="block px-4 py-3 text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.03 }}
-                  >
-                    {link.label}
-                  </MotionLink>
-                ))}
-
-                <div className="pt-4 mt-4 border-t border-white/10 space-y-3">
-                  <Link
-                    href="/login"
-                    className="block text-center px-5 py-3 text-slate-300 hover:text-white transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    href="/contact"
-                    className="block text-center px-5 py-3 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full font-semibold text-white"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    Get Started
-                  </Link>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <button
+          ref={buttonRef}
+          type="button"
+          className={`inline-flex h-11 w-11 items-center justify-center text-white lg:hidden ${focusRing}`}
+          aria-expanded={open}
+          aria-controls={menuId}
+          aria-label={open ? "Close menu" : "Open menu"}
+          onClick={() => setOpen((value) => !value)}
+        >
+          {open ? <X size={22} /> : <Menu size={22} />}
+        </button>
       </div>
-    </motion.nav>
+
+      {open ? (
+        <div id={menuId} ref={panelRef} className="border-t border-[#2D302B] bg-[#111210] lg:hidden">
+          <div className="mx-auto w-full max-w-[1280px] px-5 py-2 sm:px-6">
+            <nav aria-label="Mobile" className="flex flex-col">
+              {navLinks.map((link) => (
+                <NavLink key={link.href} href={link.href} pathname={pathname} onClick={close} mobile>
+                  {link.label}
+                </NavLink>
+              ))}
+            </nav>
+            <div className="mt-2 flex flex-col gap-2 border-t border-[#2D302B] py-3">
+              <Link
+                href="/login"
+                className={`inline-flex min-h-11 items-center px-3 text-sm font-medium text-[#a3a69f] hover:text-white ${focusRing}`}
+                onClick={close}
+              >
+                Sign In
+              </Link>
+              <Link
+                href={headerCta.href}
+                className={`inline-flex h-12 items-center justify-center rounded-[4px] bg-white px-4 text-sm font-semibold text-slate-950 ${focusRing} ${inkPrimaryMotionClass}`}
+                onClick={close}
+              >
+                {headerCta.label}
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </header>
+  );
+}
+
+function NavLink({
+  href,
+  pathname,
+  onClick,
+  mobile = false,
+  children,
+}: {
+  href: string;
+  pathname: string;
+  onClick?: () => void;
+  mobile?: boolean;
+  children: string;
+}) {
+  const current = isCurrent(pathname, href);
+  return (
+    <Link
+      href={href}
+      aria-current={current ? "page" : undefined}
+      onClick={onClick}
+      className={
+        mobile
+          ? `relative inline-flex min-h-11 items-center px-3 text-sm font-medium ${current ? "text-white" : "text-[#d7d8d3] hover:text-white"} ${focusRing}`
+          : `relative inline-flex h-11 items-center px-3 text-sm font-medium ${current ? "text-white" : "text-[#d7d8d3] hover:text-white"} ${focusRing}`
+      }
+    >
+      {children}
+      {current ? <span className="absolute inset-x-3 bottom-1.5 h-px bg-[#B6C4A1]" aria-hidden /> : null}
+    </Link>
   );
 }

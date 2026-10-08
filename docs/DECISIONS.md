@@ -512,6 +512,30 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Impact: Auth session and the dashboard shell. Human review is required because this changes membership and can disconnect Shopify. No Shopify token or Expo token is stored or rendered. The last-app block is the merchant-facing choice: the owner always keeps a working app, and Add app still works. The backend route is not deployed yet. `docs/backend-remove-merchant-store.patch` applies on cartaisy-backend `main`.
 - Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/TESTING.md`, `docs/backend-remove-merchant-store.patch`.
 
+### The public header is a flat ink bar
+
+- Date: 2026-10-06.
+- Decision: The public marketing header is a full-width sticky bar on solid `#111210`, with one `#2D302B` bottom rule and no outer radius, gradient, or backdrop blur. The inner row uses the existing 1280px grid. The current route gets a sage `#B6C4A1` underline and `aria-current`. The footer uses the same ink and a plain top rule. The signed-in dashboard and auth screens do not use this bar.
+- Reason: The inset rounded floating bar was too close to another product’s navigation. Cartaisy’s public shell should be its own flat bar.
+- Impact: `LandingNavbar` and `LandingFooter` only. Labels, destinations, and page bodies stay. No auth or dashboard change.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
+
+### The public product tour stays on the page
+
+- Date: 2026-10-06.
+- Decision: `/demo` reuses the Connect and Brand steps with `tourMode`. Continue without connecting, Back, Continue, Publish home, Go live, and Build my app announce a local status and do not navigate. File picks stay in the browser. The signed-in wizard does not pass `tourMode`, so its dashboard links and page headings stay.
+- Reason: C01 R06/R18. The embedded first-build links were sending prospects to `/dashboard` paths, and the page had three top-level headings.
+- Impact: Public `/demo` and `/product-tour` only. No Shopify OAuth, upload, or build call is added. Human review is required because the same Connect and Brand components render in the merchant wizard.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`.
+
+### A failed public lead save returns 503
+
+- Date: 2026-10-06.
+- Decision: Fit, walkthrough, and contact return 503 when the repository save throws. The body is an error string. It does not include `success` or a fit outcome. Contact email still runs only after `ContactSubmission` is created. An email failure after that save stays on the existing 500 path.
+- Reason: C01 acceptance. The contact catch returned 500 for a failed save, while fit and walkthrough already returned 503. The isolated fixture reproduced the 500.
+- Impact: `POST /api/contact` save failures only. Success copy, validation, and the rate limit are unchanged. Human review is required because the route sits next to prospect data.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`.
+
 ### High-risk auth/store ownership/publishing changes require human review
 
 - Date: unknown / historical.
@@ -519,6 +543,110 @@ Use this file to record dashboard-relevant product and architecture decisions wh
 - Reason: These areas can create tenant isolation, credential exposure, or broken mobile-app behavior.
 - Impact: Agents should keep PRs small, document assumptions, and avoid broad refactors in these areas without explicit issue scope.
 - Related docs: `AGENTS.md`, `CARTAISY_CONTEXT.md`.
+
+### Public evaluation is one managed offer and stays invite-only
+
+- Date: 2026-10-05.
+- Decision: The public site describes one managed offer: setup, then a recurring fee, agreed outside the product. No dollar amount, free trial, card checkout, or extra plan tier is published. A prospect can submit a fit check, a walkthrough request, or the contact form without an account. Those rows are stored in dashboard Mongo and shown only to a platform operator, on one inbox, newest first. Contact submissions stay in `ContactSubmission` and keep their existing email. Signup remains invite-only. The fit check does not start Shopify OAuth. A public Shopify App Store install that creates an account is not offered; install, then claim, then invite is a TODO. iOS is not described as production-ready.
+- Reason: C01 evaluation and purchase. The February 2026 marketing copy contradicted the July 2026 manual-billing decision and the October 2026 offer evidence.
+- Impact: Marketing pages, SEO, terms and privacy wording, signup and login handoff copy, and `/dashboard/admin/leads`. No merchant billing code. No change to the signup token check or the Shopify connect call. Human review is required because the handoff copy sits next to invite signup, and the lead inbox reuses the platform-operator gate.
+- Related docs: `docs/STATUS.md`, `docs/ARCHITECTURE.md`, `docs/TESTING.md`, `docs/DASHBOARD_ONBOARDING_FLOW.md`, `docs/IOS_READINESS.md`, `Cartaisy_C01_Implementation_Completion_Report.md`.
+
+### A data copy is requested through support
+
+- Date: 2026-10-07.
+- Decision: A merchant or user asks Cartaisy for a copy of data Cartaisy holds through the contact form or `support@cartaisy.com`. This product does not provide a self-serve export download. Public copy does not promise a file format, a turnaround, or which records are included. Public copy does not say the support mailbox is monitored. The commercial rules that followed this entry are in “Commercial terms are the October 2026 agreement.”
+- Reason: Founder confirmation for C01. The terms page said a person may export data before termination where possible, and the privacy page listed portability, without a self-serve export in the public product.
+- Impact: `app/terms/page.tsx` termination paragraph and `app/privacy/page.tsx` rights list. FAQ and offer strings did not claim a self-serve export, so they stay. Existing dashboard download controls are unchanged. Mailbox forwarding and regular monitoring stay open. Human review is required because this is public policy wording.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`, `Cartaisy_C01_Implementation_Completion_Report.md`.
+
+### Commercial terms are the October 2026 agreement
+
+- Date: 2026-10-07.
+- Decision: The price and any billing period are agreed with the merchant before work starts. Recurring fees are in that written agreement. A recurring fee renews automatically only when the agreement says so. Billing stays outside the product. There is no in-app card checkout. The merchant cancels by emailing `support@cartaisy.com` or using the contact form before the next renewal, and access continues through the period already paid. Cartaisy does not refund unused subscription time. Cartaisy corrects billing errors, refunds a setup fee cancelled before work starts, and makes refunds the law requires. Cartaisy may suspend or end access immediately for serious misuse, a security issue, or a legal requirement. Otherwise it gives notice and does not publish a day count. Personal-data requests (access, correction, deletion, and a copy) can be made at any time, not only before access ends, through the contact form or `privacy@cartaisy.com`. There is no self-serve export download. Personal information is kept only while needed for the service and legal obligations, then deleted or anonymized. No retention deadline is published.
+- Reason: Founder approval of the concise C01 commercial and privacy policy. Earlier public copy said the site did not set a cancellation or refund policy, and it limited a data copy to the time before access ended.
+- Impact: `app/terms/page.tsx`, `app/privacy/page.tsx`, `lib/marketing/offer.ts`, pricing, and the public FAQ. No Stripe, checkout, or auto-charge UI. Dashboard download and customer-deletion controls are unchanged and were not run. Human review is required because this is public policy wording.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`, `docs/DATA_DELETION.md`, `Cartaisy_C01_Implementation_Completion_Report.md`.
+
+### Cartaisy is a product of RenderNext LLC
+
+- Date: 2026-10-07.
+- Decision: Public terms, privacy, cookies, and contact say Cartaisy is a product of RenderNext LLC, a company registered in Texas, United States. The terms are governed by the laws of Texas and applicable United States federal law. The site does not publish a street address, city, county, registration number, arbitration requirement, or exclusive court. Product contact stays `support@cartaisy.com`. Privacy contact stays `privacy@cartaisy.com`.
+- Reason: Founder confirmation of the operator. The old terms named the jurisdiction where Cartaisy operates and required binding arbitration or a court of competent jurisdiction.
+- Impact: Those four public pages and `lib/marketing/offer.ts`. Commercial renewal, cancel, refund, retention, and export rules are unchanged. The internal support checklist is in `docs/SUPPORT_PROCESS.md`. No one is named as the inbox owner yet. Human review is required because this is public identity and governing law.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`, `docs/SUPPORT_PROCESS.md`.
+
+### Contact, fit, and the demo shell use the homepage ink
+
+- Date: 2026-10-07.
+- Decision: `/contact`, `/fit`, and the public `/demo` wrapper use the homepage ink `#111210`. Headings use `#f6f3ee`. Body uses `#c5c7c1`. Links and focus use sage `#B6C4A1`. Contact and fit fields use opaque `#1c1e1a`, a 1px `#666962` border (the homepage rule `#2D302B` lifted so the line is about 3:1 on the field), a 4px radius, and a 48px minimum height on single-line inputs. Placeholder `#a3a69f` is about 6.8:1 on the field. Body `#c5c7c1` is about 11:1 on the page. Primary actions are white with ink text. Secondary actions are an outline. The demo page removes the outer gray frame around Connect and Brand. Those step cards stay as they are. Other marketing pages keep the purple PageLayout gradient.
+- Reason: Owner-approved UI consistency for those three public surfaces. The homepage, footer, cookies, auth, and embedded dashboard steps stay.
+- Impact: `PageLayout` ink surface is opt-in. Form validation, save, status copy, routes, and offer limits are unchanged.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
+
+### Pricing, walkthrough, features, about, docs, and legal pages use the homepage ink
+
+- Date: 2026-10-07.
+- Decision: `/pricing`, `/schedule-demo`, `/features`, `/about`, `/docs`, `/docs/faq`, `/docs/shopify`, `/terms`, `/privacy`, and `/cookies` use the same opt-in ink shell as contact, fit, and the demo wrapper. Walkthrough fields and buttons use the contact and fit field classes. Legal and long-form docs sit in a 68ch measure. The FAQ disclosure uses a chevron on the existing `details` element. Docs “Soon” cards stay. `/docs/quickstart` and `/docs/api` stay on the purple gradient for a later pass. The homepage artwork, auth, dashboard, demo step cards, and cookie banner stay as they are.
+- Reason: Owner-led styling consistency after the contact and fit ink treatment was verified. No new claims or policy sentences.
+- Impact: Page chrome and form chrome only. Walkthrough validation, save, and request-only copy are unchanged.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
+
+### White primary actions turn lime on hover
+
+- Date: 2026-10-07.
+- Decision: Public white primary actions stay white at rest. Hover and press use `#C7FF4D` with `#111210` text, with a 180ms transition on background, color, and border. Reduced motion removes that transition. A disabled control does not take the lime state. Outline buttons, auth, and the dashboard do not use this hover.
+- Reason: Owner-approved hover chrome for the shared primary family, including the homepage, navigation, inner-page primaries, form submits, and cookie Accept and Save.
+- Impact: `inkPrimaryMotionClass` in `lib/marketing/publicInk.ts`. No copy, layout, or route change.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
+
+### Docs index Coming soon cards, and ink on quick start and API
+
+- Date: 2026-10-07.
+- Decision: `/docs` subtitle is “Guides for connecting your Shopify store, preparing your brand, and working with Cartaisy.” Dashboard Overview, Webhook Configuration, and Authentication render as non-interactive cards with a “Coming soon” badge, full contrast, and no link. `/docs/quickstart` and `/docs/api` use the ink shell and a 68ch measure. Available guide URLs stay. Blog, careers, newsletter, not-found, auth, and the dashboard stay off that shell.
+- Reason: Owner review of the docs index. Faint Soon links still looked clickable, and the subtitle implied a self-serve builder.
+- Impact: Docs index cards and the two guide pages. No cookie, pricing, or feature-copy change.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
+
+### Open cookie panel keeps footer controls reachable
+
+- Date: 2026-10-07.
+- Decision: While the privacy panel is open, the page reserves bottom space equal to the panel’s measured viewport height, including the taller preferences view, and removes that space when the panel closes. Footer Cookie Settings uses the muted ink footer link color and a white hover. Banner wording, Accept and Save lime hover, and consent rules stay as they are. Login, signup, and password pages keep their existing spacer.
+- Reason: At 360, 510, and 825 the fixed panel covered footer links and Cookie Settings at the end of the scroll, so those controls could not be clicked before consent.
+- Impact: Public page scroll space and the footer Cookie Settings link. No pricing, feature, or consent-copy change.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
+
+### Pricing and features lead with the offer
+
+- Date: 2026-10-07.
+- Decision: `/pricing` keeps the heading “One managed offer” and one setup sentence. The existing renewal, external billing, no-trial, no-checkout, and no-tier facts move into Billing details, after included work and before exclusions. `/features` uses the heading “Bring your Shopify store into a branded app.” and one setup sentence. Checkout, wallet, and Android/iOS availability stay in the existing cards, with the same limits.
+- Reason: Owner review. Both pages were opening with exclusions. The hierarchy follows a benefit-first order without new capabilities, prices, or results.
+- Impact: Public copy order on those two pages. Shared offer facts are unchanged.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
+
+### Public Shopify permissions list
+
+- Date: 2026-10-07.
+- Decision: `/docs/shopify` and the permissions FAQ share one module: the approved intro, five capability lines, the broader-than-used caveat, and the 16 configured names inside “Technical permission names.” The public text does not say Shopify shows that list at install and does not say every permission is used. Live granted scopes were not re-queried. Usage classifications stay in `docs/SHOPIFY_SCOPES_USAGE.md`.
+- Reason: Founder-approved public wording for C01 R17. The old “not confirmed on this site” sentence is retired.
+- Impact: Public permissions copy only. No Shopify OAuth, scope, or environment change.
+- Related docs: `docs/SHOPIFY_ACCESS.md`, `docs/SHOPIFY_SCOPES_USAGE.md`, `docs/STATUS.md`, `docs/TESTING.md`.
+
+### Features cards drop the duplicated sentences
+
+- Date: 2026-10-07.
+- Decision: On `/features` only, the Shopify hosted checkout card and the tracked build request card each use one approved three-sentence body. Shared checkout and platform sentences on the homepage, pricing, fit, and docs stay as they are.
+- Reason: Those two cards were showing the shorter include line and the longer limit line together.
+- Impact: Those two card bodies. No layout, style, or other-page copy change.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
+
+### Homepage leads with the product
+
+- Date: 2026-10-08.
+- Decision: The homepage hero keeps its headline and STILL artwork. The supporting paragraph, hero actions, capability row, and section order follow the founder-approved H1 cut. The header action is Request a walkthrough only on `/`. Shared offer facts and other routes stay as they are.
+- Reason: Founder-authorized homepage refinement. The page should show the product and the setup path without implying a launch or a download.
+- Impact: Homepage copy, order, and type scale. Fit stays in the navigation.
+- Related docs: `docs/STATUS.md`, `docs/TESTING.md`.
 
 ## Related docs/issues:
 

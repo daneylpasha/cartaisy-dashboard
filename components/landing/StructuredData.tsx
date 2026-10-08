@@ -5,12 +5,7 @@ export function OrganizationSchema() {
     name: 'Cartaisy',
     url: 'https://cartaisy.com',
     logo: 'https://cartaisy.com/logo.png',
-    description: 'Mobile App Builder for Shopify Stores',
-    sameAs: [
-      'https://twitter.com/cartaisy',
-      'https://linkedin.com/company/cartaisy',
-      'https://github.com/cartaisy',
-    ],
+    description: 'Managed branded shopping apps for Shopify stores',
     contactPoint: {
       '@type': 'ContactPoint',
       email: 'support@cartaisy.com',
@@ -32,19 +27,8 @@ export function SoftwareApplicationSchema() {
     '@type': 'SoftwareApplication',
     name: 'Cartaisy',
     applicationCategory: 'BusinessApplication',
-    operatingSystem: 'Web, iOS, Android',
-    description: 'Transform your Shopify store into a native mobile app',
-    offers: {
-      '@type': 'Offer',
-      price: '49',
-      priceCurrency: 'USD',
-      priceValidUntil: '2026-12-31',
-    },
-    aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.9',
-      ratingCount: '500',
-    },
+    operatingSystem: 'Web',
+    description: 'Managed branded shopping app for a Shopify store. Shoppers pay on Shopify hosted checkout.',
   };
 
   return (

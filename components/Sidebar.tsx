@@ -174,6 +174,14 @@ function SidebarContent({
       requiresPlatformOps: true,
     },
     {
+      href: '/dashboard/admin/leads',
+      label: 'Leads',
+      icon: <ClipboardList className="size-4" />,
+      tier: 'account',
+      group: 'Account',
+      requiresPlatformOps: true,
+    },
+    {
       href: '/dashboard/admin/onboarding',
       label: 'Invites',
       icon: <KeyRound className="size-4" />,
