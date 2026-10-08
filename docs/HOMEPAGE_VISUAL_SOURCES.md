@@ -7,7 +7,7 @@ The homepage product-tour image is a crop of the real Brand step. It is not a re
 - Component: `BrandingStep` in `components/onboarding/steps/BrandingStep.tsx`, rendered with `tourMode`.
 - Draft type: `BrandingDraft` in `lib/onboarding/types.ts`.
 - Component commit: `1789605b679ccd53339a18ba35944c5b146543dc`. That component, `ProductTour`, and `/demo` were not modified for this capture.
-- Shipped file: `public/marketing/c01-brand-step-arc.png`.
+- Shipped file: `public/marketing/c01-brand-step-arc.png`, added in `f3f9e0f38d8193bad1c7442c744bfd9066cc9142`.
 - Capture route: a temporary page at `app/capture-brand-fixture/page.tsx`. It is not committed and is not a shipped route. Handlers only updated local React state or returned without doing work. No save, upload, Shopify, or build call was wired.
 - Viewport: 1440×1400 CSS pixels, device scale 2, screenshot clip scale 2. The crop is the form block that contains the app name, logo, icon, splash, and color controls (`#app-name`’s `.space-y-8` ancestor). Output pixels: 2520×2296.
 - Crop excludes the first-build instructions panel (`data-install-preview="instructions"`) and the read-only Shopify details. Those regions were rendered, then left outside the crop. Shopify rows showed “Not available yet” because the seed passed null counts and a disconnected snapshot. They are not in the shipped image.
