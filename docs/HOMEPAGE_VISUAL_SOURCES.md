@@ -40,3 +40,29 @@ Chrome recorded 32 requests, all to `http://127.0.0.1:3002`. None were `/api/`, 
 - `/site.webmanifest`, `/favicon.ico`, `/favicon-16x16.png`
 
 No image request was made for a logo, icon, or splash.
+
+The homepage shows this file from 640px up, centered, with a maximum width of 880px.
+
+## Product tour, narrow screens
+
+Below 640px the homepage shows two crops from the same Brand step and the same ARC seed. They are not a scaled copy of the desktop image. The empty logo, icon, and splash slots were rendered and left outside these crops.
+
+- Component: `BrandingStep` in `components/onboarding/steps/BrandingStep.tsx`, rendered with `tourMode`.
+- Component commit: `1789605b679ccd53339a18ba35944c5b146543dc`. `BrandingStep`, `ProductTour`, and `/demo` were not modified.
+- Seed: the same table as the desktop capture. App name `ARC`, primary `#1B3A2F`, secondary `#D1C2BC`, logo, icon, and splash `null`, disconnected snapshot, null product and order counts, empty collections, `installPreview` phase `unavailable`.
+- Capture route: temporary `app/capture-brand-fixture/page.tsx`. It is not committed. Handlers only updated local React state or returned without doing work.
+- Viewport: 360×1600 CSS pixels. Device scale factor 3. Screenshot clip scale 1.
+- App-name crop: CSS box x 27, y 637.5, width 306, height 102. Output `public/marketing/c01-brand-step-arc-name.png`, 918×306 pixels. That box is the app-name label, the `ARC` input, and its hint.
+- Color crop: CSS box x 27, y 1065.5, width 306, height 352. Output `public/marketing/c01-brand-step-arc-colors.png`, 918×1056 pixels. That box is the primary and secondary color controls, including the hex fields. It does not include the logo, icon, or splash slots.
+- In the capture, the app-name label was 14px, the app-name input was 16px, the color labels were 14px, and the hex text fields were 14px.
+
+### Requests during the narrow capture
+
+Chrome recorded 31 requests, all to `http://127.0.0.1:3002`. None were `/api/`, Shopify, GraphQL, upload, MongoDB, or an external host.
+
+- Document: `/capture-brand-fixture`
+- Same-origin Next.js dev scripts, CSS, and HMR client
+- Same-origin fonts: Geist, Manrope, and the layout font files
+- `/site.webmanifest`, `/favicon.ico`, `/favicon-16x16.png`
+
+No image request was made for a logo, icon, or splash.

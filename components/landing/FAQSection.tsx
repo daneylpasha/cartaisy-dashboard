@@ -3,7 +3,11 @@ import { homeFaqs, offerPaths } from '@/lib/marketing/offer';
 
 const homepageFaqs = homeFaqs.map((faq) =>
   faq.question === 'Does Cartaisy guarantee sales?'
-    ? { ...faq, question: 'What results should I expect?' }
+    ? {
+        ...faq,
+        question: 'What results should I expect?',
+        answer: faq.answer.replace(/^No\. /, ''),
+      }
     : faq,
 );
 

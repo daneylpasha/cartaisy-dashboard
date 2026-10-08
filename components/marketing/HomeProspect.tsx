@@ -39,6 +39,7 @@ const withCartaisy = [
   'Preparation of a tracked build request',
 ] as const;
 const [headlineLead, headlineRest] = offerPositioning.headline.split(', ');
+const emptyPixel = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
 
 export default function HomeProspect() {
   return (
@@ -109,16 +110,40 @@ export default function HomeProspect() {
           <Link href={offerPaths.demo} className={`mt-8 ${primaryAction}`}>
             Open the interactive tour
           </Link>
-          <Image
-            src="/marketing/c01-brand-step-arc.png"
-            alt="A sample branding setup in Cartaisy, showing the app name field, the logo, icon, and splash fields, and the color controls."
-            width={2520}
-            height={2296}
-            loading="lazy"
-            quality={90}
-            sizes="(min-width: 1280px) 1184px, 100vw"
-            className="mt-10 h-auto w-full"
-          />
+          <div className="mt-10">
+            <picture className="hidden sm:block">
+              <source media="(max-width: 639px)" srcSet={emptyPixel} />
+              <img
+                src="/marketing/c01-brand-step-arc.png"
+                alt="A sample branding setup in Cartaisy, showing the app name, logo, icon, splash, and color fields."
+                width={2520}
+                height={2296}
+                className="mx-auto h-auto w-full max-w-[880px]"
+              />
+            </picture>
+            <div className="mx-auto w-full max-w-[360px] space-y-4 sm:hidden">
+              <picture>
+                <source media="(min-width: 640px)" srcSet={emptyPixel} />
+                <img
+                  src="/marketing/c01-brand-step-arc-name.png"
+                  alt="A sample branding setup in Cartaisy, showing the app name field."
+                  width={918}
+                  height={306}
+                  className="h-auto w-full"
+                />
+              </picture>
+              <picture>
+                <source media="(min-width: 640px)" srcSet={emptyPixel} />
+                <img
+                  src="/marketing/c01-brand-step-arc-colors.png"
+                  alt="A sample branding setup in Cartaisy, showing the primary and secondary color settings."
+                  width={918}
+                  height={1056}
+                  className="h-auto w-full"
+                />
+              </picture>
+            </div>
+          </div>
         </div>
       </section>
 
